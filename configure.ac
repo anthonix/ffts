@@ -55,5 +55,6 @@ AC_CHECK_FUNCS([gettimeofday pow])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
+                 tests/Makefile
                  ])
 AC_OUTPUT

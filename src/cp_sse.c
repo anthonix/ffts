@@ -35,23 +35,26 @@ firstpass_64(const float * restrict in, float * restrict out, size_t N, ffts_pla
 void 
 firstpass_32(const data_t * restrict in, data_t * restrict out, size_t N, ffts_plan_t * restrict p) {
   __m128 r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15,r16_17,r18_19,r20_21,r22_23,r24_25,r26_27,r28_29,r30_31;
+  float *LUT8 = p->ws[0];
+  float *LUT16 = p->ws[1];
+  float *LUT32 = p->ws[2];
 
   L_4_4(in+0,in+32,in+16,in+48,&r0_1,&r2_3,&r16_17,&r18_19);
   L_2_2(in+8,in+40,in+56,in+24,&r4_5,&r6_7,&r20_21,&r22_23);
-  K_N(VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1),VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,-0,0),&r0_1,&r2_3,&r4_5,&r6_7);
+  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
   L_4_2(in+4,in+36,in+20,in+52,&r8_9,&r10_11,&r28_29,&r30_31);
   L_4_4(in+60,in+28,in+12,in+44,&r12_13,&r14_15,&r24_25,&r26_27);
-  K_N(VLIT4(0.92387953251128673848313610506011,0.92387953251128673848313610506011,1,1),VLIT4(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,-0,0),&r0_1,&r4_5,&r8_9,&r12_13);
-  K_N(VLIT4(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.70710678118654757273731092936941,0.70710678118654757273731092936941),VLIT4(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.70710678118654746171500846685376,-0.70710678118654746171500846685376),&r2_3,&r6_7,&r10_11,&r14_15);
-  K_N(VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1),VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,-0,0),&r16_17,&r18_19,&r20_21,&r22_23);
-  K_N(VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1),VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,-0,0),&r24_25,&r26_27,&r28_29,&r30_31);
-  K_N(VLIT4(0.98078528040323043057924223830923,0.98078528040323043057924223830923,1,1),VLIT4(0.19509032201612824808378832130984,-0.19509032201612824808378832130984,-0,0),&r0_1,&r8_9,&r16_17,&r24_25);
+  K_N(_mm_load_ps(LUT16),_mm_load_ps(LUT16+4),&r0_1,&r4_5,&r8_9,&r12_13);
+  K_N(_mm_load_ps(LUT16+8),_mm_load_ps(LUT16+12),&r2_3,&r6_7,&r10_11,&r14_15);
+  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r16_17,&r18_19,&r20_21,&r22_23);
+  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r24_25,&r26_27,&r28_29,&r30_31);
+  K_N(_mm_load_ps(LUT32),_mm_load_ps(LUT32+4),&r0_1,&r8_9,&r16_17,&r24_25);
   S_4(r0_1,r8_9,r16_17,r24_25,out+0,out+16,out+32,out+48);
-  K_N(VLIT4(0.8314696123025452356714026791451,0.8314696123025452356714026791451,0.92387953251128673848313610506011,0.92387953251128673848313610506011),VLIT4(0.55557023301960217764872140833177,-0.55557023301960217764872140833177,0.38268343236508978177923268049199,-0.38268343236508978177923268049199),&r2_3,&r10_11,&r18_19,&r26_27);
+  K_N(_mm_load_ps(LUT32+8),_mm_load_ps(LUT32+12),&r2_3,&r10_11,&r18_19,&r26_27);
   S_4(r2_3,r10_11,r18_19,r26_27,out+4,out+20,out+36,out+52);
-  K_N(VLIT4(0.55557023301960228867102387084742,0.55557023301960228867102387084742,0.70710678118654757273731092936941,0.70710678118654757273731092936941),VLIT4(0.83146961230254512464910021662945,-0.83146961230254512464910021662945,0.70710678118654746171500846685376,-0.70710678118654746171500846685376),&r4_5,&r12_13,&r20_21,&r28_29);
+  K_N(_mm_load_ps(LUT32+16),_mm_load_ps(LUT32+20),&r4_5,&r12_13,&r20_21,&r28_29);
   S_4(r4_5,r12_13,r20_21,r28_29,out+8,out+24,out+40,out+56);
-  K_N(VLIT4(0.19509032201612830359493955256767,0.19509032201612830359493955256767,0.38268343236508983729038391174981,0.38268343236508983729038391174981),VLIT4(0.98078528040323043057924223830923,-0.98078528040323043057924223830923,0.92387953251128673848313610506011,-0.92387953251128673848313610506011),&r6_7,&r14_15,&r22_23,&r30_31);
+  K_N(_mm_load_ps(LUT32+24),_mm_load_ps(LUT32+28),&r6_7,&r14_15,&r22_23,&r30_31);
   S_4(r6_7,r14_15,r22_23,r30_31,out+12,out+28,out+44,out+60);
 
 }
@@ -59,21 +62,24 @@ firstpass_32(const data_t * restrict in, data_t * restrict out, size_t N, ffts_p
 void 
 firstpass_16(const data_t * restrict in, data_t * restrict out, size_t N, ffts_plan_t * restrict p) {
   __m128 r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15;
+  float *LUT8 = p->ws[0];
+  float *LUT16 = p->ws[1];
 
   L_4_4(in+0,in+16,in+8,in+24,&r0_1,&r2_3,&r8_9,&r10_11);
   L_2_4(in+4,in+20,in+28,in+12,&r4_5,&r6_7,&r14_15,&r12_13);
-  K_N(VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1),VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,-0,0),&r0_1,&r2_3,&r4_5,&r6_7);
-  K_N(VLIT4(0.92387953251128673848313610506011,0.92387953251128673848313610506011,1,1),VLIT4(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,-0,0),&r0_1,&r4_5,&r8_9,&r12_13);
+  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
+  K_N(_mm_load_ps(LUT16),_mm_load_ps(LUT16+4),&r0_1,&r4_5,&r8_9,&r12_13);
   S_4(r0_1,r4_5,r8_9,r12_13,out+0,out+8,out+16,out+24);
-  K_N(VLIT4(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.70710678118654757273731092936941,0.70710678118654757273731092936941),VLIT4(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.70710678118654746171500846685376,-0.70710678118654746171500846685376),&r2_3,&r6_7,&r10_11,&r14_15);
+  K_N(_mm_load_ps(LUT16+8),_mm_load_ps(LUT16+12),&r2_3,&r6_7,&r10_11,&r14_15);
   S_4(r2_3,r6_7,r10_11,r14_15,out+4,out+12,out+20,out+28);
-
 }
+
 void 
 firstpass_8(const data_t * restrict in, data_t * restrict out, size_t N, ffts_plan_t * restrict p) {
   __m128 r0_1,r2_3,r4_5,r6_7;
-  L_4_2(in+0,in+8,in+4,in+12,&r0_1,&r2_3,&r4_5,&r6_7);
-  K_N(VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1),VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,-0,0),&r0_1,&r2_3,&r4_5,&r6_7);
+  float *LUT8 = p->ws[0];
+	L_4_2(in+0,in+8,in+4,in+12,&r0_1,&r2_3,&r4_5,&r6_7);
+  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
   S_4(r0_1,r2_3,r4_5,r6_7,out+0,out+4,out+8,out+12);
 }
 void 
@@ -165,10 +171,13 @@ void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out,
 }
 
 
-ffts_plan_t *ffts_init(size_t N) {
+ffts_plan_t *ffts_init(size_t N, int sign) {
 	ffts_plan_t *p = malloc(sizeof(ffts_plan_t));
 	size_t leafN = 16;	
 	size_t i;	
+		
+	if(sign < 0) MULI_SIGN = _mm_set_ps(-0.0f, 0.0f, -0.0f, 0.0f);
+	else         MULI_SIGN = _mm_set_ps(0.0f, -0.0f, 0.0f, -0.0f);
 	
 	if(N > 32) {
 		init_offsets(p, N, leafN);
@@ -178,25 +187,68 @@ ffts_plan_t *ffts_init(size_t N) {
 		if(N == 64) p->firstpass = &firstpass_64;
 		else if(__builtin_ctzl(N) & 1) p->firstpass = &firstpass_type_2;	
 		else p->firstpass = &firstpass_type_1;	
-		/*      LUTS           */
 
-		size_t n_luts = __builtin_ctzl(N/leafN);
+		LEAFLUT[0] = _mm_set_ps(0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
+		LEAFLUT[1] = _mm_set_ps(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
+		LEAFLUT[2] = _mm_set_ps(0.92387953251128673848313610506011,0.92387953251128673848313610506011,0.92387953251128673848313610506011,0.92387953251128673848313610506011);
+		LEAFLUT[3] = _mm_set_ps(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,0.38268343236508978177923268049199,-0.38268343236508978177923268049199);
+		LEAFLUT[4] = _mm_set_ps(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.38268343236508983729038391174981);
+		LEAFLUT[5] = _mm_set_ps(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.92387953251128673848313610506011,-0.92387953251128673848313610506011);
+  	
+		LEAFLUT[6] = _mm_set_ps(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1);
+		LEAFLUT[7] = _mm_set_ps(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0,-0);
+		LEAFLUT[8] = _mm_set_ps(0.92387953251128673848313610506011,0.92387953251128673848313610506011,1,1);
+		LEAFLUT[9] = _mm_set_ps(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,0,-0);
+		LEAFLUT[10] = _mm_set_ps(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
+		LEAFLUT[11] = _mm_set_ps(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
 
+		
+		if(sign > 0) {
+			LEAFLUT[1] = _mm_xor_ps(LEAFLUT[1], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
+			LEAFLUT[3] = _mm_xor_ps(LEAFLUT[3], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
+			LEAFLUT[5] = _mm_xor_ps(LEAFLUT[5], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
+			LEAFLUT[7] = _mm_xor_ps(LEAFLUT[7], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
+			LEAFLUT[9] = _mm_xor_ps(LEAFLUT[9], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
+			LEAFLUT[11] = _mm_xor_ps(LEAFLUT[11], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
+		}
+		
 		p->i0 = N/leafN/3+1;
 		p->i1 = N/leafN/3;
 		if((N/leafN) % 3 > 1) p->i1++;
 		p->i0/=2;
 		p->i1/=2;
 
+	}else{
+		p->transforms = malloc(2 * sizeof(transform_index_t));
+		p->transforms[0] = 0;
+		p->transforms[1] = 1;
+		if(N == 2) p->firstpass = &firstpass_2;
+		else if(N == 4) p->firstpass = &firstpass_4;
+		else if(N == 8) p->firstpass = &firstpass_8;
+		else if(N == 16) p->firstpass = &firstpass_16;
+		else if(N == 32) p->firstpass = &firstpass_32;
 
-		//	printf("n_luts = %zu\n", n_luts);
+	}
+
+		int hardcoded = 0;
+
+		/*      LUTS           */
+		size_t n_luts = __builtin_ctzl(N/leafN);
+		if(N <= 32) { n_luts = __builtin_ctzl(N/4); hardcoded = 1; }
+
+
+		//printf("n_luts = %zu\n", n_luts);
 		p->ws = malloc(n_luts * sizeof(data_t *));
 		cdata_t *w;
 
 		int n = leafN*2;
+		if(hardcoded) n = 8;
+
 		for(i=0;i<n_luts;i++) {
-			//	printf("LUT[%zu] = %d\n", i, n);	
-			if(!i) {
+				
+			//printf("LUT[%zu] = %d\n", i, n);	
+			
+			if(!i || hardcoded) {
 
 				w = _mm_malloc(n/4 * 2 * sizeof(cdata_t), 32);
 
@@ -216,15 +268,15 @@ ffts_plan_t *ffts_init(size_t N) {
 					__m128 re, im;
 					re = _mm_shuffle_ps(temp0, temp0, _MM_SHUFFLE(2, 2, 0, 0));
 					im = _mm_shuffle_ps(temp0, temp0, _MM_SHUFFLE(3, 3, 1, 1));
-					im = _mm_xor_ps(im, _mm_set_ps(-0.0f, 0.0f, -0.0f, 0.0f));
+					im = _mm_xor_ps(im, MULI_SIGN);
 					_mm_store_ps(fw + j*4  , re);
 					_mm_store_ps(fw + j*4+4, im);
 				}
 
-				//	for(j=0;j<n/2;j++) {
-				//		printf("%f %f\n", creal(w[j]), cimag(w[j]));
+	//		  	for(j=0;j<n/2;j++) {
+	//		  		printf("%f %f\n", creal(w[j]), cimag(w[j]));
 
-				//	}
+	//		  	}
 
 				_mm_free(w0);
 			}else{
@@ -252,21 +304,21 @@ ffts_plan_t *ffts_init(size_t N) {
 					temp0 = _mm_load_ps(fw0 + j*2);
 					re = _mm_shuffle_ps(temp0, temp0, _MM_SHUFFLE(2, 2, 0, 0));
 					im = _mm_shuffle_ps(temp0, temp0, _MM_SHUFFLE(3, 3, 1, 1));
-					im = _mm_xor_ps(im, _mm_set_ps(-0.0f, 0.0f, -0.0f, 0.0f));
+					im = _mm_xor_ps(im, MULI_SIGN);
 					_mm_store_ps(fw + j*2*6  , re);
 					_mm_store_ps(fw + j*2*6+4, im);
 
 					temp1 = _mm_load_ps(fw1 + j*2);
 					re = _mm_shuffle_ps(temp1, temp1, _MM_SHUFFLE(2, 2, 0, 0));
 					im = _mm_shuffle_ps(temp1, temp1, _MM_SHUFFLE(3, 3, 1, 1));
-					im = _mm_xor_ps(im, _mm_set_ps(-0.0f, 0.0f, -0.0f, 0.0f));
+					im = _mm_xor_ps(im, MULI_SIGN);
 					_mm_store_ps(fw + j*2*6+8 , re);
 					_mm_store_ps(fw + j*2*6+12, im);
 
 					temp2 = _mm_load_ps(fw2 + j*2);
 					re = _mm_shuffle_ps(temp2, temp2, _MM_SHUFFLE(2, 2, 0, 0));
 					im = _mm_shuffle_ps(temp2, temp2, _MM_SHUFFLE(3, 3, 1, 1));
-					im = _mm_xor_ps(im, _mm_set_ps(-0.0f, 0.0f, -0.0f, 0.0f));
+					im = _mm_xor_ps(im, MULI_SIGN);
 					_mm_store_ps(fw + j*2*6+16, re);
 					_mm_store_ps(fw + j*2*6+20, im);
 				}
@@ -280,22 +332,11 @@ ffts_plan_t *ffts_init(size_t N) {
 			n *= 2;
 		}
 
-		p->n_bits = log(N)/log(2) - log(leafN*2)/log(2);
-	}else{
-		p->transforms = malloc(2 * sizeof(transform_index_t));
-		p->transforms[0] = 0;
-		p->transforms[1] = 1;
-		if(N == 2) p->firstpass = &firstpass_2;
-		else if(N == 4) p->firstpass = &firstpass_4;
-		else if(N == 8) p->firstpass = &firstpass_8;
-		else if(N == 16) p->firstpass = &firstpass_16;
-		else if(N == 32) p->firstpass = &firstpass_32;
 
-	}
-
+	
 	return p;
 }
-
+/*
 int main(int argc, char *argv[]) {
 	int n = atoi(argv[1]);
 	int count = atoi(argv[2]);
@@ -341,4 +382,4 @@ int main(int argc, char *argv[]) {
 	printf("Time: %f seconds, CTGs: %f Leaftime: %f \n", tt, ctgs, lt);
 
 	return 0;
-}
+}*/

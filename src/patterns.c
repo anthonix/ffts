@@ -66,7 +66,7 @@ void init_is(ffts_plan_t *p, int N, int leafN, int VL) {
 //	if(i % 16 == 15) printf("\n");
 //}
 
-	p->i0 = i0; p->i1 = i1; p->i2 = i2;
+	p->i0 = i0; p->i1 = i1;
 }
 
 void elaborate_offsets(ptrdiff_t *offsets, int leafN, int N, int ioffset, int ooffset, int stride, int even) {
