@@ -20,6 +20,7 @@ AC_PROG_CC
 #SFFT_CFLAGS="$CFLAGS"
 #SFFT_CC="$CC"
 
+SIMD=sse
 
 AC_ARG_ENABLE(single, [AC_HELP_STRING([--enable-single],[compile single-precision library])], sfft_single=$enableval, sfft_single=no)
 if test "$sfft_single" = "yes"; then
@@ -28,6 +29,16 @@ fi
 if test "$sfft_single" = "no"; then
 	AC_DEFINE(FFTS_PREC_SINGLE,0,[Define to FFT in single precision.])
 fi
+
+AC_ARG_ENABLE(neon, [AC_HELP_STRING([--enable-neon],[enable NEON extensions])], have_neon=$enableval, have_neon=no)
+if test "$have_neon" = "yes"; then
+	if test "$SIMD" != "sse"; then
+		AC_MSG_ERROR([conflicting SIMD extensisons specified])
+	fi
+	AC_DEFINE(HAVE_NEON,1,[Define to FFT with ARM NEON.])
+fi
+AM_CONDITIONAL(HAVE_NEON, test "$have_neon" = "yes")
+
 
 #if test "$ord_sr" = "no"; then
 #	AC_DEFINE(SFFT_ORD_SR,0,[Define to enable ordinary split radix.])
@@ -49,7 +60,7 @@ AC_TYPE_SIZE_T
 AC_TYPE_UINT64_T
 
 # Checks for library functions.
-AC_FUNC_MALLOC
+#AC_FUNC_MALLOC
 AC_CHECK_FUNCS([gettimeofday pow])
 
 

@@ -45,7 +45,7 @@ struct _ffts_plan_t {
 	ptrdiff_t *is;
 	ptrdiff_t *offsets;
 	void __attribute__ ((aligned(32))) **ws;
-	void (*firstpass)(const float * restrict, float * restrict, size_t, struct _ffts_plan_t * restrict);
+	void (*firstpass)(const float * restrict, float * restrict, struct _ffts_plan_t * restrict);
 	size_t i0, i1, i2;
 	uint64_t n_bits, leaftime;
 	
@@ -57,6 +57,6 @@ typedef struct _ffts_plan_t ffts_plan_t;
 
 void ffts_execute(ffts_plan_t * restrict, const void * restrict, const void * restrict);
 ffts_plan_t *ffts_init(size_t N, int sign);
-
+void ffts_free(ffts_plan_t *);
 
 #endif

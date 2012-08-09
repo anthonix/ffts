@@ -628,6 +628,8 @@ LIBOBJS
 EGREP
 GREP
 CPP
+HAVE_NEON_FALSE
+HAVE_NEON_TRUE
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -717,6 +719,7 @@ ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
 enable_single
+enable_neon
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1349,6 +1352,7 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --enable-single         compile single-precision library
+  --enable-neon           enable NEON extensions
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -4270,6 +4274,7 @@ fi
 #SFFT_CFLAGS="$CFLAGS"
 #SFFT_CC="$CC"
 
+SIMD=sse
 
 # Check whether --enable-single was given.
 if test "${enable_single+set}" = set; then :
@@ -4288,6 +4293,31 @@ if test "$sfft_single" = "no"; then
 $as_echo "#define FFTS_PREC_SINGLE 0" >>confdefs.h
 
 fi
+
+# Check whether --enable-neon was given.
+if test "${enable_neon+set}" = set; then :
+  enableval=$enable_neon; have_neon=$enableval
+else
+  have_neon=no
+fi
+
+if test "$have_neon" = "yes"; then
+	if test "$SIMD" != "sse"; then
+		as_fn_error $? "conflicting SIMD extensisons specified" "$LINENO" 5
+	fi
+
+$as_echo "#define HAVE_NEON 1" >>confdefs.h
+
+fi
+ if test "$have_neon" = "yes"; then
+  HAVE_NEON_TRUE=
+  HAVE_NEON_FALSE='#'
+else
+  HAVE_NEON_TRUE='#'
+  HAVE_NEON_FALSE=
+fi
+
+
 
 #if test "$ord_sr" = "no"; then
 #	AC_DEFINE(SFFT_ORD_SR,0,[Define to enable ordinary split radix.])
@@ -4968,73 +4998,7 @@ _ACEOF
 
 
 # Checks for library functions.
-for ac_header in stdlib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "stdlib.h" "ac_cv_header_stdlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_stdlib_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_STDLIB_H 1
-_ACEOF
-
-fi
-
-done
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GNU libc compatible malloc" >&5
-$as_echo_n "checking for GNU libc compatible malloc... " >&6; }
-if ${ac_cv_func_malloc_0_nonnull+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "$cross_compiling" = yes; then :
-  ac_cv_func_malloc_0_nonnull=no
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#if defined STDC_HEADERS || defined HAVE_STDLIB_H
-# include <stdlib.h>
-#else
-char *malloc ();
-#endif
-
-int
-main ()
-{
-return ! malloc (0);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_func_malloc_0_nonnull=yes
-else
-  ac_cv_func_malloc_0_nonnull=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_malloc_0_nonnull" >&5
-$as_echo "$ac_cv_func_malloc_0_nonnull" >&6; }
-if test $ac_cv_func_malloc_0_nonnull = yes; then :
-
-$as_echo "#define HAVE_MALLOC 1" >>confdefs.h
-
-else
-  $as_echo "#define HAVE_MALLOC 0" >>confdefs.h
-
-   case " $LIBOBJS " in
-  *" malloc.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS malloc.$ac_objext"
- ;;
-esac
-
-
-$as_echo "#define malloc rpl_malloc" >>confdefs.h
-
-fi
-
-
+#AC_FUNC_MALLOC
 for ac_func in gettimeofday pow
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -5186,6 +5150,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_NEON_TRUE}" && test -z "${HAVE_NEON_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_NEON\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

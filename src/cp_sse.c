@@ -3,213 +3,174 @@
 #include "patterns.h"
 
 __INLINE void 
-firstpass_type_1(const float * restrict in, float * restrict out, size_t N, ffts_plan_t * restrict p) {
-	size_t i, i0 = p->i0, i1 = p->i1;
+firstpass_type_1(const float * restrict in, float * restrict out, ffts_plan_t * restrict p) {
+	size_t i, ii0 = p->i0, ii1 = p->i1;
 	size_t *offsets = (size_t *)p->offsets;
 	size_t *is = (size_t *)p->is;
-  for(i=i0;i>0;--i) LEAF_EE(&is, in, &offsets, out);
-  for(i=i1;i>0;--i) LEAF_OO(&is, in, &offsets, out);
+#ifdef __ARM_NEON__
+  const data_t *i0=in+is[0],*i1=in+is[1],*i2=in+is[2],*i3=in+is[3],*i4=in+is[4],*i5=in+is[5],*i6=in+is[6],*i7=in+is[7];
+  for(i=ii0;i>0;--i) {
+    neon_shl8_ee(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i4,&i5,&i6,&i7);
+    offsets += 2;
+  }
+  for(i=ii1;i>0;--i) {
+    neon_shl8_oo(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i6,&i7,&i4,&i5);
+    offsets += 2;
+  }
+    neon_shl8_oe(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i6,&i7,&i4,&i5);
+    offsets += 2;
+  for(i=ii1;i>0;--i) {
+    neon_shl8_ee(out+offsets[0],out+offsets[1],&i6,&i7,&i4,&i5,&i0,&i1,&i3,&i2);
+    offsets += 2;
+  }
+
+#else
+	for(i=ii0;i>0;--i) LEAF_EE(&is, in, &offsets, out);
+  for(i=ii1;i>0;--i) LEAF_OO(&is, in, &offsets, out);
   LEAF_OE(&is, in, &offsets, out);
-  for(i=i1;i>0;--i) LEAF_EE(&is, in, &offsets, out);
+  for(i=ii1;i>0;--i) LEAF_EE(&is, in, &offsets, out);
+#endif
 }
 
 __INLINE void 
-firstpass_type_2(const float * restrict in, float * restrict out, size_t N, ffts_plan_t * restrict p) {
-	size_t i, i0 = p->i0, i1 = p->i1;
+firstpass_type_2(const float * restrict in, float * restrict out, ffts_plan_t * restrict p) {
+	size_t i, ii0 = p->i0, ii1 = p->i1;
 	size_t *offsets = (size_t *)p->offsets;
 	size_t *is = (size_t *)p->is;
-  for(i=i0;i>0;--i) LEAF_EE(&is, in, &offsets, out);
+#ifdef __ARM_NEON__
+  const data_t *i0=in+is[0],*i1=in+is[1],*i2=in+is[2],*i3=in+is[3],*i4=in+is[4],*i5=in+is[5],*i6=in+is[6],*i7=in+is[7];
+
+	for(i=ii0;i>0;--i) {
+		neon_shl8_ee(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i4,&i5,&i6,&i7);
+		offsets+=2;
+	}
+    neon_shl8_eo(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i4,&i5,&i6,&i7);
+    offsets += 2;
+  for(i=ii1;i>0;--i) {
+    neon_shl8_oo(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i6,&i7,&i4,&i5);
+    offsets += 2;
+	}
+  for(i=ii1;i>0;--i) {
+    neon_shl8_ee(out+offsets[0],out+offsets[1],&i6,&i7,&i4,&i5,&i0,&i1,&i3,&i2);
+    offsets += 2;
+	}
+
+#else
+	for(i=ii0;i>0;--i) LEAF_EE(&is, in, &offsets, out);
   LEAF_EO(&is, in, &offsets, out);
-  for(i=i1;i>0;--i) LEAF_OO(&is, in, &offsets, out);
-  for(i=i1;i>0;--i) LEAF_EE(&is, in, &offsets, out);
+  for(i=ii1;i>0;--i) LEAF_OO(&is, in, &offsets, out);
+  for(i=ii1;i>0;--i) LEAF_EE(&is, in, &offsets, out);
+#endif
 }
 
 __INLINE void 
-firstpass_64(const float * restrict in, float * restrict out, size_t N, ffts_plan_t * restrict p) {
+firstpass_64(const float * restrict in, float * restrict out, ffts_plan_t * restrict p) {
 	size_t *offsets = (size_t *)p->offsets;
 	size_t *is = (size_t *)p->is;
   LEAF_EE(&is, in, &offsets, out);
   LEAF_OE(&is, in, &offsets, out);
 }
 
-void 
-firstpass_32(const data_t * restrict in, data_t * restrict out, size_t N, ffts_plan_t * restrict p) {
-  __m128 r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15,r16_17,r18_19,r20_21,r22_23,r24_25,r26_27,r28_29,r30_31;
-  float *LUT8 = p->ws[0];
-  float *LUT16 = p->ws[1];
-  float *LUT32 = p->ws[2];
-
-  L_4_4(in+0,in+32,in+16,in+48,&r0_1,&r2_3,&r16_17,&r18_19);
-  L_2_2(in+8,in+40,in+56,in+24,&r4_5,&r6_7,&r20_21,&r22_23);
-  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
-  L_4_2(in+4,in+36,in+20,in+52,&r8_9,&r10_11,&r28_29,&r30_31);
-  L_4_4(in+60,in+28,in+12,in+44,&r12_13,&r14_15,&r24_25,&r26_27);
-  K_N(_mm_load_ps(LUT16),_mm_load_ps(LUT16+4),&r0_1,&r4_5,&r8_9,&r12_13);
-  K_N(_mm_load_ps(LUT16+8),_mm_load_ps(LUT16+12),&r2_3,&r6_7,&r10_11,&r14_15);
-  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r16_17,&r18_19,&r20_21,&r22_23);
-  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r24_25,&r26_27,&r28_29,&r30_31);
-  K_N(_mm_load_ps(LUT32),_mm_load_ps(LUT32+4),&r0_1,&r8_9,&r16_17,&r24_25);
-  S_4(r0_1,r8_9,r16_17,r24_25,out+0,out+16,out+32,out+48);
-  K_N(_mm_load_ps(LUT32+8),_mm_load_ps(LUT32+12),&r2_3,&r10_11,&r18_19,&r26_27);
-  S_4(r2_3,r10_11,r18_19,r26_27,out+4,out+20,out+36,out+52);
-  K_N(_mm_load_ps(LUT32+16),_mm_load_ps(LUT32+20),&r4_5,&r12_13,&r20_21,&r28_29);
-  S_4(r4_5,r12_13,r20_21,r28_29,out+8,out+24,out+40,out+56);
-  K_N(_mm_load_ps(LUT32+24),_mm_load_ps(LUT32+28),&r6_7,&r14_15,&r22_23,&r30_31);
-  S_4(r6_7,r14_15,r22_23,r30_31,out+12,out+28,out+44,out+60);
-
-}
-
-void 
-firstpass_16(const data_t * restrict in, data_t * restrict out, size_t N, ffts_plan_t * restrict p) {
-  __m128 r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15;
-  float *LUT8 = p->ws[0];
-  float *LUT16 = p->ws[1];
-
-  L_4_4(in+0,in+16,in+8,in+24,&r0_1,&r2_3,&r8_9,&r10_11);
-  L_2_4(in+4,in+20,in+28,in+12,&r4_5,&r6_7,&r14_15,&r12_13);
-  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
-  K_N(_mm_load_ps(LUT16),_mm_load_ps(LUT16+4),&r0_1,&r4_5,&r8_9,&r12_13);
-  S_4(r0_1,r4_5,r8_9,r12_13,out+0,out+8,out+16,out+24);
-  K_N(_mm_load_ps(LUT16+8),_mm_load_ps(LUT16+12),&r2_3,&r6_7,&r10_11,&r14_15);
-  S_4(r2_3,r6_7,r10_11,r14_15,out+4,out+12,out+20,out+28);
-}
-
-void 
-firstpass_8(const data_t * restrict in, data_t * restrict out, size_t N, ffts_plan_t * restrict p) {
-  __m128 r0_1,r2_3,r4_5,r6_7;
-  float *LUT8 = p->ws[0];
-	L_4_2(in+0,in+8,in+4,in+12,&r0_1,&r2_3,&r4_5,&r6_7);
-  K_N(_mm_load_ps(LUT8),_mm_load_ps(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
-  S_4(r0_1,r2_3,r4_5,r6_7,out+0,out+4,out+8,out+12);
-}
-void 
-firstpass_4(const data_t * restrict in, data_t * restrict out, size_t N, ffts_plan_t * restrict p) {
-  __m128 r0,r1,r2,r3;
-  L_4(in+0,in+4,in+2,in+6,&r0,&r1,&r2,&r3);
-  S_4(r0,r1,r2,r3,out+0,out+2,out+4,out+6);
-}
-void 
-firstpass_2(const data_t * restrict in, data_t * restrict out, size_t N, ffts_plan_t * restrict p) {
-  __m128 r0,r1;
-  L_S2(in+0,in+2,&r0,&r1);
-  S_2(r0,r1,out+0,out+2);
-}
-
-void X_8(data_t * restrict data0, size_t N, const data_t * restrict LUT) {
-	data_t *data2 = data0 + 2*N/4;
-	data_t *data4 = data0 + 4*N/4;
-	data_t *data6 = data0 + 6*N/4;
-	data_t *data1 = data0 + 1*N/4;
-	data_t *data3 = data0 + 3*N/4;
-	data_t *data5 = data0 + 5*N/4;
-	data_t *data7 = data0 + 7*N/4;
-	size_t k, n4 = N/4;
-
-	for(k=N/8/2;k>0;--k) {
-      __m128 r0, r1, r2, r3, r4, r5, r6, r7;
-			r0 = _mm_load_ps(data0);
-			r1 = _mm_load_ps(data1);
-			r2 = _mm_load_ps(data2);
-			r3 = _mm_load_ps(data3);
-			K_N(_mm_load_ps(LUT), _mm_load_ps(LUT+4), &r0, &r1, &r2, &r3);
-			r4 = _mm_load_ps(data4);
-			r6 = _mm_load_ps(data6);
-			K_N(_mm_load_ps(LUT+8), _mm_load_ps(LUT+12), &r0, &r2, &r4, &r6);
-			r5 = _mm_load_ps(data5);
-			r7 = _mm_load_ps(data7);
-			K_N(_mm_load_ps(LUT+16), _mm_load_ps(LUT+20), &r1, &r3, &r5, &r7);
-			LUT += 24;
-			_mm_store_ps(data0, r0); data0 += 4;
-			_mm_store_ps(data1, r1); data1 += 4;
-			_mm_store_ps(data2, r2); data2 += 4;
-			_mm_store_ps(data3, r3); data3 += 4;
-			_mm_store_ps(data4, r4); data4 += 4;
-			_mm_store_ps(data5, r5); data5 += 4;
-			_mm_store_ps(data6, r6); data6 += 4;
-			_mm_store_ps(data7, r7); data7 += 4;
-	}
-}
-void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out, size_t N) {
+void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out) {
 	transform_index_t *ps = p->transforms;
+	int leafN = 8;
+	p->firstpass((const float *)in, (float *)out, p);
+	size_t ps0_next = ps[0];
+	while(ps0_next) {
+		size_t ps0 = ps0_next;
+		size_t ps1 = ps[1];
+		ps0_next = ps[2];
+		ps += 2;
 
-	p->firstpass((const float *)in, (float *)out, N, p);
-	while(ps[0]) {
-		
-		if(ps[0] == 32) { 
+		if(ps0 == 2*leafN) { 
   		float *LUT = (float *)p->ws[0];
-  		float *data = (float *)(out) + ps[1];
-  		size_t n = 32;
-  		size_t i;
-  		for(i=0;i<n/4/2;i++) {
-  			__m128 uk = _mm_load_ps(data);
-  			__m128 uk2 = _mm_load_ps(data + 2*n/4);
-  			__m128 zk_p = _mm_load_ps(data + 4*n/4);
-  			__m128 zk_n = _mm_load_ps(data + 6*n/4);
-
-  			K_N(_mm_load_ps(LUT), _mm_load_ps(LUT+4), &uk, &uk2, &zk_p, &zk_n);
-
-  			_mm_store_ps(data, uk); 
-  			_mm_store_ps(data + 2*n/4, uk2); 
-  			_mm_store_ps(data + 4*n/4, zk_p);
-  			_mm_store_ps(data + 6*n/4, zk_n);
-
-  			LUT += 8;
-  			data += 4;
-  		}
-
+  		float *data = (float *)(out) + ps1;
+  		#ifdef __ARM_NEON__
+			X_4_SPLIT(data, 16, LUT);
+			#else
+			X_4(data, 16, LUT);
+			#endif
 
 		}else{
-  		int index = __builtin_ctzl(ps[0])-5;
-  		float *LUT = (float *)p->ws[__builtin_ctzl(ps[0])-5];
-  		X_8(((float *)out) + ps[1], ps[0], LUT);
+  		int index = __builtin_ctzl(ps0)-4;
+  		float *LUT = (float *)p->ws[__builtin_ctzl(ps0)-4];
+  		#ifdef __ARM_NEON__
+			X_8_SPLIT(((float *)out) + ps1, ps0, LUT);
+			#else
+			X_8(((float *)out) + ps1, ps0, LUT);
+			#endif
 		}
 
-		ps += 2;
+
 	}
 	
+	#ifdef __ARM_NEON__
+		if(p->N>32)
+		X_8_SPLIT_T((float *)out, p->N, p->lastlut);
+	#endif
 	
 }
 
+void ffts_free(ffts_plan_t *p) {
+	
+	size_t i;
+
+	if(p->ws) {
+		for(i=0;i<p->n_luts;i++) {
+			FFTS_FREE(p->ws[i]);
+		}
+		free(p->ws);
+	}
+	if(p->is) free(p->is);
+	if(p->offsets)		free(p->offsets);
+	free(p->transforms);
+
+	free(p);
+}
 
 ffts_plan_t *ffts_init(size_t N, int sign) {
 	ffts_plan_t *p = malloc(sizeof(ffts_plan_t));
-	size_t leafN = 16;	
+	size_t leafN = 8;	
 	size_t i;	
 		
-	if(sign < 0) MULI_SIGN = _mm_set_ps(-0.0f, 0.0f, -0.0f, 0.0f);
-	else         MULI_SIGN = _mm_set_ps(0.0f, -0.0f, 0.0f, -0.0f);
+	if(sign < 0) MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
+	else         MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
+	
+	if(sign < 0) SCALAR_MULI_SIGN = -0.0f*I; 
+	else         SCALAR_MULI_SIGN = -0.0f; 
 	
 	if(N > 32) {
-		init_offsets(p, N, leafN);
-		init_is(p, N, leafN, 2);
-		init_tree(p, N, leafN);
+		ffts_init_offsets(p, N, leafN);
+		ffts_init_is(p, N, leafN, 2);
+		ffts_init_tree(p, N, leafN);
 		
-		if(N == 64) p->firstpass = &firstpass_64;
-		else if(__builtin_ctzl(N) & 1) p->firstpass = &firstpass_type_2;	
-		else p->firstpass = &firstpass_type_1;	
+	//	if(N == 64) p->firstpass = &firstpass_64;
+		if(__builtin_ctzl(N) & 1) p->firstpass = &firstpass_type_1;	
+		else p->firstpass = &firstpass_type_2;	
 
-		LEAFLUT[0] = _mm_set_ps(0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
-		LEAFLUT[1] = _mm_set_ps(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
-		LEAFLUT[2] = _mm_set_ps(0.92387953251128673848313610506011,0.92387953251128673848313610506011,0.92387953251128673848313610506011,0.92387953251128673848313610506011);
-		LEAFLUT[3] = _mm_set_ps(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,0.38268343236508978177923268049199,-0.38268343236508978177923268049199);
-		LEAFLUT[4] = _mm_set_ps(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.38268343236508983729038391174981);
-		LEAFLUT[5] = _mm_set_ps(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.92387953251128673848313610506011,-0.92387953251128673848313610506011);
+		LEAFLUT[0] = VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
+		LEAFLUT[1] = VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
+		LEAFLUT[2] = VLIT4(0.92387953251128673848313610506011,0.92387953251128673848313610506011,0.92387953251128673848313610506011,0.92387953251128673848313610506011);
+		LEAFLUT[3] = VLIT4(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,0.38268343236508978177923268049199,-0.38268343236508978177923268049199);
+		LEAFLUT[4] = VLIT4(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.38268343236508983729038391174981);
+		LEAFLUT[5] = VLIT4(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.92387953251128673848313610506011,-0.92387953251128673848313610506011);
   	
-		LEAFLUT[6] = _mm_set_ps(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1);
-		LEAFLUT[7] = _mm_set_ps(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0,-0);
-		LEAFLUT[8] = _mm_set_ps(0.92387953251128673848313610506011,0.92387953251128673848313610506011,1,1);
-		LEAFLUT[9] = _mm_set_ps(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,0,-0);
-		LEAFLUT[10] = _mm_set_ps(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
-		LEAFLUT[11] = _mm_set_ps(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
+		LEAFLUT[6] = VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1);
+		LEAFLUT[7] = VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0,-0);
+		LEAFLUT[8] = VLIT4(0.92387953251128673848313610506011,0.92387953251128673848313610506011,1,1);
+		LEAFLUT[9] = VLIT4(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,0,-0);
+		LEAFLUT[10] = VLIT4(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
+		LEAFLUT[11] = VLIT4(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
 
 		
 		if(sign > 0) {
-			LEAFLUT[1] = _mm_xor_ps(LEAFLUT[1], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
-			LEAFLUT[3] = _mm_xor_ps(LEAFLUT[3], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
-			LEAFLUT[5] = _mm_xor_ps(LEAFLUT[5], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
-			LEAFLUT[7] = _mm_xor_ps(LEAFLUT[7], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
-			LEAFLUT[9] = _mm_xor_ps(LEAFLUT[9], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
-			LEAFLUT[11] = _mm_xor_ps(LEAFLUT[11], _mm_set_ps(-0.0f,-0.0f,-0.0f,-0.0f));
+			V neg = VLIT4(-0.0f, -0.0f, -0.0f, -0.0f);
+			LEAFLUT[1] = VXOR(LEAFLUT[1], neg);
+			LEAFLUT[3] = VXOR(LEAFLUT[3], neg);
+			LEAFLUT[5] = VXOR(LEAFLUT[5], neg);
+			LEAFLUT[7] = VXOR(LEAFLUT[7], neg);
+			LEAFLUT[9] = VXOR(LEAFLUT[9], neg);
+			LEAFLUT[11] = VXOR(LEAFLUT[11], neg);
 		}
 		
 		p->i0 = N/leafN/3+1;
@@ -223,11 +184,14 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		p->transforms[0] = 0;
 		p->transforms[1] = 1;
 		if(N == 2) p->firstpass = &firstpass_2;
-		else if(N == 4) p->firstpass = &firstpass_4;
+		else if(N == 4 && sign == -1) p->firstpass = &firstpass_4_f;
+		else if(N == 4 && sign == 1) p->firstpass = &firstpass_4_b;
 		else if(N == 8) p->firstpass = &firstpass_8;
 		else if(N == 16) p->firstpass = &firstpass_16;
 		else if(N == 32) p->firstpass = &firstpass_32;
 
+		p->is = NULL;
+		p->offsets = NULL;
 	}
 
 		int hardcoded = 0;
@@ -236,9 +200,14 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		size_t n_luts = __builtin_ctzl(N/leafN);
 		if(N <= 32) { n_luts = __builtin_ctzl(N/4); hardcoded = 1; }
 
+		if(n_luts >= 32) n_luts = 0;
 
-		//printf("n_luts = %zu\n", n_luts);
-		p->ws = malloc(n_luts * sizeof(data_t *));
+//		fprintf(stderr, "n_luts = %zu\n", n_luts);
+		if(n_luts)
+			p->ws = malloc(n_luts * sizeof(data_t *));
+		else 
+			p->ws = NULL;
+		
 		cdata_t *w;
 
 		int n = leafN*2;
@@ -246,45 +215,67 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 
 		for(i=0;i<n_luts;i++) {
 				
-			//printf("LUT[%zu] = %d\n", i, n);	
+//			fprintf(stderr, "LUT[%zu] = %d\n", i, n);	
 			
 			if(!i || hardcoded) {
-
-				w = _mm_malloc(n/4 * 2 * sizeof(cdata_t), 32);
-
-				cdata_t *w0 = _mm_malloc(n/4 * sizeof(cdata_t), 32);
+				cdata_t *w0 = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
 
 				size_t j;
 				for(j=0;j<n/4;j++) {
 					w0[j]	= W(n,j);
 				}
 
-				__m128 temp0, temp1, temp2;
 
-				float *fw = (float *)w;
 				float *fw0 = (float *)w0;
-				for(j=0;j<n/4;j+=2) {
-					temp0 = _mm_load_ps(fw0 + j*2);
-					__m128 re, im;
-					re = _mm_shuffle_ps(temp0, temp0, _MM_SHUFFLE(2, 2, 0, 0));
-					im = _mm_shuffle_ps(temp0, temp0, _MM_SHUFFLE(3, 3, 1, 1));
-					im = _mm_xor_ps(im, MULI_SIGN);
-					_mm_store_ps(fw + j*4  , re);
-					_mm_store_ps(fw + j*4+4, im);
+				#ifdef __ARM_NEON__
+				if(N <= 32) {
+					w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
+					float *fw = (float *)w;
+					V temp0, temp1, temp2;
+					for(j=0;j<n/4;j+=2) {
+						temp0 = VLD(fw0 + j*2);
+						V re, im;
+						re = VDUPRE(temp0);
+						im = VDUPIM(temp0);
+						im = VXOR(im, MULI_SIGN);
+						VST(fw + j*4  , re);
+						VST(fw + j*4+4, im);
+					}
+				}else{
+					w = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
+					float *fw = (float *)w;
+					VS temp0, temp1, temp2;
+					for(j=0;j<n/4;j+=4) {
+						temp0 = VLD2(fw0 + j*2);
+						STORESPR(fw + j*2, temp0);
+					}
 				}
+				#else
+				w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
+				float *fw = (float *)w;
+				V temp0, temp1, temp2;
+				for(j=0;j<n/4;j+=2) {
+					temp0 = VLD(fw0 + j*2);
+					V re, im;
+					re = VDUPRE(temp0);
+					im = VDUPIM(temp0);
+					im = VXOR(im, MULI_SIGN);
+					VST(fw + j*4  , re);
+					VST(fw + j*4+4, im);
+				}
+				#endif
 
 	//		  	for(j=0;j<n/2;j++) {
 	//		  		printf("%f %f\n", creal(w[j]), cimag(w[j]));
 
 	//		  	}
 
-				_mm_free(w0);
+				FFTS_FREE(w0);
 			}else{
-				w = _mm_malloc(n/8 * 3 * 2 * sizeof(cdata_t), 32);
 
-				cdata_t *w0 = _mm_malloc(n/8 * sizeof(cdata_t), 32);
-				cdata_t *w1 = _mm_malloc(n/8 * sizeof(cdata_t), 32);
-				cdata_t *w2 = _mm_malloc(n/8 * sizeof(cdata_t), 32);
+				cdata_t *w0 = FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
+				cdata_t *w1 = FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
+				cdata_t *w2 = FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
 
 				size_t j;
 				for(j=0;j<n/8;j++) {
@@ -294,46 +285,69 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 
 				}
 
-				__m128 temp0, temp1, temp2, re, im;
-
-				float *fw = (float *)w;
 				float *fw0 = (float *)w0;
 				float *fw1 = (float *)w1;
 				float *fw2 = (float *)w2;
+				#ifdef __ARM_NEON__
+				w = FFTS_MALLOC(n/8 * 3 * sizeof(cdata_t), 32);
+				float *fw = (float *)w;
+				VS temp0, temp1, temp2;
+				for(j=0;j<n/8;j+=4) {
+					temp0 = VLD2(fw0 + j*2);
+					STORESPR(fw + j*2*3,      temp0);
+					//VST(fw + j*2*3,      temp0.val[0]);
+					//VST(fw + j*2*3 + 4,  temp0.val[1]);
+					temp1 = VLD2(fw1 + j*2);
+					STORESPR(fw + j*2*3 + 8,  temp1);
+					//VST(fw + j*2*3 + 8,  temp1.val[0]);
+					//VST(fw + j*2*3 + 12, temp1.val[1]);
+					temp2 = VLD2(fw2 + j*2);
+					STORESPR(fw + j*2*3 + 16, temp2);
+					//VST(fw + j*2*3 + 16, temp2.val[0]);
+					//VST(fw + j*2*3 + 20, temp2.val[1]);
+				#else
+				w = FFTS_MALLOC(n/8 * 3 * 2 * sizeof(cdata_t), 32);
+				float *fw = (float *)w;
+				V temp0, temp1, temp2, re, im;
 				for(j=0;j<n/8;j+=2) {
-					temp0 = _mm_load_ps(fw0 + j*2);
-					re = _mm_shuffle_ps(temp0, temp0, _MM_SHUFFLE(2, 2, 0, 0));
-					im = _mm_shuffle_ps(temp0, temp0, _MM_SHUFFLE(3, 3, 1, 1));
-					im = _mm_xor_ps(im, MULI_SIGN);
-					_mm_store_ps(fw + j*2*6  , re);
-					_mm_store_ps(fw + j*2*6+4, im);
+					temp0 = VLD(fw0 + j*2);
+					re = VDUPRE(temp0);
+					im = VDUPIM(temp0);
+					im = VXOR(im, MULI_SIGN);
+					VST(fw + j*2*6  , re);
+					VST(fw + j*2*6+4, im);
 
-					temp1 = _mm_load_ps(fw1 + j*2);
-					re = _mm_shuffle_ps(temp1, temp1, _MM_SHUFFLE(2, 2, 0, 0));
-					im = _mm_shuffle_ps(temp1, temp1, _MM_SHUFFLE(3, 3, 1, 1));
-					im = _mm_xor_ps(im, MULI_SIGN);
-					_mm_store_ps(fw + j*2*6+8 , re);
-					_mm_store_ps(fw + j*2*6+12, im);
+					temp1 = VLD(fw1 + j*2);
+					re = VDUPRE(temp1);
+					im = VDUPIM(temp1);
+					im = VXOR(im, MULI_SIGN);
+					VST(fw + j*2*6+8 , re);
+					VST(fw + j*2*6+12, im);
 
-					temp2 = _mm_load_ps(fw2 + j*2);
-					re = _mm_shuffle_ps(temp2, temp2, _MM_SHUFFLE(2, 2, 0, 0));
-					im = _mm_shuffle_ps(temp2, temp2, _MM_SHUFFLE(3, 3, 1, 1));
-					im = _mm_xor_ps(im, MULI_SIGN);
-					_mm_store_ps(fw + j*2*6+16, re);
-					_mm_store_ps(fw + j*2*6+20, im);
+					temp2 = VLD(fw2 + j*2);
+					re = VDUPRE(temp2);
+					im = VDUPIM(temp2);
+					im = VXOR(im, MULI_SIGN);
+					VST(fw + j*2*6+16, re);
+					VST(fw + j*2*6+20, im);
+				#endif
 				}
 
-				_mm_free(w0);
-				_mm_free(w1);
-				_mm_free(w2);
+				FFTS_FREE(w0);
+				FFTS_FREE(w1);
+				FFTS_FREE(w2);
 			}
 			p->ws[i] = w;
 
 			n *= 2;
 		}
 
+	p->N = N;
+	p->lastlut = w;
+	p->n_luts = n_luts;
 
-	
+//	fprintf(stderr, "sizeof(size_t) == %lu\n", sizeof(size_t));
+
 	return p;
 }
 /*
@@ -342,8 +356,8 @@ int main(int argc, char *argv[]) {
 	int count = atoi(argv[2]);
 
 	ffts_plan_t *p = ffts_init(n);
-	cdata_t *in = _mm_malloc(n * sizeof(cdata_t), 32);
-	cdata_t *out = _mm_malloc(n * sizeof(cdata_t), 32);
+	cdata_t *in = FFTS_MALLOC(n * sizeof(cdata_t), 32);
+	cdata_t *out = FFTS_MALLOC(n * sizeof(cdata_t), 32);
 
 	size_t i;
 	for(i=0;i<n;i++) in[i] = i;
