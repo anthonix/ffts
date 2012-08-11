@@ -75,6 +75,9 @@ void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out)
 	transform_index_t *ps = p->transforms;
 	int leafN = 8;
 	p->firstpass((const float *)in, (float *)out, p);
+	p->transform(out, p->N, p->ws);
+
+	/*
 	size_t ps0_next = ps[0];
 	while(ps0_next) {
 		size_t ps0 = ps0_next;
@@ -108,7 +111,7 @@ void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out)
 		if(p->N>32)
 		X_8_SPLIT_T((float *)out, p->N, p->lastlut);
 	#endif
-	
+*/	
 }
 
 void ffts_free(ffts_plan_t *p) {
@@ -116,9 +119,9 @@ void ffts_free(ffts_plan_t *p) {
 	size_t i;
 
 	if(p->ws) {
-		for(i=0;i<p->n_luts;i++) {
-			FFTS_FREE(p->ws[i]);
-		}
+//	for(i=0;i<p->n_luts;i++) {
+//		FFTS_FREE(p->ws[i]);
+//	}
 		free(p->ws);
 	}
 	if(p->is) free(p->is);
@@ -138,11 +141,13 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	
 	if(sign < 0) SCALAR_MULI_SIGN = -0.0f*I; 
 	else         SCALAR_MULI_SIGN = -0.0f; 
-	
+
+	p->transform = NULL;
+
 	if(N > 32) {
 		ffts_init_offsets(p, N, leafN);
 		ffts_init_is(p, N, leafN, 2);
-		ffts_init_tree(p, N, leafN);
+	//	ffts_init_tree(p, N, leafN);
 		
 	//	if(N == 64) p->firstpass = &firstpass_64;
 		if(__builtin_ctzl(N) & 1) p->firstpass = &firstpass_type_1;	
@@ -203,19 +208,46 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		if(n_luts >= 32) n_luts = 0;
 
 //		fprintf(stderr, "n_luts = %zu\n", n_luts);
-		if(n_luts)
-			p->ws = malloc(n_luts * sizeof(data_t *));
-		else 
-			p->ws = NULL;
 		
 		cdata_t *w;
 
 		int n = leafN*2;
 		if(hardcoded) n = 8;
+		
+		size_t lut_size = 0;
 
 		for(i=0;i<n_luts;i++) {
-				
-//			fprintf(stderr, "LUT[%zu] = %d\n", i, n);	
+			if(!i || hardcoded) {
+			#ifdef __ARM_NEON__
+				if(N <= 32) lut_size += n/4 * 2 * sizeof(cdata_t);
+				else lut_size += n/4 * sizeof(cdata_t);
+			#else
+				lut_size += n/4 * 2 * sizeof(cdata_t);
+			#endif
+				n *= 2;
+			} else {
+			#ifdef __ARM_NEON__
+				lut_size += n/8 * 3 * sizeof(cdata_t);
+			#else
+				lut_size += n/8 * 3 * 2 * sizeof(cdata_t);
+			#endif
+			}
+			n *= 2;
+		}
+
+		if(n_luts) {
+			p->ws = FFTS_MALLOC(lut_size,32);
+			p->ws_is = malloc(n_luts * sizeof(size_t));
+		}else{
+			p->ws = NULL;
+			p->ws_is = NULL;
+		}
+		w = p->ws;
+
+		n = leafN*2;
+		for(i=0;i<n_luts;i++) {
+			p->ws_is[i] = w - (cdata_t *)p->ws;	
+			fprintf(stderr, "LUT[%zu] = %d @ %08x\n", i, n, w);	
 			
 			if(!i || hardcoded) {
 				cdata_t *w0 = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
@@ -229,7 +261,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 				float *fw0 = (float *)w0;
 				#ifdef __ARM_NEON__
 				if(N <= 32) {
-					w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
+					//w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
 					float *fw = (float *)w;
 					V temp0, temp1, temp2;
 					for(j=0;j<n/4;j+=2) {
@@ -241,17 +273,19 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 						VST(fw + j*4  , re);
 						VST(fw + j*4+4, im);
 					}
+					w += n/4 * 2;
 				}else{
-					w = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
+					//w = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
 					float *fw = (float *)w;
 					VS temp0, temp1, temp2;
 					for(j=0;j<n/4;j+=4) {
 						temp0 = VLD2(fw0 + j*2);
 						STORESPR(fw + j*2, temp0);
 					}
+					w += n/4;
 				}
 				#else
-				w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
+				//w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
 				float *fw = (float *)w;
 				V temp0, temp1, temp2;
 				for(j=0;j<n/4;j+=2) {
@@ -263,8 +297,8 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 					VST(fw + j*4  , re);
 					VST(fw + j*4+4, im);
 				}
+				w += n/4 * 2;
 				#endif
-
 	//		  	for(j=0;j<n/2;j++) {
 	//		  		printf("%f %f\n", creal(w[j]), cimag(w[j]));
 
@@ -289,7 +323,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 				float *fw1 = (float *)w1;
 				float *fw2 = (float *)w2;
 				#ifdef __ARM_NEON__
-				w = FFTS_MALLOC(n/8 * 3 * sizeof(cdata_t), 32);
+				//w = FFTS_MALLOC(n/8 * 3 * sizeof(cdata_t), 32);
 				float *fw = (float *)w;
 				VS temp0, temp1, temp2;
 				for(j=0;j<n/8;j+=4) {
@@ -305,8 +339,10 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 					STORESPR(fw + j*2*3 + 16, temp2);
 					//VST(fw + j*2*3 + 16, temp2.val[0]);
 					//VST(fw + j*2*3 + 20, temp2.val[1]);
+				}
+				w += n/8 * 3;
 				#else
-				w = FFTS_MALLOC(n/8 * 3 * 2 * sizeof(cdata_t), 32);
+				//w = FFTS_MALLOC(n/8 * 3 * 2 * sizeof(cdata_t), 32);
 				float *fw = (float *)w;
 				V temp0, temp1, temp2, re, im;
 				for(j=0;j<n/8;j+=2) {
@@ -330,22 +366,33 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 					im = VXOR(im, MULI_SIGN);
 					VST(fw + j*2*6+16, re);
 					VST(fw + j*2*6+20, im);
-				#endif
 				}
+				w += n/8 * 3 * 2;
+				#endif
 
 				FFTS_FREE(w0);
 				FFTS_FREE(w1);
 				FFTS_FREE(w2);
 			}
-			p->ws[i] = w;
+			///p->ws[i] = w;
 
 			n *= 2;
 		}
 
+	float *tmp = (float *)p->ws;
+	for(i=0;i<lut_size*2;i+=8) {
+		fprintf(stderr, "%08x %f %f %f %f - %f %f %f %f\n", 
+			tmp,
+			tmp[0], tmp[1], tmp[2], tmp[3], 
+			tmp[4], tmp[5], tmp[6], tmp[7]);
+		tmp += 8;
+	}
+	
 	p->N = N;
 	p->lastlut = w;
 	p->n_luts = n_luts;
-
+	if(N>32)  
+		p->transform = ffts_generate_func_code(p, N, leafN);
 //	fprintf(stderr, "sizeof(size_t) == %lu\n", sizeof(size_t));
 
 	return p;

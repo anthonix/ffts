@@ -10,6 +10,12 @@ typedef float32x4_t V;
 
 typedef float32x4x2_t VS;
 
+#include <complex.h>
+#include <stdalign.h>
+
+typedef complex float cdata_t;
+typedef alignas(16) float data_t;
+
 #define ADD vaddq_f32
 #define SUB vsubq_f32
 #define MUL vmulq_f32

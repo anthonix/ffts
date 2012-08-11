@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stdalign.h>
 
+#include "codegen.h"
+
 typedef complex float cdata_t;
 typedef alignas(16) float data_t;
 
@@ -16,15 +18,19 @@ typedef alignas(16) float data_t;
 
 typedef size_t transform_index_t;
 
+typedef void (*transform_func_t)(float *data, size_t N, float *LUT);
+
 struct _ffts_plan_t {
 	ptrdiff_t *is;
 	ptrdiff_t *offsets;
-	void __attribute__ ((aligned(32))) **ws;
+	void __attribute__ ((aligned(32))) *ws;
+	size_t *ws_is;
 	void (*firstpass)(const float * restrict, float * restrict, struct _ffts_plan_t * restrict);
 	size_t i0, i1, n_luts;
 	size_t N;
 	void *lastlut;
 	transform_index_t *transforms; 
+	transform_func_t transform;
 };
 
 typedef struct _ffts_plan_t ffts_plan_t;

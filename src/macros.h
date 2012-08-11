@@ -9,6 +9,7 @@
 	#include "sse_float.h"
 #endif
 
+typedef struct _ffts_plan_t ffts_plan_t;
 
 #include "cp_sse.h"
 
@@ -413,9 +414,9 @@ LEAF_EO8(size_t ** restrict is, const data_t * restrict in, size_t ** restrict o
 __INLINE void 
 firstpass_32(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
   V r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15,r16_17,r18_19,r20_21,r22_23,r24_25,r26_27,r28_29,r30_31;
-  float *LUT8 = p->ws[0];
-  float *LUT16 = p->ws[1];
-  float *LUT32 = p->ws[2];
+  float *LUT8 = p->ws + p->ws_is[0];
+  float *LUT16 = p->ws + p->ws_is[1];
+  float *LUT32 = p->ws + p->ws_is[2];
 
   L_4_4(in+0,in+32,in+16,in+48,&r0_1,&r2_3,&r16_17,&r18_19);
   L_2_2(in+8,in+40,in+56,in+24,&r4_5,&r6_7,&r20_21,&r22_23);
@@ -440,8 +441,8 @@ firstpass_32(const data_t * restrict in, data_t * restrict out, ffts_plan_t * re
 __INLINE void 
 firstpass_16(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
   V r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15;
-  float *LUT8 = p->ws[0];
-  float *LUT16 = p->ws[1];
+  float *LUT8 = p->ws + p->ws_is[0];
+  float *LUT16 = p->ws + p->ws_is[1];
 
   L_4_4(in+0,in+16,in+8,in+24,&r0_1,&r2_3,&r8_9,&r10_11);
   L_2_4(in+4,in+20,in+28,in+12,&r4_5,&r6_7,&r14_15,&r12_13);
@@ -455,7 +456,7 @@ firstpass_16(const data_t * restrict in, data_t * restrict out, ffts_plan_t * re
 __INLINE void 
 firstpass_8(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
   V r0_1,r2_3,r4_5,r6_7;
-  float *LUT8 = p->ws[0];
+  float *LUT8 = p->ws + p->ws_is[0];
 	L_4_2(in+0,in+8,in+4,in+12,&r0_1,&r2_3,&r4_5,&r6_7);
   K_N(VLD(LUT8),VLD(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
   S_4(r0_1,r2_3,r4_5,r6_7,out+0,out+4,out+8,out+12);

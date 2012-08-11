@@ -122,7 +122,7 @@ void ffts_init_offsets(ffts_plan_t *p, int N, int leafN) {
 
 }
 
-
+/*
 int tree_count(int N, int leafN, int offset) {
 	
 	if(N <= leafN) return 0;
@@ -171,4 +171,4 @@ void ffts_init_tree(ffts_plan_t *p, int N, int leafN) {
 //}
 
 }
-
+*/
