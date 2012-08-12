@@ -30,7 +30,7 @@ struct _ffts_plan_t {
 	size_t N;
 	void *lastlut;
 	transform_index_t *transforms; 
-	transform_func_t transform;
+	transform_func_t transform, transform_base;
 };
 
 typedef struct _ffts_plan_t ffts_plan_t;

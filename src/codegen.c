@@ -134,6 +134,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	uint32_t *func = valloc(8192);
 	uint32_t *fp = func;
 
+	//p->transform_base = func;
 
 	uint32_t *x_8_addr = fp;
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);

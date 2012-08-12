@@ -73,45 +73,8 @@ firstpass_64(const float * restrict in, float * restrict out, ffts_plan_t * rest
 
 void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out) {
 	transform_index_t *ps = p->transforms;
-	int leafN = 8;
 	p->firstpass((const float *)in, (float *)out, p);
-	p->transform(out, p->N, p->ws);
-
-	/*
-	size_t ps0_next = ps[0];
-	while(ps0_next) {
-		size_t ps0 = ps0_next;
-		size_t ps1 = ps[1];
-		ps0_next = ps[2];
-		ps += 2;
-
-		if(ps0 == 2*leafN) { 
-  		float *LUT = (float *)p->ws[0];
-  		float *data = (float *)(out) + ps1;
-  		#ifdef __ARM_NEON__
-			X_4_SPLIT(data, 16, LUT);
-			#else
-			X_4(data, 16, LUT);
-			#endif
-
-		}else{
-  		int index = __builtin_ctzl(ps0)-4;
-  		float *LUT = (float *)p->ws[__builtin_ctzl(ps0)-4];
-  		#ifdef __ARM_NEON__
-			X_8_SPLIT(((float *)out) + ps1, ps0, LUT);
-			#else
-			X_8(((float *)out) + ps1, ps0, LUT);
-			#endif
-		}
-
-
-	}
-	
-	#ifdef __ARM_NEON__
-		if(p->N>32)
-		X_8_SPLIT_T((float *)out, p->N, p->lastlut);
-	#endif
-*/	
+	if(p->transform) p->transform(out, p->N, p->ws);
 }
 
 void ffts_free(ffts_plan_t *p) {
@@ -119,14 +82,13 @@ void ffts_free(ffts_plan_t *p) {
 	size_t i;
 
 	if(p->ws) {
-//	for(i=0;i<p->n_luts;i++) {
-//		FFTS_FREE(p->ws[i]);
-//	}
 		FFTS_FREE(p->ws);
 	}
 	if(p->is) free(p->is);
 	if(p->offsets)		free(p->offsets);
 	//free(p->transforms);
+
+//	if(p->transform_base) free(p->transform_base);
 
 	free(p);
 }
@@ -143,8 +105,9 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	else         SCALAR_MULI_SIGN = -0.0f; 
 
 	p->transform = NULL;
+	p->transform_base = NULL;
 
-	if(N > 32) {
+	if(N >= 32) {
 		ffts_init_offsets(p, N, leafN);
 		ffts_init_is(p, N, leafN, 2);
 	//	ffts_init_tree(p, N, leafN);
@@ -203,7 +166,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 
 		/*      LUTS           */
 		size_t n_luts = __builtin_ctzl(N/leafN);
-		if(N <= 32) { n_luts = __builtin_ctzl(N/4); hardcoded = 1; }
+		if(N < 32) { n_luts = __builtin_ctzl(N/4); hardcoded = 1; }
 
 		if(n_luts >= 32) n_luts = 0;
 
@@ -245,6 +208,9 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		w = p->ws;
 
 		n = leafN*2;
+		if(hardcoded) n = 8;
+		
+		
 		for(i=0;i<n_luts;i++) {
 			p->ws_is[i] = w - (cdata_t *)p->ws;	
 			fprintf(stderr, "LUT[%zu] = %d @ %08x - %zu\n", i, n, w, p->ws_is[i]);	
@@ -391,7 +357,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	p->N = N;
 	p->lastlut = w;
 	p->n_luts = n_luts;
-	if(N>32)  
+	if(N>=32)  
 		p->transform = ffts_generate_func_code(p, N, leafN);
 //	fprintf(stderr, "sizeof(size_t) == %lu\n", sizeof(size_t));
 

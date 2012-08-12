@@ -442,7 +442,7 @@ __INLINE void
 firstpass_16(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
   V r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15;
   float *LUT8 = p->ws + p->ws_is[0];
-  float *LUT16 = p->ws + p->ws_is[1];
+  float *LUT16 = ((float *)p->ws) + 8;//(p->ws_is[1]*4);
 
   L_4_4(in+0,in+16,in+8,in+24,&r0_1,&r2_3,&r8_9,&r10_11);
   L_2_4(in+4,in+20,in+28,in+12,&r4_5,&r6_7,&r14_15,&r12_13);
