@@ -103,7 +103,7 @@ uint32_t LUT_offset(size_t N, size_t leafN) {
 			if(!i || hardcoded) {
 			#ifdef __ARM_NEON__
 				if(N <= 32) lut_size += n/4 * 2 * sizeof(cdata_t);
-				else lut_size += n/4 * sizeof(cdata_t);
+			else lut_size += n/4 * sizeof(cdata_t);
 			#else
 				lut_size += n/4 * 2 * sizeof(cdata_t);
 			#endif
@@ -167,8 +167,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 		}else{
   		*fp++ = ADDI(0, 0, (pps[1] * 4)- pAddr);
   		*fp++ = ADDI(1, 1, pps[0] - pN);
-  		*fp++ = ADDI(2, 2, LUT_offset(pps[0], leafN) - pLUT); 
 		}
+		//*fp++ = ADDI(2, 2, LUT_offset(pps[0], leafN) - pLUT); 
+		*fp++ = ADDI(2, 2, p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8 - pLUT); 
 
 
   	if(pps[0] == 2*leafN) {
@@ -181,7 +182,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 
 		pAddr = pps[1] * 4;
 		pN = pps[0];
-		pLUT = LUT_offset(pps[0], leafN);
+		pLUT = p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8;//LUT_offset(pps[0], leafN);
 		fprintf(stderr, "LUT offset for %d is %d\n", pN, pLUT); 
 		count += 4;
 		pps += 2;

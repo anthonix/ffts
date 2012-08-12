@@ -122,11 +122,11 @@ void ffts_free(ffts_plan_t *p) {
 //	for(i=0;i<p->n_luts;i++) {
 //		FFTS_FREE(p->ws[i]);
 //	}
-		free(p->ws);
+		FFTS_FREE(p->ws);
 	}
 	if(p->is) free(p->is);
 	if(p->offsets)		free(p->offsets);
-	free(p->transforms);
+	//free(p->transforms);
 
 	free(p);
 }
@@ -247,7 +247,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		n = leafN*2;
 		for(i=0;i<n_luts;i++) {
 			p->ws_is[i] = w - (cdata_t *)p->ws;	
-			fprintf(stderr, "LUT[%zu] = %d @ %08x\n", i, n, w);	
+			fprintf(stderr, "LUT[%zu] = %d @ %08x - %zu\n", i, n, w, p->ws_is[i]);	
 			
 			if(!i || hardcoded) {
 				cdata_t *w0 = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
