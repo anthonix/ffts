@@ -73,8 +73,9 @@ firstpass_64(const float * restrict in, float * restrict out, ffts_plan_t * rest
 
 void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out) {
 	transform_index_t *ps = p->transforms;
-	p->firstpass((const float *)in, (float *)out, p);
-	if(p->transform) p->transform(out, p->N, p->ws);
+	//p->firstpass((const float *)in, (float *)out, p);
+	p->transform(p, (const float *)in, (float *)out);
+	//if(p->transform) p->transform(out, p->N, p->ws);
 }
 
 void ffts_free(ffts_plan_t *p) {
@@ -88,8 +89,13 @@ void ffts_free(ffts_plan_t *p) {
 	if(p->offsets)		free(p->offsets);
 	//free(p->transforms);
 
-//	if(p->transform_base) free(p->transform_base);
-
+	if(p->transform_base) {
+		if (mprotect(p->transform_base, p->transform_size, PROT_READ | PROT_WRITE)) {
+			perror("Couldn't mprotect");
+			exit(errno);
+		}
+		free(p->transform_base);
+	}
 	free(p);
 }
 
@@ -197,7 +203,10 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 			}
 			n *= 2;
 		}
-
+		
+//		lut_size *= 16;
+		
+	//	fprintf(stderr, "lut size = %zu\n", lut_size);
 		if(n_luts) {
 			p->ws = FFTS_MALLOC(lut_size,32);
 			p->ws_is = malloc(n_luts * sizeof(size_t));
@@ -213,7 +222,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		
 		for(i=0;i<n_luts;i++) {
 			p->ws_is[i] = w - (cdata_t *)p->ws;	
-			fprintf(stderr, "LUT[%zu] = %d @ %08x - %zu\n", i, n, w, p->ws_is[i]);	
+			//fprintf(stderr, "LUT[%zu] = %d @ %08x - %zu\n", i, n, w, p->ws_is[i]);	
 			
 			if(!i || hardcoded) {
 				cdata_t *w0 = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
@@ -346,13 +355,13 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		}
 
 	float *tmp = (float *)p->ws;
-	for(i=0;i<lut_size*2;i+=8) {
-		fprintf(stderr, "%08x %f %f %f %f - %f %f %f %f\n", 
-			tmp,
-			tmp[0], tmp[1], tmp[2], tmp[3], 
-			tmp[4], tmp[5], tmp[6], tmp[7]);
-		tmp += 8;
-	}
+//for(i=0;i<lut_size*2;i+=8) {
+//	fprintf(stderr, "%08x %f %f %f %f - %f %f %f %f\n", 
+//		tmp,
+//		tmp[0], tmp[1], tmp[2], tmp[3], 
+//		tmp[4], tmp[5], tmp[6], tmp[7]);
+//	tmp += 8;
+//}
 	
 	p->N = N;
 	p->lastlut = w;

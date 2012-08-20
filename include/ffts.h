@@ -41,17 +41,23 @@
 
 typedef size_t transform_index_t;
 
-struct _ffts_plan_t {
-	ptrdiff_t *is;
-	ptrdiff_t *offsets;
-	void __attribute__ ((aligned(32))) **ws;
-	void (*firstpass)(const float * restrict, float * restrict, struct _ffts_plan_t * restrict);
-	size_t i0, i1, i2;
-	uint64_t n_bits, leaftime;
-	
-	transform_index_t *transforms; 
-};
 
+struct _ffts_plan_t {
+	ptrdiff_t *offsets;
+	void __attribute__ ((aligned(32))) *ws;
+	void __attribute__ ((aligned(32))) *other_ws;
+	ptrdiff_t *is;
+	size_t *ws_is;
+	void (*firstpass)(const float * restrict, float * restrict, struct _ffts_plan_t * restrict);
+	size_t i0, i1, n_luts;
+	size_t N;
+	void *lastlut;
+	transform_index_t *transforms; 
+	//transform_func_t transform;
+	void (*transform)(struct _ffts_plan_t * restrict, const float * restrict, float * restrict);
+	void *transform_base;
+	size_t transform_size;
+};
 
 typedef struct _ffts_plan_t ffts_plan_t;
 

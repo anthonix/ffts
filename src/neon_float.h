@@ -644,14 +644,62 @@ __INLINE V LOAD2I(const data_t **addr) {
 
     return o;
 }
-__INLINE V LOADI(const data_t **addr) {
-    float32x2_t out0, out1;
+__INLINE V LOAD2I_0(const data_t **addr) {
     float32x4_t o;
-    
-    __asm__ ("vld1.32 {%q0}, [%1, :128]!\n\t"
-             : "=w" (o), "+r" (*addr)
-             : 
-             ); 
+    __asm__ ("vld2.32 {%q0}, [%1, :128]! @tag0\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOAD2I_1(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld2.32 {%q0}, [%1, :128]! @tag1\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOAD2I_2(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld2.32 {%q0}, [%1, :128]! @tag2\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOAD2I_3(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld2.32 {%q0}, [%1, :128]! @tag3\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOAD2I_4(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld2.32 {%q0}, [%1, :128]! @tag4\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOAD2I_5(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld2.32 {%q0}, [%1, :128]! @tag5\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOAD2I_6(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld2.32 {%q0}, [%1, :128]! @tag6\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOAD2I_7(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld2.32 {%q0}, [%1, :128]! @tag7\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+
+
+
+__INLINE V LOADI(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld1.32 {%q0}, [%1, :128]!\n\t" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOADI_2(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld1.32 {%q0}, [%1, :128]!\n\t  @tag2" : "=w" (o), "+r" (*addr) : ); 
+    return o;
+}
+__INLINE V LOADI_3(const data_t **addr) {
+    float32x4_t o;
+    __asm__ ("vld1.32 {%q0}, [%1, :128]!\n\t  @tag3" : "=w" (o), "+r" (*addr) : ); 
     return o;
 }
 __INLINE V HSP_MUL(V *d, const V *w) {
@@ -699,10 +747,10 @@ __INLINE void neon_shl8_ee(data_t *restrict out0, data_t *restrict out1,const da
     V t0, t1, t2, t3, t4, t5, t6, t7;
     
     
-    t0 = LOAD2I(i0);    
-    t1 = LOAD2I(i1);    
-    t2 = LOAD2I(i2);    
-    t3 = LOAD2I(i3);    
+    t0 = LOAD2I_0(i0);    
+    t1 = LOAD2I_1(i1);    
+    t2 = LOAD2I_2(i2);    
+    t3 = LOAD2I_3(i3);    
     t4 = ADD (t0, t1);
     t5 = SUB (t0, t1);
     t6 = ADD (t2, t3);
@@ -712,10 +760,10 @@ __INLINE void neon_shl8_ee(data_t *restrict out0, data_t *restrict out1,const da
     r1 = HSP_SUB_MULI(&t5, &t7);
     r3 = HSP_ADD_MULI(&t5, &t7);
     
-    t0 = LOAD2I(i4);    
-    t1 = LOAD2I(i5);    
-    t2 = LOAD2I(i6);    
-    t3 = LOAD2I(i7);    
+    t0 = LOAD2I_4(i4);    
+    t1 = LOAD2I_5(i5);    
+    t2 = LOAD2I_6(i6);    
+    t3 = LOAD2I_7(i7);    
     r4 = ADD (t0, t1);
     r5 = SUB (t0, t1);
     r6 = ADD (t2, t3);
@@ -768,10 +816,10 @@ __INLINE void neon_shl8_oo(data_t *restrict out0, data_t *restrict out1,const da
     V r0, r1, r2, r3, r4, r5, r6, r7;
     V t0, t1, t2, t3, t4, t5, t6, t7; 
     
-    t0 = LOAD2I(i0);    
-    t1 = LOAD2I(i1);    
-    t2 = LOAD2I(i2);    
-    t3 = LOAD2I(i3);    
+    t0 = LOAD2I_0(i0);    
+    t1 = LOAD2I_1(i1);    
+    t2 = LOAD2I_2(i2);    
+    t3 = LOAD2I_3(i3);    
     t4 = ADD (t0, t1);
     t5 = SUB (t0, t1);
     t6 = ADD (t2, t3);
@@ -796,10 +844,10 @@ __INLINE void neon_shl8_oo(data_t *restrict out0, data_t *restrict out1,const da
 
     
     
-    t0 = LOAD2I(i4);    
-    t1 = LOAD2I(i5);    
-    t2 = LOAD2I(i6);    
-    t3 = LOAD2I(i7);    
+    t0 = LOAD2I_4(i4);    
+    t1 = LOAD2I_5(i5);    
+    t2 = LOAD2I_6(i6);    
+    t3 = LOAD2I_7(i7);    
     t4 = ADD (t0, t1);
     t5 = SUB (t0, t1);
     t6 = ADD (t2, t3);
@@ -850,10 +898,10 @@ __INLINE void neon_shl8_eo(data_t *restrict out0, data_t *restrict out1,const da
     
     {
     V t0, t1, t2, t3, t4, t5, t6, t7;
-    t0 = LOAD2I(i0);    
-    t1 = LOAD2I(i1);    
-    t2 = LOAD2I(i2);    
-    t3 = LOAD2I(i3);    
+    t0 = LOAD2I_0(i0);    
+    t1 = LOAD2I_1(i1);    
+    t2 = LOAD2I_2(i2);    
+    t3 = LOAD2I_3(i3);    
     t4 = ADD(t0, t1);
     t5 = SUB(t0, t1);
     t6 = ADD(t2, t3);
@@ -886,10 +934,10 @@ __INLINE void neon_shl8_eo(data_t *restrict out0, data_t *restrict out1,const da
     }
     {
         V t0, t1, t2, t3, t4, t5, t6, t7;
-        t0 = LOAD2I(i4);    
-        t1 = LOAD2I(i5);    
-        t2 = LOAD2I(i6);    
-        t3 = LOAD2I(i7);    
+        t0 = LOAD2I_4(i4);    
+        t1 = LOAD2I_5(i5);    
+        t2 = LOAD2I_6(i6);    
+        t3 = LOAD2I_7(i7);    
         //t2 = HALFBLEND(t6, t7);
         //t3 = HALFBLEND(t7, t6);
         t4 = ADD(t0, t1);
@@ -955,10 +1003,10 @@ __INLINE void neon_shl8_oe(data_t *restrict out0, data_t *restrict out1,const da
     
        {
         V t0, t1, t2, t3, t4, t5, t6, t7;
-    t0 = LOAD2I(i0);    
-    t1 = LOAD2I(i1);    
-    t6 = LOADI(i2);    
-    t7 = LOADI(i3);    
+    t0 = LOAD2I_0(i0);    
+    t1 = LOAD2I_1(i1);    
+    t6 = LOADI_2(i2);    
+    t7 = LOADI_3(i3);    
     
         float32x2x2_t tmp0 = vtrn_f32(vget_low_f32(t6), vget_high_f32(t7));
         float32x2x2_t tmp1 = vtrn_f32(vget_low_f32(t7), vget_high_f32(t6));
@@ -991,10 +1039,10 @@ __INLINE void neon_shl8_oe(data_t *restrict out0, data_t *restrict out1,const da
     }
     {
         V t0, t1, t2, t3, t4, t5, t6, t7;
-        t0 = LOAD2I(i4);    
-        t1 = LOAD2I(i5);    
-        t2 = LOAD2I(i6);    
-        t3 = LOAD2I(i7);    
+        t0 = LOAD2I_4(i4);    
+        t1 = LOAD2I_5(i5);    
+        t2 = LOAD2I_6(i6);    
+        t3 = LOAD2I_7(i7);    
         t4 = ADD(t0, t1);
         t5 = SUB(t0, t1);
         t6 = ADD(t2, t3);
