@@ -27,7 +27,6 @@ struct _ffts_plan_t {
 	void __attribute__ ((aligned(32))) *oe_ws, *eo_ws, *ee_ws;
 	ptrdiff_t *is;
 	size_t *ws_is;
-	void (*firstpass)(const float * restrict, float * restrict, struct _ffts_plan_t * restrict);
 	size_t i0, i1, n_luts;
 	size_t N;
 	void *lastlut;

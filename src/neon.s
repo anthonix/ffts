@@ -266,10 +266,6 @@ neon_x8_t_loop:
 _neon_ee:
 	vld1.32	{d16, d17}, [r2, :128]
 _neon_ee_loop:
-	ldr r2, [r12], #4
-	ldr lr, [r12], #4
-	add r2, r0, r2, lsl #2
-	add lr, r0, lr, lsl #2
 	vld2.32 {q15}, [r10, :128]!
 	vld2.32 {q13}, [r8, :128]!
 	vld2.32 {q14}, [r7, :128]!
@@ -277,9 +273,9 @@ _neon_ee_loop:
 	vld2.32 {q10}, [r3, :128]!
 	vld2.32 {q11}, [r6, :128]!
 	vld2.32 {q12}, [r5, :128]!
-	subs	r11, r11, #1
 	vsub.f32	q1, q14, q13
 	vld2.32 {q0}, [r9, :128]!
+	subs	r11, r11, #1
 	vsub.f32	q2, q0, q15
 	vadd.f32	q0, q0, q15
 	vmul.f32	d10, d2, d17
@@ -318,8 +314,12 @@ _neon_ee_loop:
 	vadd.f32	d13, d19, d14
 	vsub.f32	d12, d18, d15
 	vadd.f32	d15, d31, d26
+	ldr r2, [r12], #4
+	ldr lr, [r12], #4
 	vtrn.32	q1, q3
 	vtrn.32	q0, q2
+	add r2, r0, r2, lsl #2
+	add lr, r0, lr, lsl #2
 	vsub.f32	q4, q11, q10
 	vsub.f32	q5, q14, q5
 	vsub.f32	d14, d30, d27
@@ -329,6 +329,7 @@ _neon_ee_loop:
 	vtrn.32	q5, q7
 	vst2.32 {q4,q5}, [r2, :128]!
 	vst2.32 {q6,q7}, [lr, :128]!
+	bne _neon_ee_loop
 
 @ assumes r0 = out 
 @         
@@ -339,6 +340,8 @@ _neon_ee_loop:
 	.globl _neon_oo
 	.align 4
 _neon_oo:
+
+_neon_oo_loop:
 	vld2.32 {q8}, [r6, :128]!
 	vld2.32 {q9}, [r5, :128]!
 	vld2.32 {q10}, [r4, :128]!
@@ -347,6 +350,7 @@ _neon_oo:
 	vsub.f32	q8, q9, q8
 	vsub.f32	q9, q13, q10
 	vadd.f32	q12, q13, q10
+	subs	r11, r11, #1
 	vld2.32 {q10}, [r7, :128]!
 	vld2.32 {q13}, [r9, :128]!
 	vsub.f32	q2, q12, q11
@@ -364,8 +368,8 @@ _neon_oo:
 	vsub.f32	q6, q12, q11
 	vadd.f32	q4, q12, q11
 	vtrn.32	q0, q2
-	ldr r2, [r12]!
-	ldr lr, [r12]!
+	ldr r2, [r12], #4
+	ldr lr, [r12], #4
 	vadd.f32	d15, d19, d16
 	vsub.f32	d11, d19, d16
 	vsub.f32	d14, d18, d17
@@ -379,6 +383,7 @@ _neon_oo:
 	vtrn.32	q5, q7
 	vst2.32 {q4,q5}, [r2, :128]!
 	vst2.32 {q6,q7}, [lr, :128]!
+	bne _neon_oo_loop
 
 @ assumes r0 = out 
 @         
@@ -404,15 +409,15 @@ _neon_eo:
 	vsub.f32	q8, q12, q8
 	vadd.f32	d8, d22, d21
 	vsub.f32	d10, d22, d21
-	ldr r2, [r12]!
-	ldr lr, [r12]!
+	ldr r2, [r12], #4
+	ldr lr, [r12], #4
 	vld1.32	{d20, d21}, [r11, :128]
 	vtrn.32	q9, q4
-	vtrn.32	q8, q5
-	vswp d9,d10
 	add r2, r0, r2, lsl #2
 	add lr, r0, lr, lsl #2
-	vst1.32 {d8,d9,d10,d11}, [r2, :128]!
+	vtrn.32	q8, q5
+	vswp d9,d10
+	vst1.32 {d8,d9,d10,d11}, [lr, :128]!
 	vld2.32 {q13}, [r10, :128]! @tag7
 	vld2.32 {q15}, [r9, :128]! @tag6
 	vld2.32 {q11}, [r8, :128]! @tag5
@@ -429,7 +434,7 @@ _neon_eo:
 	vsub.f32	q15, q13, q11
 	vtrn.32	q15, q7
 	vswp d13, d14
-	vst1.32 {d12,d13,d14,d15}, [r2, :128]!
+	vst1.32 {d12,d13,d14,d15}, [lr, :128]!
 	vtrn.32	q13, q14
 	vtrn.32	q11, q12
 	vmul.f32	d24, d26, d21
@@ -454,7 +459,7 @@ _neon_eo:
 	vsub.f32	d6, d16, d21
 	vswp d1, d2
 	vswp d5, d6
-	vstmia lr!, {q0-q3}
+	vstmia r2!, {q0-q3}
 	
 
 @ assumes r0 = out 

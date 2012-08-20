@@ -32,22 +32,9 @@ void elaborate_tree(size_t **p, int N, int leafN, int offset) {
 	(*p)+=2;
 }
 
-void 
-ffts_x_8(float *data, size_t N, float *LUT) {
-	X_8_SPLIT(data, N, LUT);
-}
-void 
-ffts_x_8_t(float *data, size_t N, float *LUT) {
-	X_8_SPLIT_T(data, N, LUT);
-}
-void 
-ffts_x_4(float *data, size_t N, float *LUT) {
-	//fprintf(stderr, "X_4 %zu\n", N);
-	X_4_SPLIT(data, N, LUT);
-}
 
-void 
-dummy(float *data, size_t N, float *LUT) {
+void neon_X_8(data_t * restrict data0, size_t N, data_t * restrict LUT) {
+	X_8_SPLIT(data0, N, LUT);
 }
 
 uint32_t BL(void *pos, void *target) {
@@ -86,7 +73,7 @@ void ADDI(uint32_t **p, uint8_t dst, uint8_t src, int32_t imm) {
 
 		*(*p)++ = 0xe2800000 | ((src & 0xf) << 16) | ((dst & 0xf) << 12) | ((shamt & 0xf) << 8) | (imm & 0xff);
 		
-		if(imm > 255) ADDI(p, dst, src, (oimm + ((imm & 0xff) << (32-shamt*2))));
+		if(imm > 255) ADDI(p, dst, src, (oimm - ((imm & 0xff) << (32-shamt*2))));
 	}
 }
 
@@ -95,8 +82,15 @@ uint32_t LDRI(uint8_t dst, uint8_t base, uint32_t offset) {
 	                  | ((base & 0xf) << 16) | (offset & 0xfff) ;
 }
 
-uint32_t MOVI(uint8_t dst, uint16_t val) {
-	return 0xe3a00000 | ((dst & 0xf) << 12) | (val & 0xffff) ;
+uint32_t MOVI(uint32_t **p, uint8_t dst, uint32_t imm) {
+	uint32_t oimm = imm;
+	
+		uint32_t shamt = (__builtin_ctzl(imm)>15)?15:__builtin_ctzl(imm);
+		if(shamt & 1) shamt -= 1;
+		imm >>= shamt;
+		shamt = (32 - shamt)/2;
+	*(*p)++ = 0xe3a00000 | ((dst & 0xf) << 12) | ((shamt & 0xf) << 8) | (imm & 0xff) ;
+		if(imm > 255) ADDI(p, dst, dst, (oimm - ((imm & 0xff) << (32-shamt*2))));
 }
 
 uint32_t PUSH_LR() { return 0xe92d4ff0; } //0xe92d4000; }
@@ -151,10 +145,21 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	uint32_t *func = p->transform_base;//valloc(8192);
 	uint32_t *fp = func;
 
+	fprintf(stderr, "Allocating %d bytes \n", p->transform_size);
+
 	if(!func) { 
 		fprintf(stderr, "NOMEM\n");
 		exit(1);
 	}
+
+	if(N < 32) {
+
+
+
+
+
+	}
+
 
 	uint32_t *x_8_addr = fp;
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
@@ -168,22 +173,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 
 	uint32_t *start = fp;
 
-//fprintf(stderr, "X_4: %08x START: %08x\n", x_4_addr, start);
-//fprintf(stderr, "X_8: %08x\n", x_8_addr, start);
-//fprintf(stderr, "X_8_T: %08x\n", x_8_t_addr, start);
-
-	fprintf(stderr, "LUT: %08x\n", p->ws);
-	fprintf(stderr, "offsets: %08x\n", p->offsets);
 	*fp++ = PUSH_LR();
-//	*fp++ = MOV(2, 1);
-//	*fp++ = BL(fp+2, start);
-
-
-
-
-  
-//ADDI(0, 1, 0); // mov r1 -> r0
-//ADDI(1, 2, 0); // mov r2 -> r1
 	
 	ADDI(&fp, 3, 1, 0);
 	ADDI(&fp, 7, 1, N);
@@ -204,34 +194,93 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	p->ee_ws = ee_w_data;
 	p->eo_ws = eo_w_data;
 
-	fprintf(stderr, "p = %08x\n", p);
+	fprintf(stderr, "p = %08x i0 = %d i1 = %d\n", p, p->i0, p->i1);
 
 
 	fprintf(stderr, "start of ee %08x\n", fp);
 	*fp++ = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); 
-
+	MOVI(&fp, 11, p->i0);
+	
+	fprintf(stderr, "p->i0 insn = %d - %08x %08x\n", p->i0, fp[-2], fp[-1]);
+	//fp++;
 	memcpy(fp, neon_ee, neon_oo - neon_ee);
 	fp += (neon_oo - neon_ee) / 4;
 	
+	if(__builtin_ctzl(N) & 1){
+		ADDI(&fp, 2, 7, 0);
+		ADDI(&fp, 7, 9, 0);
+		ADDI(&fp, 9, 2, 0);
 
-	ADDI(&fp, 2, 7, 0);
-	ADDI(&fp, 7, 9, 0);
-	ADDI(&fp, 9, 2, 0);
+		ADDI(&fp, 2, 8, 0);
+		ADDI(&fp, 8, 10, 0);
+		ADDI(&fp, 10, 2, 0);
 	
-	ADDI(&fp, 2, 8, 0);
-	ADDI(&fp, 8, 10, 0);
-	ADDI(&fp, 10, 2, 0);
+		if(p->i1) {
+			MOVI(&fp, 11, p->i1);
+			memcpy(fp, neon_oo, neon_eo - neon_oo);
+			fp += (neon_eo - neon_oo) / 4;
+		}
+		
+		*fp++ = LDRI(11, 1, ((uint32_t)&p->oe_ws) - ((uint32_t)p)); 
 
-	*fp++ = LDRI(11, 1, ((uint32_t)&p->oe_ws) - ((uint32_t)p)); 
+		memcpy(fp, neon_oe, neon_end - neon_oe);
+		fp += (neon_end - neon_oe) / 4;
 
-	fprintf(stderr, "start of oe %08x\n", fp);
-	memcpy(fp, neon_oe, neon_end - neon_oe);
-	fp += (neon_end - neon_oe) / 4;
+	}else{
+		
+		*fp++ = LDRI(11, 1, ((uint32_t)&p->eo_ws) - ((uint32_t)p)); 
 
+		memcpy(fp, neon_eo, neon_oe - neon_eo);
+		fp += (neon_oe - neon_eo) / 4;
+		
+		ADDI(&fp, 2, 7, 0);
+		ADDI(&fp, 7, 9, 0);
+		ADDI(&fp, 9, 2, 0);
+
+		ADDI(&fp, 2, 8, 0);
+		ADDI(&fp, 8, 10, 0);
+		ADDI(&fp, 10, 2, 0);
+	
+		if(p->i1) {
+			MOVI(&fp, 11, p->i1);
+			memcpy(fp, neon_oo, neon_eo - neon_oo);
+			fp += (neon_eo - neon_oo) / 4;
+		}
+
+	}
+
+
+	if(p->i1) {
+		ADDI(&fp, 2, 3, 0);
+		ADDI(&fp, 3, 7, 0);
+		ADDI(&fp, 7, 2, 0);
+
+		ADDI(&fp, 2, 4, 0);
+		ADDI(&fp, 4, 8, 0);
+		ADDI(&fp, 8, 2, 0);
+		
+		ADDI(&fp, 2, 5, 0);
+		ADDI(&fp, 5, 9, 0);
+		ADDI(&fp, 9, 2, 0);
+
+		ADDI(&fp, 2, 6, 0);
+		ADDI(&fp, 6, 10, 0);
+		ADDI(&fp, 10, 2, 0);
+
+		ADDI(&fp, 2, 9, 0);
+		ADDI(&fp, 9, 10, 0);
+		ADDI(&fp, 10, 2, 0);
+
+		*fp++ = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); 
+	  MOVI(&fp, 11, p->i1);
+		memcpy(fp, neon_ee, neon_oo - neon_ee);
+		fp += (neon_oo - neon_ee) / 4;
+
+	}
 	
   *fp++ = LDRI(2, 1, ((uint32_t)&p->ws) - ((uint32_t)p)); // load offsets into r12
 	//ADDI(&fp, 2, 1, 0);
-	*fp++ = MOVI(1, 0);
+	MOVI(&fp, 1, 0);
 	
 	// args: r0 - out
 	//       r1 - N
@@ -246,7 +295,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	
 //	fprintf(stderr, "size %zu at %zu - diff %zu\n", pps[0], pps[1]*4, (pps[1]*4) - pAddr);
 		if(!pN) {
-			*fp++ = MOVI(1, pps[0]);
+			MOVI(&fp, 1, pps[0]);
 		}else{
   		if((pps[1]*4)-pAddr) ADDI(&fp, 0, 0, (pps[1] * 4)- pAddr);
 			if(pps[0] - pN) ADDI(&fp, 1, 1, pps[0] - pN);
@@ -282,7 +331,6 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 //	fprintf(stderr, "%08x\n", x_4_addr[i]);
 //fprintf(stderr, "\n");
 //for(int i=0;i<count;i++) 
-//	fprintf(stderr, "%08x\n", start[i]);
 
 	free(ps);
 	

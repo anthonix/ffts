@@ -46,19 +46,21 @@ static inline V VLIT4(data_t f3, data_t f2, data_t f1, data_t f0) {
 #define FFTS_MALLOC(d,a) (valloc(d))
 #define FFTS_FREE(d) (free(d))
 __INLINE void FMA(V *Rd, V Rn, V Rm) {
-    __asm__ ("vmla.f32 %q0,%q1,%q2\n\t"
-             : "+w" (*Rd)
-             : "w" (Rn), "w" (Rm)
-             //: "0"
-             );
+	*Rd = vmlaq_f32(*Rd, Rn, Rm);
+//  __asm__ ("vmla.f32 %q0,%q1,%q2\n\t"
+//           : "+w" (*Rd)
+//           : "w" (Rn), "w" (Rm)
+//           //: "0"
+//           );
     
 }
 __INLINE void FMS(V *Rd, V Rn, V Rm) {
-    __asm__ ("vmls.f32 %q0,%q1,%q2\n\t"
-             : "+w" (*Rd)
-             : "w" (Rn), "w" (Rm)
-            // : "0"
-             );
+	*Rd = vmlsq_f32(*Rd, Rn, Rm);
+//	__asm__ ("vmls.f32 %q0,%q1,%q2\n\t"
+//           : "+w" (*Rd)
+//           : "w" (Rn), "w" (Rm)
+//          // : "0"
+//           );
 }
 
 __INLINE VS VSMUL(VS *d, VS *w) {

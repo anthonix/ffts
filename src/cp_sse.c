@@ -2,74 +2,6 @@
 #include "macros.h"
 #include "patterns.h"
 
-__INLINE void 
-firstpass_type_1(const float * restrict in, float * restrict out, ffts_plan_t * restrict p) {
-	size_t i, ii0 = p->i0, ii1 = p->i1;
-	size_t *offsets = (size_t *)p->offsets;
-	size_t *is = (size_t *)p->is;
-#ifdef __ARM_NEON__
-  const data_t *i0=in+is[0],*i1=in+is[1],*i2=in+is[2],*i3=in+is[3],*i4=in+is[4],*i5=in+is[5],*i6=in+is[6],*i7=in+is[7];
-  for(i=ii0;i>0;--i) {
-    neon_shl8_ee(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i4,&i5,&i6,&i7);
-    offsets += 2;
-  }
-  for(i=ii1;i>0;--i) {
-    neon_shl8_oo(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i6,&i7,&i4,&i5);
-    offsets += 2;
-  }
-    neon_shl8_oe(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i6,&i7,&i4,&i5);
-    offsets += 2;
-  for(i=ii1;i>0;--i) {
-    neon_shl8_ee(out+offsets[0],out+offsets[1],&i6,&i7,&i4,&i5,&i0,&i1,&i3,&i2);
-    offsets += 2;
-  }
-
-#else
-	for(i=ii0;i>0;--i) LEAF_EE(&is, in, &offsets, out);
-  for(i=ii1;i>0;--i) LEAF_OO(&is, in, &offsets, out);
-  LEAF_OE(&is, in, &offsets, out);
-  for(i=ii1;i>0;--i) LEAF_EE(&is, in, &offsets, out);
-#endif
-}
-
-__INLINE void 
-firstpass_type_2(const float * restrict in, float * restrict out, ffts_plan_t * restrict p) {
-	size_t i, ii0 = p->i0, ii1 = p->i1;
-	size_t *offsets = (size_t *)p->offsets;
-	size_t *is = (size_t *)p->is;
-#ifdef __ARM_NEON__
-  const data_t *i0=in+is[0],*i1=in+is[1],*i2=in+is[2],*i3=in+is[3],*i4=in+is[4],*i5=in+is[5],*i6=in+is[6],*i7=in+is[7];
-
-	for(i=ii0;i>0;--i) {
-		neon_shl8_ee(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i4,&i5,&i6,&i7);
-		offsets+=2;
-	}
-    neon_shl8_eo(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i4,&i5,&i6,&i7);
-    offsets += 2;
-  for(i=ii1;i>0;--i) {
-    neon_shl8_oo(out+offsets[0],out+offsets[1],&i0,&i1,&i2,&i3,&i6,&i7,&i4,&i5);
-    offsets += 2;
-	}
-  for(i=ii1;i>0;--i) {
-    neon_shl8_ee(out+offsets[0],out+offsets[1],&i6,&i7,&i4,&i5,&i0,&i1,&i3,&i2);
-    offsets += 2;
-	}
-
-#else
-	for(i=ii0;i>0;--i) LEAF_EE(&is, in, &offsets, out);
-  LEAF_EO(&is, in, &offsets, out);
-  for(i=ii1;i>0;--i) LEAF_OO(&is, in, &offsets, out);
-  for(i=ii1;i>0;--i) LEAF_EE(&is, in, &offsets, out);
-#endif
-}
-
-__INLINE void 
-firstpass_64(const float * restrict in, float * restrict out, ffts_plan_t * restrict p) {
-	size_t *offsets = (size_t *)p->offsets;
-	size_t *is = (size_t *)p->is;
-  LEAF_EE(&is, in, &offsets, out);
-  LEAF_OE(&is, in, &offsets, out);
-}
 
 void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out) {
 	transform_index_t *ps = p->transforms;
@@ -119,8 +51,6 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	//	ffts_init_tree(p, N, leafN);
 		
 	//	if(N == 64) p->firstpass = &firstpass_64;
-		if(__builtin_ctzl(N) & 1) p->firstpass = &firstpass_type_1;	
-		else p->firstpass = &firstpass_type_2;	
 
 		LEAFLUT[0] = VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
 		LEAFLUT[1] = VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
@@ -157,12 +87,12 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		p->transforms = malloc(2 * sizeof(transform_index_t));
 		p->transforms[0] = 0;
 		p->transforms[1] = 1;
-		if(N == 2) p->firstpass = &firstpass_2;
-		else if(N == 4 && sign == -1) p->firstpass = &firstpass_4_f;
-		else if(N == 4 && sign == 1) p->firstpass = &firstpass_4_b;
-		else if(N == 8) p->firstpass = &firstpass_8;
-		else if(N == 16) p->firstpass = &firstpass_16;
-		else if(N == 32) p->firstpass = &firstpass_32;
+//	if(N == 2) p->firstpass = &firstpass_2;
+//	else if(N == 4 && sign == -1) p->firstpass = &firstpass_4_f;
+//	else if(N == 4 && sign == 1) p->firstpass = &firstpass_4_b;
+//	else if(N == 8) p->firstpass = &firstpass_8;
+//	else if(N == 16) p->firstpass = &firstpass_16;
+//	else if(N == 32) p->firstpass = &firstpass_32;
 
 		p->is = NULL;
 		p->offsets = NULL;
@@ -362,7 +292,8 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 //		tmp[4], tmp[5], tmp[6], tmp[7]);
 //	tmp += 8;
 //}
-	
+
+	fprintf(stderr, "p0 %d p1 %d\n", p->i0, p->i1);
 	p->N = N;
 	p->lastlut = w;
 	p->n_luts = n_luts;
