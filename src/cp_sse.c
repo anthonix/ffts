@@ -1,6 +1,12 @@
 #include "cp_sse.h"
 #include "macros.h"
+//#include "mini_macros.h"
 #include "patterns.h"
+  #include <libkern/OSCacheControl.h>
+  #include <errno.h>
+  #include <sys/mman.h>
+  #include <string.h>
+  #include <limits.h>	   /* for PAGESIZE */
 
 
 void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out) {
@@ -20,6 +26,7 @@ void ffts_free(ffts_plan_t *p) {
 	if(p->is) free(p->is);
 	if(p->offsets)		free(p->offsets);
 	//free(p->transforms);
+	if(p->transforms) free(p->transforms);
 
 	if(p->transform_base) {
 		if (mprotect(p->transform_base, p->transform_size, PROT_READ | PROT_WRITE)) {
@@ -44,6 +51,11 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 
 	p->transform = NULL;
 	p->transform_base = NULL;
+	p->transforms = NULL;
+	p->is = NULL;
+	p->ws = NULL;
+	p->offsets = NULL;
+
 
 	if(N >= 32) {
 		ffts_init_offsets(p, N, leafN);
@@ -87,12 +99,12 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		p->transforms = malloc(2 * sizeof(transform_index_t));
 		p->transforms[0] = 0;
 		p->transforms[1] = 1;
-//	if(N == 2) p->firstpass = &firstpass_2;
-//	else if(N == 4 && sign == -1) p->firstpass = &firstpass_4_f;
-//	else if(N == 4 && sign == 1) p->firstpass = &firstpass_4_b;
-//	else if(N == 8) p->firstpass = &firstpass_8;
-//	else if(N == 16) p->firstpass = &firstpass_16;
-//	else if(N == 32) p->firstpass = &firstpass_32;
+  	if(N == 2) p->transform = &firstpass_2;
+  	else if(N == 4 && sign == -1) p->transform = &firstpass_4_f;
+  	else if(N == 4 && sign == 1) p->transform = &firstpass_4_b;
+  	else if(N == 8) p->transform = &firstpass_8;
+  	else if(N == 16) p->transform = &firstpass_16;
+  	else if(N == 32) p->transform = &firstpass_32;
 
 		p->is = NULL;
 		p->offsets = NULL;
@@ -293,7 +305,6 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 //	tmp += 8;
 //}
 
-	fprintf(stderr, "p0 %d p1 %d\n", p->i0, p->i1);
 	p->N = N;
 	p->lastlut = w;
 	p->n_luts = n_luts;

@@ -439,22 +439,22 @@ firstpass_32(const data_t * restrict in, data_t * restrict out, ffts_plan_t * re
 }
 
 __INLINE void 
-firstpass_16(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
+firstpass_16(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
   V r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15;
-  float *LUT8 = p->ws + p->ws_is[0];
-  float *LUT16 = ((float *)p->ws) + 8;//(p->ws_is[1]*4);
+  float *LUT8 = p->ws ;//+ p->ws_is[0];
+//  float *LUT16 = ((float *)p->ws) + 8;//(p->ws_is[1]*4);
 
   L_4_4(in+0,in+16,in+8,in+24,&r0_1,&r2_3,&r8_9,&r10_11);
   L_2_4(in+4,in+20,in+28,in+12,&r4_5,&r6_7,&r14_15,&r12_13);
   K_N(VLD(LUT8),VLD(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
-  K_N(VLD(LUT16),VLD(LUT16+4),&r0_1,&r4_5,&r8_9,&r12_13);
+  K_N(VLD(LUT8+8),VLD(LUT8+12),&r0_1,&r4_5,&r8_9,&r12_13);
   S_4(r0_1,r4_5,r8_9,r12_13,out+0,out+8,out+16,out+24);
-  K_N(VLD(LUT16+8),VLD(LUT16+12),&r2_3,&r6_7,&r10_11,&r14_15);
+  K_N(VLD(LUT8+16),VLD(LUT8+20),&r2_3,&r6_7,&r10_11,&r14_15);
   S_4(r2_3,r6_7,r10_11,r14_15,out+4,out+12,out+20,out+28);
 }
 
 __INLINE void 
-firstpass_8(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
+firstpass_8(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
   V r0_1,r2_3,r4_5,r6_7;
   float *LUT8 = p->ws + p->ws_is[0];
 	L_4_2(in+0,in+8,in+4,in+12,&r0_1,&r2_3,&r4_5,&r6_7);
@@ -462,7 +462,7 @@ firstpass_8(const data_t * restrict in, data_t * restrict out, ffts_plan_t * res
   S_4(r0_1,r2_3,r4_5,r6_7,out+0,out+4,out+8,out+12);
 }
 __INLINE void 
-firstpass_4_f(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
+firstpass_4_f(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
   cdata_t *i = (cdata_t *)in, *o = (cdata_t *)out;
 	cdata_t t0, t1, t2, t3, t4, t5, t6, t7;
   t0 = i[0]; t1 = i[2]; t2 = i[1]; t3 = i[3];
@@ -477,7 +477,7 @@ firstpass_4_f(const data_t * restrict in, data_t * restrict out, ffts_plan_t * r
   o[3] = t5 + t7;
 }
 __INLINE void 
-firstpass_4_b(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
+firstpass_4_b(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
   cdata_t *i = (cdata_t *)in, *o = (cdata_t *)out;
 	cdata_t t0, t1, t2, t3, t4, t5, t6, t7;
   t0 = i[0]; t1 = i[2]; t2 = i[1]; t3 = i[3];
@@ -492,7 +492,7 @@ firstpass_4_b(const data_t * restrict in, data_t * restrict out, ffts_plan_t * r
   o[3] = t5 + t7;
 }
 __INLINE void 
-firstpass_2(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
+firstpass_2(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
   cdata_t t0, t1, r0,r1;
   t0 = ((cdata_t *)in)[0]; t1 = ((cdata_t *)in)[1];
   r0 = t0 + t1; r1 = t0 - t1;

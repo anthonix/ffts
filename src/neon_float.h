@@ -488,7 +488,7 @@ __INLINE VS LOADSPR0(data_t *addr) {
 	VS r;
 	register V p0 __asm__ ("q8") ;
 	register V p1 __asm__ ("q9") ;
-	__asm__ __volatile__ ("vld1.32 {%q0,%q1}, [%2, :128]\n\t"
+	__asm__ __volatile__("vld1.32 {%q0,%q1}, [%2, :128]\n\t"
 			: "=&w" (p0), "=&w" (p1)
 			: "r" (addr)
 			);
@@ -499,7 +499,7 @@ __INLINE VS LOADSPR1(data_t *addr) {
 	VS r;
 	register V p0 __asm__ ("q10") ;
 	register V p1 __asm__ ("q11") ;
-	__asm__ __volatile__ ("vld1.32 {%q0,%q1}, [%2, :128]\n\t"
+	__asm__ __volatile__("vld1.32 {%q0,%q1}, [%2, :128]\n\t"
 			: "=&w" (p0), "=&w" (p1)
 			: "r" (addr)
 			);
@@ -510,7 +510,7 @@ __INLINE VS LOADSPR2(data_t *addr) {
 	VS r;
 	register V p0 __asm__ ("q12") ;
 	register V p1 __asm__ ("q13") ;
-	__asm__ __volatile__ ("vld1.32 {%q0,%q1}, [%2, :128]\n\t"
+	__asm__ __volatile__("vld1.32 {%q0,%q1}, [%2, :128]\n\t"
 			: "=&w" (p0), "=&w" (p1)
 			: "r" (addr)
 			);
@@ -521,7 +521,7 @@ __INLINE VS LOADSPR3(data_t *addr) {
 	VS r;
 	register V p0 __asm__ ("q14") ;
 	register V p1 __asm__ ("q15") ;
-	__asm__ __volatile__ ("vld1.32 {%q0,%q1}, [%2, :128]\n\t"
+	__asm__ __volatile__("vld1.32 {%q0,%q1}, [%2, :128]\n\t"
 			: "=&w" (p0), "=&w" (p1)
 			: "r" (addr)
 			);
@@ -532,7 +532,7 @@ __INLINE VS LOADSPRI(data_t * restrict * addr) {
 	VS r;
 	register V p0 __asm__ ("q2") ;
 	register V p1 __asm__ ("q3") ;
-	__asm__ __volatile__ ("vld1.32 {%q0,%q1}, [%2, :128]!\n\t"
+	__asm__ __volatile__("vld1.32 {%q0,%q1}, [%2, :128]!\n\t"
 			: "=&w" (p0), "=&w" (p1), "+r" (*addr)
 			: 
 			);

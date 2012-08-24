@@ -1,7 +1,9 @@
 #include "codegen.h"
 #include "macros.h"
 #include "neon_float.h"
+//#include "mini_macros.h"
 #include "neon.h"
+#include "cp_sse.h"
 #include <libkern/OSCacheControl.h>
 
 int tree_count(int N, int leafN, int offset) {
@@ -33,9 +35,10 @@ void elaborate_tree(size_t **p, int N, int leafN, int offset) {
 }
 
 
-void neon_X_8(data_t * restrict data0, size_t N, data_t * restrict LUT) {
-	X_8_SPLIT(data0, N, LUT);
+void neon_x4_x(data_t * restrict data, const data_t * restrict LUT) {
+	X_8_SPLIT(data, 64, LUT);
 }
+
 
 uint32_t BL(void *pos, void *target) {
 	return 0xeb000000 | (((target - pos) / 4) & 0xffffff);
@@ -152,15 +155,6 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 		exit(1);
 	}
 
-	if(N < 32) {
-
-
-
-
-
-	}
-
-
 	uint32_t *x_8_addr = fp;
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
 	fp += (neon_x8_t - neon_x8) / 4;
@@ -194,14 +188,11 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	p->ee_ws = ee_w_data;
 	p->eo_ws = eo_w_data;
 
-	fprintf(stderr, "p = %08x i0 = %d i1 = %d\n", p, p->i0, p->i1);
 
 
-	fprintf(stderr, "start of ee %08x\n", fp);
 	*fp++ = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); 
 	MOVI(&fp, 11, p->i0);
 	
-	fprintf(stderr, "p->i0 insn = %d - %08x %08x\n", p->i0, fp[-2], fp[-1]);
 	//fp++;
 	memcpy(fp, neon_ee, neon_oo - neon_ee);
 	fp += (neon_oo - neon_ee) / 4;
@@ -342,7 +333,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	sys_icache_invalidate(func, p->transform_size);
 
 
-	fprintf(stderr, "size of transform = %d\n", (fp-func)*4);
+	fprintf(stderr, "size of transform %zu = %d\n", N, (fp-func)*4);
 
 	return (transform_func_t)start;
 }
