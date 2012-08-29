@@ -159,23 +159,73 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	*fp++ = 0x4c;
 	*fp++ = 0x8b;
 	*fp++ = 0x07;
-	MOVI(&fp, RCX, p->i0 * 4);
+	uint32_t lp_cnt = p->i0 * 4;
+	MOVI(&fp, RCX, lp_cnt);
+	
 	//LEA(&fp, R8, RDI, ((uint32_t)&p->offsets) - ((uint32_t)p)); 
 #endif
 	//fp++;
-	memcpy(fp, leaf_ee, neon_oo - leaf_ee);
 #ifdef __ARM_NEON__
+	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
 	fp += (neon_oo - leaf_ee) / 4;
 #else
 	int i;
+	memcpy(fp, leaf_ee_init, leaf_ee - leaf_ee_init);
+	IMM32_NI(fp + 3, READ_IMM32(fp + 3) + ((void *)leaf_ee_init - (void *)fp )); 
+	fp += (leaf_ee - leaf_ee_init);
 
-	IMM32_NI(fp + 3, READ_IMM32(fp + 3) + ((void *)leaf_ee - (void *)fp )); 
+	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
+
 
 	uint32_t offsets[8] = {0, N, N/2, 3*N/2, N/4, 5*N/4, 7*N/4, 3*N/4};
+	uint32_t offsets_o[8] = {0, N, N/2, 3*N/2, 7*N/4, 3*N/4, N/4, 5*N/4};
+	uint32_t offsets_oe[8] = {7*N/4, 3*N/4, N/4, 5*N/4, 0, N, 3*N/2, N/2};
 	
 	for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_ee_offsets[i], offsets[i]*4); 
 	
-	fp += (neon_oo - leaf_ee);
+	fp += (leaf_oo - leaf_ee);
+	
+	if(__builtin_ctzl(N) & 1){
+		if(p->i1) {
+			lp_cnt += p->i1 * 4;
+  		MOVI(&fp, RCX, lp_cnt);
+  		memcpy(fp, leaf_oo, leaf_eo - leaf_oo);
+  		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_oo_offsets[i], offsets_o[i]*4); 
+  		fp += (leaf_eo - leaf_oo);
+		}
+		
+
+  	memcpy(fp, leaf_oe, leaf_end - leaf_oe);
+  	lp_cnt += 4;
+  	for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_oe_offsets[i], offsets_o[i]*4); 
+  	fp += (leaf_end - leaf_oe);
+
+	}else{
+
+
+		memcpy(fp, leaf_eo, leaf_oe - leaf_eo);
+		lp_cnt += 4;
+		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_eo_offsets[i], offsets[i]*4); 
+		fp += (leaf_oe - leaf_eo);
+
+  	if(p->i1) {
+			lp_cnt += p->i1 * 4;
+  		MOVI(&fp, RCX, lp_cnt);
+  		memcpy(fp, leaf_oo, leaf_eo - leaf_oo);
+  		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_oo_offsets[i], offsets_o[i]*4); 
+  		fp += (leaf_eo - leaf_oo);
+  	}
+
+	}
+	if(p->i1) {
+
+		lp_cnt += p->i1 * 4;
+		MOVI(&fp, RCX, lp_cnt);
+		memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
+		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_ee_offsets[i], offsets_oe[i]*4); 
+		fp += (leaf_oo - leaf_ee);
+
+	}
 #endif
 #ifdef __ARM_NEON__
 	if(__builtin_ctzl(N) & 1){

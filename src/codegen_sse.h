@@ -8,14 +8,18 @@ static const __attribute__ ((aligned(16))) data_t eo_w_data[4] = {1.0f,0.7071067
 void neon_x4(float *, size_t, float *);
 void neon_x8(float *, size_t, float *);
 void neon_x8_t(float *, size_t, float *);
+void leaf_ee_init();
 void leaf_ee();
-void neon_oo();
-void neon_eo();
-void neon_oe();
-void neon_end();
+void leaf_oo();
+void leaf_eo();
+void leaf_oe();
+void leaf_end();
 
 
 extern const uint32_t sse_leaf_ee_offsets[8];
+extern const uint32_t sse_leaf_oo_offsets[8];
+extern const uint32_t sse_leaf_eo_offsets[8];
+extern const uint32_t sse_leaf_oe_offsets[8];
 
 #define EAX 0
 #define ECX 1
