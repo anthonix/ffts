@@ -12,15 +12,14 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 AC_PROG_CC
 #AX_COMPILER_VENDOR
-
+LT_INIT([disable-shared])
+AM_PROG_AS
 #CXX="clang++"
 #CXXFLAGS="$CXXFLAGS -stdlib=libc++"
 
 #SFFT_AR="/usr/bin/ar"
 #SFFT_CFLAGS="$CFLAGS"
 #SFFT_CC="$CC"
-
-SIMD=sse
 
 AC_ARG_ENABLE(single, [AC_HELP_STRING([--enable-single],[compile single-precision library])], sfft_single=$enableval, sfft_single=no)
 if test "$sfft_single" = "yes"; then
@@ -29,6 +28,12 @@ fi
 if test "$sfft_single" = "no"; then
 	AC_DEFINE(FFTS_PREC_SINGLE,0,[Define to FFT in single precision.])
 fi
+
+AC_ARG_ENABLE(sse, [AC_HELP_STRING([--enable-sse],[enable SSE extensions])], have_sse=$enableval, have_sse=yes)
+if test "$have_sse" = "yes"; then
+	SIMD=sse
+fi
+AM_CONDITIONAL(HAVE_SSE, test "$have_sse" = "yes")
 
 AC_ARG_ENABLE(neon, [AC_HELP_STRING([--enable-neon],[enable NEON extensions])], have_neon=$enableval, have_neon=no)
 if test "$have_neon" = "yes"; then

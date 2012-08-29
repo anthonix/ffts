@@ -1,10 +1,19 @@
 #include "codegen.h"
 #include "macros.h"
-#include "neon_float.h"
 //#include "mini_macros.h"
-#include "neon.h"
 #include "cp_sse.h"
 #include <libkern/OSCacheControl.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+
+#ifdef __ARM_NEON__
+	#include "codegen_neon.h"
+	#include "neon_float.h"
+	#include "neon.h"
+#else
+	#include "codegen_sse.h"
+	#include "sse_float.h"
+#endif
 
 int tree_count(int N, int leafN, int offset) {
 	
@@ -35,69 +44,7 @@ void elaborate_tree(size_t **p, int N, int leafN, int offset) {
 }
 
 
-void neon_x4_x(data_t * restrict data, const data_t * restrict LUT) {
-	X_8_SPLIT(data, 64, LUT);
-}
 
-
-uint32_t BL(void *pos, void *target) {
-	return 0xeb000000 | (((target - pos) / 4) & 0xffffff);
-}
-
-uint32_t B(uint8_t r) {
-	return 0xe12fff10 | r;
-}
-
-uint32_t MOV(uint8_t dst, uint8_t src) {
-		return 0xe1a00000 | (src & 0xf) | ((dst & 0xf) << 12);
-}
-
-void ADDI(uint32_t **p, uint8_t dst, uint8_t src, int32_t imm) {
-	int32_t oimm = imm;
-	if(imm < 0) {
-		imm = -imm;
-		uint32_t shamt = (__builtin_ctzl(imm)>15)?15:__builtin_ctzl(imm);
-		if(shamt & 1) shamt -= 1;
-		imm >>= shamt;
-		shamt = (32 - shamt)/2;
-		
-	//	if(imm > 255) fprintf(stderr, "imm>255: %d\n", oimm);
-		*(*p)++ = 0xe2400000 | ((src & 0xf) << 16) | ((dst & 0xf) << 12) | ((shamt & 0xf) << 8) | (imm & 0xff);
-	
-		if(imm > 255) ADDI(p, dst, src, (oimm + ((imm & 0xff) << (32-shamt*2))));
-
-	}else{
-		uint32_t shamt = (__builtin_ctzl(imm)>15)?15:__builtin_ctzl(imm);
-		if(shamt & 1) shamt -= 1;
-		imm >>= shamt;
-		shamt = (32 - shamt)/2;
-
-//		if(imm > 255) fprintf(stderr, "imm>255: %d\n", oimm);
-
-		*(*p)++ = 0xe2800000 | ((src & 0xf) << 16) | ((dst & 0xf) << 12) | ((shamt & 0xf) << 8) | (imm & 0xff);
-		
-		if(imm > 255) ADDI(p, dst, src, (oimm - ((imm & 0xff) << (32-shamt*2))));
-	}
-}
-
-uint32_t LDRI(uint8_t dst, uint8_t base, uint32_t offset) {
-	return 0xe5900000 | ((dst & 0xf) << 12)
-	                  | ((base & 0xf) << 16) | (offset & 0xfff) ;
-}
-
-uint32_t MOVI(uint32_t **p, uint8_t dst, uint32_t imm) {
-	uint32_t oimm = imm;
-	
-		uint32_t shamt = (__builtin_ctzl(imm)>15)?15:__builtin_ctzl(imm);
-		if(shamt & 1) shamt -= 1;
-		imm >>= shamt;
-		shamt = (32 - shamt)/2;
-	*(*p)++ = 0xe3a00000 | ((dst & 0xf) << 12) | ((shamt & 0xf) << 8) | (imm & 0xff) ;
-		if(imm > 255) ADDI(p, dst, dst, (oimm - ((imm & 0xff) << (32-shamt*2))));
-}
-
-uint32_t PUSH_LR() { return 0xe92d4ff0; } //0xe92d4000; }
-uint32_t POP_LR() { return 0xe8bd8ff0; } //0xe8bd8000; }
 
 uint32_t LUT_offset(size_t N, size_t leafN) {
 		int i;
@@ -130,7 +77,13 @@ uint32_t LUT_offset(size_t N, size_t leafN) {
 	return lut_size;
 }
 
-transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
+#ifdef __ARM_NEON__
+	typedef uint32_t insns_t;
+#else
+	typedef uint8_t insns_t;
+#endif
+
+void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	int count = tree_count(N, leafN, 0) + 1;
 	size_t *ps = malloc(count * 2 * sizeof(size_t));
 	size_t *pps = ps;
@@ -144,29 +97,37 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	if(N < 8192) p->transform_size = 8192;
 	else p->transform_size = N;
 
-	p->transform_base = valloc(p->transform_size);//(void *)func;
-	uint32_t *func = p->transform_base;//valloc(8192);
-	uint32_t *fp = func;
+	p->transform_base = valloc(p->transform_size);//mmap(NULL, p->transform_size, PROT_WRITE | PROT_READ, MAP_ANON | MAP_SHARED, -1, 0);
+	/*
+	if(p->transform_base == MAP_FAILED) {
+		fprintf(stderr, "MAP FAILED\n");
+		exit(1);
+	}*/
+
+	insns_t *func = p->transform_base;//valloc(8192);
+	insns_t *fp = func;
 
 	fprintf(stderr, "Allocating %d bytes \n", p->transform_size);
+	fprintf(stderr, "Base address = %016p\n", func);
 
 	if(!func) { 
 		fprintf(stderr, "NOMEM\n");
 		exit(1);
 	}
 
-	uint32_t *x_8_addr = fp;
+	insns_t *x_8_addr = fp;
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
 	fp += (neon_x8_t - neon_x8) / 4;
 //uint32_t *x_8_t_addr = fp;
 //memcpy(fp, neon_x8_t, neon_end - neon_x8_t);
 //fp += (neon_end - neon_x8_t) / 4;
-	uint32_t *x_4_addr = fp;
+	insns_t *x_4_addr = fp;
 	memcpy(fp, neon_x4, neon_x8 - neon_x4);
 	fp += (neon_x8 - neon_x4) / 4;
 
-	uint32_t *start = fp;
+	insns_t *start = fp;
 
+#ifdef __ARM_NEON__
 	*fp++ = PUSH_LR();
 	
 	ADDI(&fp, 3, 1, 0);
@@ -183,20 +144,40 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	ADDI(&fp, 1, 0, 0);
 
 	ADDI(&fp, 0, 2, 0), // mov out into r0
+#endif
 
 	p->oe_ws = oe_w_data;
 	p->ee_ws = ee_w_data;
 	p->eo_ws = eo_w_data;
 
 
-
+#ifdef __ARM_NEON__
 	*fp++ = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); 
 	MOVI(&fp, 11, p->i0);
+#else
 	
+	*fp++ = 0x4c;
+	*fp++ = 0x8b;
+	*fp++ = 0x07;
+	MOVI(&fp, RCX, p->i0 * 4);
+	//LEA(&fp, R8, RDI, ((uint32_t)&p->offsets) - ((uint32_t)p)); 
+#endif
 	//fp++;
-	memcpy(fp, neon_ee, neon_oo - neon_ee);
-	fp += (neon_oo - neon_ee) / 4;
+	memcpy(fp, leaf_ee, neon_oo - leaf_ee);
+#ifdef __ARM_NEON__
+	fp += (neon_oo - leaf_ee) / 4;
+#else
+	int i;
+
+	IMM32_NI(fp + 3, READ_IMM32(fp + 3) + ((void *)leaf_ee - (void *)fp )); 
+
+	uint32_t offsets[8] = {0, N, N/2, 3*N/2, N/4, 5*N/4, 7*N/4, 3*N/4};
 	
+	for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_ee_offsets[i], offsets[i]*4); 
+	
+	fp += (neon_oo - leaf_ee);
+#endif
+#ifdef __ARM_NEON__
 	if(__builtin_ctzl(N) & 1){
 		ADDI(&fp, 2, 7, 0);
 		ADDI(&fp, 7, 9, 0);
@@ -316,6 +297,23 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	}
 	
 	*fp++ = POP_LR(); count++;
+#else
+	RET(&fp);	
+
+
+	uint8_t *pp = func;
+	int counter = 0;
+	do{ 
+		printf("%02x ", *pp);
+		if(counter++ % 16 == 15) printf("\n");
+	} while(++pp < fp);
+
+	printf("\n");
+
+
+#endif
+
+
 //	*fp++ = B(14); count++;
 
 //for(int i=0;i<(neon_x8 - neon_x4)/4;i++) 
@@ -327,7 +325,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 	
 	if (mprotect(func, p->transform_size, PROT_READ | PROT_EXEC)) {
 		perror("Couldn't mprotect");
-		return NULL;
+		exit(1);
 	}
 
 	sys_icache_invalidate(func, p->transform_size);
@@ -335,5 +333,5 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN)
 
 	fprintf(stderr, "size of transform %zu = %d\n", N, (fp-func)*4);
 
-	return (transform_func_t)start;
+	p->transform = start;
 }

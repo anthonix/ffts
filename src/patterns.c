@@ -114,9 +114,9 @@ void ffts_init_offsets(ffts_plan_t *p, int N, int leafN) {
 	for(i=0;i<N/leafN;i++) {
 		p->offsets[i] = offsets[i*2+1]*2;
 	}
-//for(i=0;i<N/leafN;i++) {
-//	printf("%4d %4d\n", p->offsets[i], reverse_bits(p->offsets[i], __builtin_ctzl(2*N)));
-//}
+  for(i=0;i<N/leafN;i++) {
+  	printf("%4d %4d\n", p->offsets[i], reverse_bits(p->offsets[i], __builtin_ctzl(2*N)));
+  }
 	free(offsets);
 
 

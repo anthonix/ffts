@@ -1,20 +1,12 @@
 
-OBJLIBS = libffts.a
-HDRS = cp_sse.h patterns.h macros.h neon_float.h codegen.h neon.h
-FILES = cp_sse.c patterns.c codegen.c neon.s
-OBJS = cp_sse.o patterns.o codegen.o neon.o
 
-all: $(OBJLIBS)
+lib_LTLIBRARIES = libffts.la
 
-%.o: %.c $(HDRS)
-	$(CC) $(CFLAGS) -c -o $@ $< -I../include -g
-	$(CC) $(CFLAGS) -S $< -I../include
+libffts_la_SOURCES = cp_sse.c patterns.c codegen.c
 
-%.o: %.s 
-	$(CC) $(CFLAGS) -c -o $@ $< -I../include -g
-	
-$(OBJLIBS): $(OBJS) 
-	$(AR) rcs libffts.a $(OBJS)
-
-clean:
-	$(RM) -f *.o $(OBJLIBS)
+if HAVE_NEON
+libffts_la_SOURCES += neon.s
+endif
+if HAVE_SSE
+libffts_la_SOURCES += sse.s
+endif

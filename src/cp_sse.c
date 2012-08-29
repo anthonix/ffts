@@ -308,8 +308,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	p->N = N;
 	p->lastlut = w;
 	p->n_luts = n_luts;
-	if(N>=32)  
-		p->transform = ffts_generate_func_code(p, N, leafN);
+	if(N>=32)  ffts_generate_func_code(p, N, leafN);
 //	fprintf(stderr, "sizeof(size_t) == %lu\n", sizeof(size_t));
 
 	return p;
