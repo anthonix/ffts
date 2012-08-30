@@ -14,7 +14,12 @@ void leaf_oo();
 void leaf_eo();
 void leaf_oe();
 void leaf_end();
+void x_init();
+void x4();
+void x8_soft();
+void x8_hard();
 
+	typedef uint8_t insns_t;
 
 extern const uint32_t sse_leaf_ee_offsets[8];
 extern const uint32_t sse_leaf_oo_offsets[8];
@@ -103,6 +108,33 @@ void LEA(uint8_t **p, uint8_t dst, uint8_t base, int32_t disp) {
 
 void RET(uint8_t **p) {
 	*(*p)++ = 0xc3;
+}
+
+void ADDI(uint8_t **p, uint8_t dst, int32_t imm) {
+	if(dst >= 8) *(*p)++ = 0x49;
+	else         *(*p)++ = 0x48;
+	
+	if(imm > 127 || imm <= -128) *(*p)++ = 0x81;
+	else          *(*p)++ = 0x83;
+	
+	*(*p)++ = 0xc0 | (dst & 0x7);
+
+	if(imm > 127 || imm <= -128) IMM32(p, imm);
+	else          IMM8(p, imm);
+}
+
+void CALL(uint8_t **p, insns_t *func) {
+	*(*p)++ = 0xe8;
+	IMM32(p, ((void *)func) - (void *)(*p) - 4); 
+}
+
+void PUSH(uint8_t **p, uint8_t reg) {
+	if(reg >= 8) *(*p)++ = 0x41;
+	*(*p)++ = 0x50 | (reg & 7);
+}
+void POP(uint8_t **p, uint8_t reg) {
+	if(reg >= 8) *(*p)++ = 0x41;
+	*(*p)++ = 0x58 | (reg & 7);
 }
 
 #endif

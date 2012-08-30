@@ -94,7 +94,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 
 	pps = ps;
 
-	if(N < 8192) p->transform_size = 8192;
+	if(N < 8192) p->transform_size = 16384;
 	else p->transform_size = N;
 
 	p->transform_base = valloc(p->transform_size);//mmap(NULL, p->transform_size, PROT_WRITE | PROT_READ, MAP_ANON | MAP_SHARED, -1, 0);
@@ -116,15 +116,26 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	}
 
 	insns_t *x_8_addr = fp;
+	fprintf(stderr, "X8 start address = %016p\n", fp);
+#ifdef __ARM_NEON__
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
 	fp += (neon_x8_t - neon_x8) / 4;
+#else
+	memcpy(fp, x8_soft, x8_hard - x8_soft);
+	fp += (x8_hard - x8_soft);
+#endif
 //uint32_t *x_8_t_addr = fp;
 //memcpy(fp, neon_x8_t, neon_end - neon_x8_t);
 //fp += (neon_end - neon_x8_t) / 4;
 	insns_t *x_4_addr = fp;
+	fprintf(stderr, "X4 start address = %016p\n", fp);
+#ifdef __ARM_NEON__
 	memcpy(fp, neon_x4, neon_x8 - neon_x4);
 	fp += (neon_x8 - neon_x4) / 4;
-
+#else
+	memcpy(fp, x4, x8_soft - x4);
+	fp += (x8_soft - x4);
+#endif
 	insns_t *start = fp;
 
 #ifdef __ARM_NEON__
@@ -169,6 +180,17 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
 	fp += (neon_oo - leaf_ee) / 4;
 #else
+	fprintf(stderr, "Leaf start address = %016p\n", fp);
+	
+	PUSH(&fp, RBP);	
+	PUSH(&fp, RBX);
+	PUSH(&fp, R10);
+	PUSH(&fp, R11);
+	PUSH(&fp, R12);
+	PUSH(&fp, R13);
+	PUSH(&fp, R14);
+	PUSH(&fp, R15);
+	
 	int i;
 	memcpy(fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	IMM32_NI(fp + 3, READ_IMM32(fp + 3) + ((void *)leaf_ee_init - (void *)fp )); 
@@ -225,6 +247,49 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_ee_offsets[i], offsets_oe[i]*4); 
 		fp += (leaf_oo - leaf_ee);
 
+	}
+	
+	fprintf(stderr, "Body start address = %016p\n", fp);
+  //LEA(&fp, R8, RDI, ((uint32_t)&p->ws) - ((uint32_t)p)); 
+	memcpy(fp, x_init, x4 - x_init);
+	IMM32_NI(fp + 3, READ_IMM32(fp + 3) + ((void *)x_init - (void *)fp )); 
+	fp += (x4 - x_init);
+
+	int32_t pAddr = 0;
+	int32_t pN = 0;
+	int32_t pLUT = 0;
+	count = 2;
+	while(pps[0]) {
+	
+//	fprintf(stderr, "size %zu at %zu - diff %zu\n", pps[0], pps[1]*4, (pps[1]*4) - pAddr);
+		if(!pN) {
+			MOVI(&fp, RCX, pps[0] / 4);
+		}else{
+  		if((pps[1]*4)-pAddr) ADDI(&fp, RDX, (pps[1] * 4)- pAddr);
+			if(pps[0] - pN) ADDI(&fp, RCX, (pps[0] - pN) / 4);
+		}
+		
+  		if(p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8 - pLUT)
+  			ADDI(&fp, R8, p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8 - pLUT); 
+
+
+  	if(pps[0] == 2*leafN) {
+      CALL(&fp, x_4_addr);
+//  	}else if(!pps[2]){
+//	  //uint32_t *x_8_t_addr = fp;
+//		memcpy(fp, neon_x8_t, neon_ee - neon_x8_t);
+//		fp += (neon_ee - neon_x8_t) / 4;
+//		//*fp++ = BL(fp+2, x_8_t_addr);
+  	}else{
+    		CALL(&fp, x_8_addr);
+  	}
+
+		pAddr = pps[1] * 4;
+		pN = pps[0];
+		pLUT = p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8;//LUT_offset(pps[0], leafN);
+//	fprintf(stderr, "LUT offset for %d is %d\n", pN, pLUT); 
+		count += 4;
+		pps += 2;
 	}
 #endif
 #ifdef __ARM_NEON__
@@ -348,6 +413,14 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	
 	*fp++ = POP_LR(); count++;
 #else
+	POP(&fp, R15);
+	POP(&fp, R14);
+	POP(&fp, R13);
+	POP(&fp, R12);
+	POP(&fp, R11);
+	POP(&fp, R10);
+	POP(&fp, RBX);
+	POP(&fp, RBP);
 	RET(&fp);	
 
 
