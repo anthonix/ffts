@@ -15,9 +15,9 @@ _neon_x8_t:
 	.globl _leaf_ee_init
 	.align	4, 0x90
 _leaf_ee_init:
- 		lea L_sse_constants(%rip), %r9 
+ 		#lea L_sse_constants(%rip), %r9 
+		movq 0xe0(%rdi), %r9
 		xorl	%eax, %eax
-
 # eax is loop counter (init to 0)
 # rcx is loop max count
 # rsi is 'in' base pointer
@@ -404,7 +404,8 @@ _leaf_end:
 	.globl	_x_init
 	.align	4,0x90
 _x_init:
-        movaps    L_sse_constants(%rip), %xmm3           #34.3
+        #movaps    L_sse_constants(%rip), %xmm3           #34.3
+				movaps   (%r9), %xmm3           #34.3
 				movq        0x20(%rdi),%r8
 
 	.globl	_x4
@@ -728,7 +729,9 @@ _sse_leaf_oe_offsets:
 	.long LEAF_OE_const_7-_leaf_oe+0x4
 	
 	.section	__TEXT, __const
+	.globl _sse_constants
 	.align 4
+_sse_constants:
 L_sse_constants:
 L_2il0floatpacket.719:
 	.long	0x00000000,0x80000000,0x00000000,0x80000000

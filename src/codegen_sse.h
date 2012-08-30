@@ -19,6 +19,8 @@ void x4();
 void x8_soft();
 void x8_hard();
 
+void sse_constants();
+
 	typedef uint8_t insns_t;
 
 extern const uint32_t sse_leaf_ee_offsets[8];
@@ -50,25 +52,31 @@ extern const uint32_t sse_leaf_oe_offsets[8];
 #define R14 14 
 #define R15 15 
 
-void IMM8(uint8_t **p, uint32_t imm) {
+void IMM8(uint8_t **p, int32_t imm) {
 		*(*p)++ = (imm & 0xff);
 }
 
-void IMM32(uint8_t **p, uint32_t imm) {
+void IMM16(uint8_t **p, int32_t imm) {
+	int i;
+	for(i=0;i<2;i++) {
+		*(*p)++ = (imm & (0xff << (i*8))) >> (i*8);
+	} 
+}
+void IMM32(uint8_t **p, int32_t imm) {
 	int i;
 	for(i=0;i<4;i++) {
 		*(*p)++ = (imm & (0xff << (i*8))) >> (i*8);
 	} 
 }
-void IMM32_NI(uint8_t *p, uint32_t imm) {
+void IMM32_NI(uint8_t *p, int32_t imm) {
 	int i;
 	for(i=0;i<4;i++) {
 		*(p+i) = (imm & (0xff << (i*8))) >> (i*8);
 	} 
 }
 
-uint32_t READ_IMM32(uint8_t *p) {
-	uint32_t rval = 0;
+int32_t READ_IMM32(uint8_t *p) {
+	int32_t rval = 0;
 	int i;
 	for(i=0;i<4;i++) {
 		rval |= *(p+i) << (i*8);
@@ -77,14 +85,29 @@ uint32_t READ_IMM32(uint8_t *p) {
 }
 
 void MOVI(uint8_t **p, uint8_t dst, uint32_t imm) {
-	if(dst < 8) {
-		*(*p)++ = 0xb8 + dst; 
-	}else{
-		*(*p)++ = 0x49;
-		*(*p)++ = 0xc7;
-		*(*p)++ = 0xc0 | (dst - 8);
-	}
+//  if(imm < 65536) *(*p)++ = 0x66; 
+  if(dst >= 8) *(*p)++ = 0x41;
+
+  //if(imm < 65536 && imm >= 256) *(*p)++ = 0x66; 
+
+  //if(imm >= 256) 
+	*(*p)++ = 0xb8 | (dst & 0x7);
+//  else           *(*p)++ = 0xb0 | (dst & 0x7);
+
+ // if(imm < 256) IMM8(p, imm);
+//  else 
+//if(imm < 65536) IMM16(p, imm);
+//else 
 	IMM32(p, imm);
+
+//if(dst < 8) {
+//	*(*p)++ = 0xb8 + dst; 
+//}else{
+//	*(*p)++ = 0x49;
+//	*(*p)++ = 0xc7;
+//	*(*p)++ = 0xc0 | (dst - 8);
+//}
+//IMM32(p, imm);
 }
 
 void ADDRMODE(uint8_t **p, uint8_t reg, uint8_t rm, int32_t disp) {
@@ -111,6 +134,7 @@ void RET(uint8_t **p) {
 }
 
 void ADDI(uint8_t **p, uint8_t dst, int32_t imm) {
+	
 	if(dst >= 8) *(*p)++ = 0x49;
 	else         *(*p)++ = 0x48;
 	

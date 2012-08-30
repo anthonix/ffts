@@ -55,6 +55,7 @@ struct _ffts_plan_t {
 	void (*transform)(struct _ffts_plan_t * restrict, const float * restrict, float * restrict);
 	void *transform_base;
 	size_t transform_size;
+	void *constants;
 };
 
 typedef struct _ffts_plan_t ffts_plan_t;

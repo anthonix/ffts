@@ -88,6 +88,8 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	size_t *ps = malloc(count * 2 * sizeof(size_t));
 	size_t *pps = ps;
 
+	p->constants = sse_constants;
+
 	elaborate_tree(&pps, N, leafN, 0);
 	pps[0] = 0;
 	pps[1] = 0;
@@ -193,7 +195,19 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	
 	int i;
 	memcpy(fp, leaf_ee_init, leaf_ee - leaf_ee_init);
-	IMM32_NI(fp + 3, READ_IMM32(fp + 3) + ((void *)leaf_ee_init - (void *)fp )); 
+	
+	fprintf(stderr, "Leaf start address = %016p\n", fp);
+	fprintf(stderr, "Leaf ee init address = %016p\n", leaf_ee_init);
+	fprintf(stderr, "Constants address = %016p\n", sse_constants);
+	fprintf(stderr, "Constants address = %016p\n", p->constants);
+	
+//int32_t val = READ_IMM32(fp + 3);
+//fprintf(stderr, "diff = 0x%x\n", ((uint32_t)&p->constants) - ((uint32_t)p));
+
+//int64_t v2 = val + (int64_t)((void *)leaf_ee_init - (void *)fp );
+//fprintf(stderr, "IMM = 0x%llx\n", v2);
+
+//IMM32_NI(fp + 3, ((int64_t) READ_IMM32(fp + 3)) + ((void *)leaf_ee_init - (void *)fp )); 
 	fp += (leaf_ee - leaf_ee_init);
 
 	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
@@ -252,7 +266,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	fprintf(stderr, "Body start address = %016p\n", fp);
   //LEA(&fp, R8, RDI, ((uint32_t)&p->ws) - ((uint32_t)p)); 
 	memcpy(fp, x_init, x4 - x_init);
-	IMM32_NI(fp + 3, READ_IMM32(fp + 3) + ((void *)x_init - (void *)fp )); 
+//IMM32_NI(fp + 3, ((int64_t)READ_IMM32(fp + 3)) + ((void *)x_init - (void *)fp )); 
 	fp += (x4 - x_init);
 
 	int32_t pAddr = 0;
