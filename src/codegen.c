@@ -196,9 +196,6 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	PUSH(&fp, R13);
 	PUSH(&fp, R14);
 	PUSH(&fp, R15);
-	PUSH(&fp, R9);
-	PUSH(&fp, R8);
-	PUSH(&fp, RCX);
 	
 	int i;
 	memcpy(fp, leaf_ee_init, leaf_ee - leaf_ee_init);
@@ -446,9 +443,6 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	
 	*fp++ = POP_LR(); count++;
 #else
-	POP(&fp, RCX);
-	POP(&fp, R8);
-	POP(&fp, R9);
 	POP(&fp, R15);
 	POP(&fp, R14);
 	POP(&fp, R13);

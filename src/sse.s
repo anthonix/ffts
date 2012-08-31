@@ -106,7 +106,7 @@ LEAF_EE_const_7:
 				addq	    $4, %rax
         shufps    $238, %xmm4, %xmm2                            #83.5
         movaps    %xmm1, %xmm4                                  #83.5
-        movaps    %xmm3, (%rdx,%r11,4)                          #83.5
+        #movntdq    %xmm3, (%rdx,%r11,4)                          #83.5
         subps     %xmm12, %xmm7                                 #83.5
         addps     %xmm12, %xmm14                                #83.5
         movlhps   %xmm7, %xmm4                                  #83.5
@@ -116,13 +116,14 @@ LEAF_EE_const_7:
         movlhps   %xmm14, %xmm9                                 #83.5
         shufps    $238, %xmm13, %xmm5                           #83.5
         shufps    $238, %xmm14, %xmm6                           #83.5
-        movaps    %xmm4, 16(%rdx,%r11,4)                        #83.5
-        movaps    %xmm7, 32(%rdx,%r11,4)                        #83.5
-        movaps    %xmm9, 48(%rdx,%r11,4)                        #83.5
-        movaps    %xmm2, (%rdx,%r12,4)                          #83.5
-        movaps    %xmm1, 16(%rdx,%r12,4)                        #83.5
-        movaps    %xmm5, 32(%rdx,%r12,4)                        #83.5
-        movaps    %xmm6, 48(%rdx,%r12,4)                        #83.5
+        movntdq    %xmm3, (%rdx,%r11,4)                          #83.5
+        movntdq    %xmm4, 16(%rdx,%r11,4)                        #83.5
+        movntdq    %xmm7, 32(%rdx,%r11,4)                        #83.5
+        movntdq    %xmm9, 48(%rdx,%r11,4)                        #83.5
+        movntdq    %xmm2, (%rdx,%r12,4)                          #83.5
+        movntdq    %xmm1, 16(%rdx,%r12,4)                        #83.5
+        movntdq    %xmm5, 32(%rdx,%r12,4)                        #83.5
+        movntdq    %xmm6, 48(%rdx,%r12,4)                        #83.5
 				cmpq	%rcx, %rax
         jne      LEAF_EE_1 
 
@@ -191,14 +192,14 @@ LEAF_OO_const_7:
         shufps    $238, %xmm15, %xmm3                           #93.5
         shufps    $238, %xmm13, %xmm9                           #93.5
         shufps    $238, %xmm1, %xmm2                            #93.5
-        movaps    %xmm14, (%rdx,%r11,4)                         #93.5
-        movaps    %xmm7, 16(%rdx,%r11,4)                        #93.5
-        movaps    %xmm4, 32(%rdx,%r11,4)                        #93.5
-        movaps    %xmm8, 48(%rdx,%r11,4)                        #93.5
-        movaps    %xmm3, (%rdx,%r12,4)                          #93.5
-        movaps    %xmm6, 16(%rdx,%r12,4)                        #93.5
-        movaps    %xmm9, 32(%rdx,%r12,4)                        #93.5
-        movaps    %xmm2, 48(%rdx,%r12,4)                        #93.5
+        movntdq    %xmm14, (%rdx,%r11,4)                         #93.5
+        movntdq    %xmm7, 16(%rdx,%r11,4)                        #93.5
+        movntdq    %xmm4, 32(%rdx,%r11,4)                        #93.5
+        movntdq    %xmm8, 48(%rdx,%r11,4)                        #93.5
+        movntdq    %xmm3, (%rdx,%r12,4)                          #93.5
+        movntdq    %xmm6, 16(%rdx,%r12,4)                        #93.5
+        movntdq    %xmm9, 32(%rdx,%r12,4)                        #93.5
+        movntdq    %xmm2, 48(%rdx,%r12,4)                        #93.5
 				cmpq	%rcx, %rax
         jne       LEAF_OO_1       # Prob 95%                      #92.14
 
