@@ -96,21 +96,25 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 
 	pps = ps;
 
-	if(N < 8192) p->transform_size = 16384;
+#ifdef __ARM_NEON__
+	if(N < 8192) p->transform_size = 8192;
 	else p->transform_size = N;
+#else
+	if(N < 2048) p->transform_size = 16384;
+	else p->transform_size = 16384 + 2*N/8 * __builtin_ctzl(N);
+#endif
 
-	p->transform_base = valloc(p->transform_size);//mmap(NULL, p->transform_size, PROT_WRITE | PROT_READ, MAP_ANON | MAP_SHARED, -1, 0);
+	p->transform_base = mmap(NULL, p->transform_size, PROT_WRITE | PROT_READ, MAP_ANON | MAP_SHARED, -1, 0);
 	/*
 	if(p->transform_base == MAP_FAILED) {
 		fprintf(stderr, "MAP FAILED\n");
 		exit(1);
 	}*/
-
 	insns_t *func = p->transform_base;//valloc(8192);
 	insns_t *fp = func;
 
-	fprintf(stderr, "Allocating %d bytes \n", p->transform_size);
-	fprintf(stderr, "Base address = %016p\n", func);
+//fprintf(stderr, "Allocating %d bytes \n", p->transform_size);
+//fprintf(stderr, "Base address = %016p\n", func);
 
 	if(!func) { 
 		fprintf(stderr, "NOMEM\n");
@@ -118,7 +122,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	}
 
 	insns_t *x_8_addr = fp;
-	fprintf(stderr, "X8 start address = %016p\n", fp);
+//fprintf(stderr, "X8 start address = %016p\n", fp);
 #ifdef __ARM_NEON__
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
 	fp += (neon_x8_t - neon_x8) / 4;
@@ -130,7 +134,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 //memcpy(fp, neon_x8_t, neon_end - neon_x8_t);
 //fp += (neon_end - neon_x8_t) / 4;
 	insns_t *x_4_addr = fp;
-	fprintf(stderr, "X4 start address = %016p\n", fp);
+//fprintf(stderr, "X4 start address = %016p\n", fp);
 #ifdef __ARM_NEON__
 	memcpy(fp, neon_x4, neon_x8 - neon_x4);
 	fp += (neon_x8 - neon_x4) / 4;
@@ -182,7 +186,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
 	fp += (neon_oo - leaf_ee) / 4;
 #else
-	fprintf(stderr, "Leaf start address = %016p\n", fp);
+//fprintf(stderr, "Leaf start address = %016p\n", fp);
 	
 	PUSH(&fp, RBP);	
 	PUSH(&fp, RBX);
@@ -192,14 +196,17 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	PUSH(&fp, R13);
 	PUSH(&fp, R14);
 	PUSH(&fp, R15);
+	PUSH(&fp, R9);
+	PUSH(&fp, R8);
+	PUSH(&fp, RCX);
 	
 	int i;
 	memcpy(fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	
-	fprintf(stderr, "Leaf start address = %016p\n", fp);
-	fprintf(stderr, "Leaf ee init address = %016p\n", leaf_ee_init);
-	fprintf(stderr, "Constants address = %016p\n", sse_constants);
-	fprintf(stderr, "Constants address = %016p\n", p->constants);
+//fprintf(stderr, "Leaf start address = %016p\n", fp);
+//fprintf(stderr, "Leaf ee init address = %016p\n", leaf_ee_init);
+//fprintf(stderr, "Constants address = %016p\n", sse_constants);
+//fprintf(stderr, "Constants address = %016p\n", p->constants);
 	
 //int32_t val = READ_IMM32(fp + 3);
 //fprintf(stderr, "diff = 0x%x\n", ((uint32_t)&p->constants) - ((uint32_t)p));
@@ -263,7 +270,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 
 	}
 	
-	fprintf(stderr, "Body start address = %016p\n", fp);
+//fprintf(stderr, "Body start address = %016p\n", fp);
   //LEA(&fp, R8, RDI, ((uint32_t)&p->ws) - ((uint32_t)p)); 
 	memcpy(fp, x_init, x4 - x_init);
 //IMM32_NI(fp + 3, ((int64_t)READ_IMM32(fp + 3)) + ((void *)x_init - (void *)fp )); 
@@ -275,7 +282,6 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	count = 2;
 	while(pps[0]) {
 	
-//	fprintf(stderr, "size %zu at %zu - diff %zu\n", pps[0], pps[1]*4, (pps[1]*4) - pAddr);
 		if(!pN) {
 			MOVI(&fp, RCX, pps[0] / 4);
 		}else{
@@ -292,11 +298,6 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 					*fp++ = 0xe9;
 					*fp++ = ((-diff) & 0xff);
 				}
-
-					
-				fprintf(stderr, "%d -> %d = shl %d\n", pps[0], pN, diff);
-	//			ADDI(&fp, RCX, (pps[0] - pN) / 4);
-
 			}
 		}
 		
@@ -445,6 +446,9 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	
 	*fp++ = POP_LR(); count++;
 #else
+	POP(&fp, RCX);
+	POP(&fp, R8);
+	POP(&fp, R9);
 	POP(&fp, R15);
 	POP(&fp, R14);
 	POP(&fp, R13);
@@ -456,14 +460,14 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	RET(&fp);	
 
 
-	uint8_t *pp = func;
-	int counter = 0;
-	do{ 
-		printf("%02x ", *pp);
-		if(counter++ % 16 == 15) printf("\n");
-	} while(++pp < fp);
+//uint8_t *pp = func;
+//int counter = 0;
+//do{ 
+//	printf("%02x ", *pp);
+//	if(counter++ % 16 == 15) printf("\n");
+//} while(++pp < fp);
 
-	printf("\n");
+//printf("\n");
 
 
 #endif
@@ -486,7 +490,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	sys_icache_invalidate(func, p->transform_size);
 
 
-	fprintf(stderr, "size of transform %zu = %d\n", N, (fp-func)*4);
+//fprintf(stderr, "size of transform %zu = %d\n", N, (fp-func)*4);
 
 	p->transform = start;
 }

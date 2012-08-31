@@ -33,7 +33,8 @@ void ffts_free(ffts_plan_t *p) {
 			perror("Couldn't mprotect");
 			exit(errno);
 		}
-		free(p->transform_base);
+		munmap(p->transform_base, p->transform_size);
+		//free(p->transform_base);
 	}
 	free(p);
 }
