@@ -280,7 +280,24 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 			MOVI(&fp, RCX, pps[0] / 4);
 		}else{
   		if((pps[1]*4)-pAddr) ADDI(&fp, RDX, (pps[1] * 4)- pAddr);
-			if(pps[0] - pN) ADDI(&fp, RCX, (pps[0] - pN) / 4);
+			if(pps[0] > leafN && pps[0] - pN) {
+				
+				int diff = __builtin_ctzl(pps[0]) - __builtin_ctzl(pN);
+				*fp++ = 0xc1; 
+				
+				if(diff > 0) {
+					*fp++ = 0xe1;
+					*fp++ = (diff & 0xff);
+				}else{
+					*fp++ = 0xe9;
+					*fp++ = ((-diff) & 0xff);
+				}
+
+					
+				fprintf(stderr, "%d -> %d = shl %d\n", pps[0], pN, diff);
+	//			ADDI(&fp, RCX, (pps[0] - pN) / 4);
+
+			}
 		}
 		
   		if(p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8 - pLUT)
@@ -299,7 +316,8 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
   	}
 
 		pAddr = pps[1] * 4;
-		pN = pps[0];
+		if(pps[0] > leafN) 
+			pN = pps[0];
 		pLUT = p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8;//LUT_offset(pps[0], leafN);
 //	fprintf(stderr, "LUT offset for %d is %d\n", pN, pLUT); 
 		count += 4;
