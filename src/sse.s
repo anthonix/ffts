@@ -13,7 +13,7 @@ _neon_x8_t:
 
 
 	.globl _leaf_ee_init
-	.align	4, 0x90
+#	.align	4, 0x90
 _leaf_ee_init:
  		#lea L_sse_constants(%rip), %r9 
 		movq 0xe0(%rdi), %r9
@@ -26,11 +26,12 @@ _leaf_ee_init:
 # r9 is constants pointer
 # scratch: rax r11 r12
 	.globl _leaf_ee
-	.align	4, 0x90
+#	.align	4, 0x90
+
+# _leaf_ee + 9 needs 16 byte alignment
 _leaf_ee:
 		movaps    32(%r9), %xmm0            #83.5
- 		movaps    0x0(%r9), %xmm8            #83.5
-	.align	4, 0x90
+ 		movaps    (%r9), %xmm8            #83.5
 LEAF_EE_1:
 LEAF_EE_const_0:
 				movaps    0xBEBAFECA(%rsi,%rax,4), %xmm7                           #83.5
@@ -116,22 +117,23 @@ LEAF_EE_const_7:
         movlhps   %xmm14, %xmm9                                 #83.5
         shufps    $238, %xmm13, %xmm5                           #83.5
         shufps    $238, %xmm14, %xmm6                           #83.5
-        movntdq    %xmm3, (%rdx,%r11,4)                          #83.5
-        movntdq    %xmm4, 16(%rdx,%r11,4)                        #83.5
-        movntdq    %xmm7, 32(%rdx,%r11,4)                        #83.5
-        movntdq    %xmm9, 48(%rdx,%r11,4)                        #83.5
-        movntdq    %xmm2, (%rdx,%r12,4)                          #83.5
-        movntdq    %xmm1, 16(%rdx,%r12,4)                        #83.5
-        movntdq    %xmm5, 32(%rdx,%r12,4)                        #83.5
-        movntdq    %xmm6, 48(%rdx,%r12,4)                        #83.5
+        movaps    %xmm3, (%rdx,%r11,4)                          #83.5
+        movaps    %xmm4, 16(%rdx,%r11,4)                        #83.5
+        movaps    %xmm7, 32(%rdx,%r11,4)                        #83.5
+        movaps    %xmm9, 48(%rdx,%r11,4)                        #83.5
+        movaps    %xmm2, (%rdx,%r12,4)                          #83.5
+        movaps    %xmm1, 16(%rdx,%r12,4)                        #83.5
+        movaps    %xmm5, 32(%rdx,%r12,4)                        #83.5
+        movaps    %xmm6, 48(%rdx,%r12,4)                        #83.5
 				cmpq	%rcx, %rax
         jne      LEAF_EE_1 
+        
 
 	.globl _leaf_oo
-	.align 4,0x90
+
+# _leaf_oo + 4 needs to be 16 byte aligned
 _leaf_oo:
         movaps    (%r9), %xmm5            #92.7
-	.align	4, 0x90
 LEAF_OO_1:
 LEAF_OO_const_0:
         movaps    0xBEBAFECA(%rsi,%rax,4), %xmm4                           #93.5
@@ -192,20 +194,19 @@ LEAF_OO_const_7:
         shufps    $238, %xmm15, %xmm3                           #93.5
         shufps    $238, %xmm13, %xmm9                           #93.5
         shufps    $238, %xmm1, %xmm2                            #93.5
-        movntdq    %xmm14, (%rdx,%r11,4)                         #93.5
-        movntdq    %xmm7, 16(%rdx,%r11,4)                        #93.5
-        movntdq    %xmm4, 32(%rdx,%r11,4)                        #93.5
-        movntdq    %xmm8, 48(%rdx,%r11,4)                        #93.5
-        movntdq    %xmm3, (%rdx,%r12,4)                          #93.5
-        movntdq    %xmm6, 16(%rdx,%r12,4)                        #93.5
-        movntdq    %xmm9, 32(%rdx,%r12,4)                        #93.5
-        movntdq    %xmm2, 48(%rdx,%r12,4)                        #93.5
+        movaps    %xmm14, (%rdx,%r11,4)                         #93.5
+        movaps    %xmm7, 16(%rdx,%r11,4)                        #93.5
+        movaps    %xmm4, 32(%rdx,%r11,4)                        #93.5
+        movaps    %xmm8, 48(%rdx,%r11,4)                        #93.5
+        movaps    %xmm3, (%rdx,%r12,4)                          #93.5
+        movaps    %xmm6, 16(%rdx,%r12,4)                        #93.5
+        movaps    %xmm9, 32(%rdx,%r12,4)                        #93.5
+        movaps    %xmm2, 48(%rdx,%r12,4)                        #93.5
 				cmpq	%rcx, %rax
         jne       LEAF_OO_1       # Prob 95%                      #92.14
 
 
 	.globl _leaf_eo
-	.align 4,0x90
 _leaf_eo:
 LEAF_EO_const_0:
         movaps    0xBEBAFECA(%rsi,%rax,4), %xmm9                          #88.5
@@ -300,7 +301,6 @@ LEAF_EO_const_7:
 	
 
 	.globl _leaf_oe
-	.align 4,0x90
 _leaf_oe:
         movaps    (%r9), %xmm0           #59.5
         #movaps    0x20(%r9), %xmm1           #59.5
@@ -399,18 +399,15 @@ LEAF_OE_const_5:
 	
 	
 	.globl	_leaf_end
-	.align	4,0x90
 _leaf_end:
 
 	.globl	_x_init
-	.align	4,0x90
 _x_init:
         #movaps    L_sse_constants(%rip), %xmm3           #34.3
 				movaps   (%r9), %xmm3           #34.3
 				movq        0x20(%rdi),%r8
 
 	.globl	_x4
-	.align	4,0x90
 _x4:
         movaps    64(%rdx), %xmm0                               #34.3
         movaps    96(%rdx), %xmm1                               #34.3
@@ -475,7 +472,8 @@ _x4:
 				ret	
 	
 	.globl	_x8_soft
-	.align	4,0x90
+# _x8_soft + 5 needs to be 16 byte aligned
+
 _x8_soft:
         xorl %eax, %eax
 				movq      %rdx, %rbx     
@@ -487,7 +485,6 @@ _x8_soft:
         leaq       (%r12,%rcx,4), %r13
         leaq       (%r13,%rcx,4), %r14
         leaq       (%r14,%rcx,4), %r15
-	.align	4,0x90
 X8_soft_loop:   
         movaps    (%rsi), %xmm9       
         movaps    (%r10,%rax,4), %xmm6 
@@ -578,10 +575,8 @@ X8_soft_loop:
 				ret
 
 	.globl	_x8_hard
-	.align	4,0x90
 _x8_hard:
         movaps    (%r9), %xmm5           
-	.align	4
 X8_loop:  
         movaps    (%r8), %xmm9                                 
 X8_const_2:

@@ -8,7 +8,7 @@
 
 #ifdef __ARM_NEON__
 	#include "codegen_neon.h"
-	#include "neon_float.h"
+//	#include "neon_float.h"
 	#include "neon.h"
 #else
 	#include "codegen_sse.h"
@@ -83,6 +83,33 @@ uint32_t LUT_offset(size_t N, size_t leafN) {
 	typedef uint8_t insns_t;
 #endif
 
+#define P(x) (*(*p)++ = x)
+
+void insert_nops(uint8_t **p, uint32_t count) {
+	switch(count) {
+		case 0: break;
+		case 2: P(0x66); 
+		case 1: P(0x90); break;
+		case 3: P(0x0F); P(0x1F); P(0x00); break;	
+		case 4: P(0x0F); P(0x1F); P(0x40); P(0x00); break;	
+		case 5: P(0x0F); P(0x1F); P(0x44); P(0x00); P(0x00); break;	
+		case 6: P(0x66); P(0x0F); P(0x1F); P(0x44); P(0x00); P(0x00); break;	
+		case 7: P(0x0F); P(0x1F); P(0x80); P(0x00); P(0x00); P(0x00); P(0x00); break;	
+		case 8: P(0x0F); P(0x1F); P(0x84); P(0x00); P(0x00); P(0x00); P(0x00); P(0x00); break;	
+		case 9: P(0x66); P(0x0F); P(0x1F); P(0x84); P(0x00); P(0x00); P(0x00); P(0x00); P(0x00); break;	
+		default:
+			P(0x66); P(0x0F); P(0x1F); P(0x84); P(0x00); P(0x00); P(0x00); P(0x00); P(0x00); 
+			insert_nops(p, count-9);
+			break;	
+	}
+}
+
+void align_mem16(uint8_t **p, uint32_t offset) {
+	int r = (16 - (offset & 0xf)) - ((uint32_t)(*p) & 0xf);
+	r = (16 + r) & 0xf;
+	insert_nops(p, r);	
+}
+
 void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	int count = tree_count(N, leafN, 0) + 1;
 	size_t *ps = malloc(count * 2 * sizeof(size_t));
@@ -122,25 +149,30 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	}
 
 	insns_t *x_8_addr = fp;
-//fprintf(stderr, "X8 start address = %016p\n", fp);
 #ifdef __ARM_NEON__
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
 	fp += (neon_x8_t - neon_x8) / 4;
 #else
+	align_mem16(&fp, 0);
+	x_8_addr = fp;
+	align_mem16(&fp, 5);
 	memcpy(fp, x8_soft, x8_hard - x8_soft);
 	fp += (x8_hard - x8_soft);
+//fprintf(stderr, "X8 start address = %016p\n", x_8_addr);
 #endif
 //uint32_t *x_8_t_addr = fp;
 //memcpy(fp, neon_x8_t, neon_end - neon_x8_t);
 //fp += (neon_end - neon_x8_t) / 4;
 	insns_t *x_4_addr = fp;
-//fprintf(stderr, "X4 start address = %016p\n", fp);
 #ifdef __ARM_NEON__
 	memcpy(fp, neon_x4, neon_x8 - neon_x4);
 	fp += (neon_x8 - neon_x4) / 4;
 #else
+	align_mem16(&fp, 0);
+	x_4_addr = fp;
 	memcpy(fp, x4, x8_soft - x4);
 	fp += (x8_soft - x4);
+//fprintf(stderr, "X4 start address = %016p\n", x_4_addr);
 #endif
 	insns_t *start = fp;
 
@@ -172,6 +204,8 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	*fp++ = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); 
 	MOVI(&fp, 11, p->i0);
 #else
+	align_mem16(&fp, 0);
+	start = fp;
 	
 	*fp++ = 0x4c;
 	*fp++ = 0x8b;
@@ -186,7 +220,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
 	fp += (neon_oo - leaf_ee) / 4;
 #else
-//fprintf(stderr, "Leaf start address = %016p\n", fp);
+//fprintf(stderr, "Body start address = %016p\n", start);
 	
 	PUSH(&fp, RBP);	
 	PUSH(&fp, RBX);
@@ -200,7 +234,6 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	int i;
 	memcpy(fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	
-//fprintf(stderr, "Leaf start address = %016p\n", fp);
 //fprintf(stderr, "Leaf ee init address = %016p\n", leaf_ee_init);
 //fprintf(stderr, "Constants address = %016p\n", sse_constants);
 //fprintf(stderr, "Constants address = %016p\n", p->constants);
@@ -214,6 +247,8 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 //IMM32_NI(fp + 3, ((int64_t) READ_IMM32(fp + 3)) + ((void *)leaf_ee_init - (void *)fp )); 
 	fp += (leaf_ee - leaf_ee_init);
 
+//fprintf(stderr, "Leaf start address = %016p\n", fp);
+	align_mem16(&fp, 9);
 	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
 
 
@@ -229,6 +264,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 		if(p->i1) {
 			lp_cnt += p->i1 * 4;
   		MOVI(&fp, RCX, lp_cnt);
+			align_mem16(&fp, 4);
   		memcpy(fp, leaf_oo, leaf_eo - leaf_oo);
   		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_oo_offsets[i], offsets_o[i]*4); 
   		fp += (leaf_eo - leaf_oo);
@@ -251,6 +287,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
   	if(p->i1) {
 			lp_cnt += p->i1 * 4;
   		MOVI(&fp, RCX, lp_cnt);
+			align_mem16(&fp, 4);
   		memcpy(fp, leaf_oo, leaf_eo - leaf_oo);
   		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_oo_offsets[i], offsets_o[i]*4); 
   		fp += (leaf_eo - leaf_oo);
@@ -261,6 +298,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 
 		lp_cnt += p->i1 * 4;
 		MOVI(&fp, RCX, lp_cnt);
+		align_mem16(&fp, 9);
 		memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
 		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_ee_offsets[i], offsets_oe[i]*4); 
 		fp += (leaf_oo - leaf_ee);

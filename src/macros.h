@@ -4,7 +4,8 @@
 #include "../config.h"
 
 #ifdef HAVE_NEON
-	#include "neon_float.h"
+	//#include "neon_float.h"
+	#include "neon.h"
 #else 
 	#include "sse_float.h"
 #endif
