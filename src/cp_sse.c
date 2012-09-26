@@ -312,7 +312,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	if(N>=32)  ffts_generate_func_code(p, N, leafN);
 #ifdef __x86_64__
 	float *temp_consts = (float *)p->constants;
-	if(sign > 0) {
+	if(sign > 0 && N>=32) {
 		temp_consts[0] = -0.0f;
 		temp_consts[1] = 0.0f;
 		temp_consts[2] = -0.0f;
