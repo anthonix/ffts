@@ -115,7 +115,9 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	size_t *ps = malloc(count * 2 * sizeof(size_t));
 	size_t *pps = ps;
 
+#ifdef __x86_64__
 	p->constants = sse_constants;
+#endif
 
 	elaborate_tree(&pps, N, leafN, 0);
 	pps[0] = 0;
@@ -217,8 +219,8 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 #endif
 	//fp++;
 #ifdef __ARM_NEON__
-	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
-	fp += (neon_oo - leaf_ee) / 4;
+	memcpy(fp, neon_ee, neon_oo - neon_ee);
+	fp += (neon_oo - neon_ee) / 4;
 #else
 //fprintf(stderr, "Body start address = %016p\n", start);
 	

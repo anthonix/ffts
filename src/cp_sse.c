@@ -310,6 +310,27 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	p->lastlut = w;
 	p->n_luts = n_luts;
 	if(N>=32)  ffts_generate_func_code(p, N, leafN);
+#ifdef __x86_64__
+	float *temp_consts = (float *)p->constants;
+	if(sign > 0) {
+		temp_consts[0] = -0.0f;
+		temp_consts[1] = 0.0f;
+		temp_consts[2] = -0.0f;
+		temp_consts[3] = 0.0f;
+	
+		float temp;
+  	temp = temp_consts[9];
+  	temp_consts[9] = temp_consts[8];
+  	temp_consts[8] = temp;
+  	temp = temp_consts[11];
+  	temp_consts[11] = temp_consts[10];
+  	temp_consts[10] = temp;
+
+		temp = temp_consts[18];
+		temp_consts[18] = temp_consts[19];
+		temp_consts[19] = temp;
+	}
+#endif
 //	fprintf(stderr, "sizeof(size_t) == %lu\n", sizeof(size_t));
 
 	return p;

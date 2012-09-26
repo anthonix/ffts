@@ -724,7 +724,8 @@ _sse_leaf_oe_offsets:
 	.long LEAF_OE_const_6-_leaf_oe+0x4
 	.long LEAF_OE_const_7-_leaf_oe+0x4
 	
-	.section	__TEXT, __const
+#	.section	__TEXT, __const
+	.data
 	.globl _sse_constants
 	.align 4
 _sse_constants:

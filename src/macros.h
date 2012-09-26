@@ -6,6 +6,56 @@
 #ifdef HAVE_NEON
 	//#include "neon_float.h"
 	#include "neon.h"
+#include <arm_neon.h>
+#define __INLINE static inline __attribute__((always_inline))
+
+typedef float32x4_t V;
+
+typedef float32x4x2_t VS;
+
+#include <complex.h>
+#include <stdalign.h>
+
+typedef complex float cdata_t;
+typedef alignas(16) float data_t;
+
+#define ADD vaddq_f32
+#define SUB vsubq_f32
+#define MUL vmulq_f32
+#define VADD vaddq_f32
+#define VSUB vsubq_f32
+#define VMUL vmulq_f32
+#define VXOR(x,y) (vreinterpretq_f32_u32(veorq_u32(vreinterpretq_u32_f32(x), vreinterpretq_u32_f32(y))))
+#define VST vst1q_f32
+#define VLD vld1q_f32 
+#define VST2 vst2q_f32
+#define VLD2 vld2q_f32 
+
+#define VSWAPPAIRS(x) (vrev64q_f32(x))
+
+#define VUNPACKHI(a,b) (vcombine_f32(vget_high_f32(a), vget_high_f32(b)))
+#define VUNPACKLO(a,b) (vcombine_f32(vget_low_f32(a), vget_low_f32(b)))
+
+#define VBLEND(x,y) (vcombine_f32(vget_low_f32(x), vget_high_f32(y)))
+
+static inline V VLIT4(data_t f3, data_t f2, data_t f1, data_t f0) {
+    data_t __attribute__ ((aligned(16))) d[4] = {f0, f1, f2, f3};
+    return VLD(d);
+}
+
+#define VDUPRE(r) vcombine_f32(vdup_lane_f32(vget_low_f32(r),0), vdup_lane_f32(vget_high_f32(r),0))
+#define VDUPIM(r) vcombine_f32(vdup_lane_f32(vget_low_f32(r),1), vdup_lane_f32(vget_high_f32(r),1))
+
+#define FFTS_MALLOC(d,a) (valloc(d))
+#define FFTS_FREE(d) (free(d))
+
+__INLINE void STORESPR(data_t * addr,  VS p) {
+	__asm__ __volatile__ ("vst1.32 {%q1,%q2}, [%0, :128]\n\t"
+									 		: 
+		                	: "r" (addr), "w" (p.val[0]), "w" (p.val[1])
+	                 		: "memory");
+}
+
 #else 
 	#include "sse_float.h"
 #endif
@@ -114,7 +164,7 @@ __INLINE void TX2(V *a, V *b) {
     *a = TX2_t0; *b = TX2_t1; 
 }
 
-
+/*
 __INLINE void 
 LEAF_EE(size_t ** restrict is, const data_t * restrict in, size_t ** restrict out_offsets, data_t * restrict out) {
   V r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15;
@@ -168,6 +218,7 @@ LEAF_OO(size_t ** restrict is, const data_t * restrict in, size_t ** restrict ou
 
 	*is += 16;
 }
+*/
 #ifdef __ARM_NEON__
 __INLINE void 
 S_4_1(V r0, V r1, V r2, V r3, data_t * restrict o0, data_t * restrict o1, data_t * restrict o2, data_t * restrict o3) {
@@ -187,6 +238,7 @@ S_4_2(V r0, V r1, V r2, V r3, data_t * restrict o0, data_t * restrict o1, data_t
 		                	: "r" (o0), "w" (p0), "w" (p1), "w" (p2), "w" (p3)
 	                 		: "memory");
 }
+/*
 __INLINE void 
 LEAF_EE8(size_t ** restrict is, const data_t * restrict in, size_t ** restrict out_offsets, data_t * restrict out) {
   V r0,r1,r2,r3,r4,r5,r6,r7;
@@ -259,6 +311,7 @@ LEAF_OO8(size_t ** restrict is, const data_t * restrict in, size_t ** restrict o
 //S_4_2(r1,r3,r5,r7,out1+0,out1+4,out1+8,out1+12);
 	*is += 8;
 }
+*/
 #endif
 __INLINE void 
 L_4_4(const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
@@ -331,7 +384,7 @@ L_4_2(const data_t * restrict i0, const data_t * restrict i1, const data_t * res
   *r0 = VUNPACKLO(t0, t1);
   *r1 = VUNPACKLO(t2, t3);
 }
-
+/*
 __INLINE void 
 LEAF_OE(size_t ** restrict is, const data_t * restrict in, size_t ** restrict out_offsets, data_t * restrict out) {
   V r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15,r16_17,r18_19,r20_21,r22_23,r24_25,r26_27,r28_29,r30_31;
@@ -381,7 +434,9 @@ LEAF_EO(size_t ** restrict is, const data_t * restrict in, size_t ** restrict ou
 
 	*is += 16;
 }
+*/
 #ifdef __ARM_NEON__
+/*
 __INLINE void 
 LEAF_OE8(size_t ** restrict is, const data_t * restrict in, size_t ** restrict out_offsets, data_t * restrict out) {
   V r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15;
@@ -410,7 +465,7 @@ LEAF_EO8(size_t ** restrict is, const data_t * restrict in, size_t ** restrict o
   S_4_2(r0_1,r2_3,r4_5,r6_7,out0+0,out0+4,out0+8,out0+12);
 
 	*is += 8;
-}
+}*/
 #endif
 __INLINE void 
 firstpass_32(const data_t * restrict in, data_t * restrict out, ffts_plan_t * restrict p) {
@@ -500,7 +555,7 @@ firstpass_2(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restr
 	((cdata_t *)out)[0] = r0;
 	((cdata_t *)out)[1] = r1;
 }
-
+/*
 __INLINE void X_8(data_t * restrict data0, size_t N, const data_t * restrict LUT) {
 	data_t *data2 = data0 + 2*N/4;
 	data_t *data4 = data0 + 4*N/4;
@@ -556,5 +611,5 @@ __INLINE void X_4(data_t * restrict data, size_t N, const data_t * restrict LUT)
 		data += 4;
 	}
 }
-
+*/
 #endif
