@@ -2,12 +2,15 @@
 #include "macros.h"
 //#include "mini_macros.h"
 #include "patterns.h"
-  #include <libkern/OSCacheControl.h>
   #include <errno.h>
   #include <sys/mman.h>
   #include <string.h>
   #include <limits.h>	   /* for PAGESIZE */
 
+#if __APPLE__
+  #include <libkern/OSCacheControl.h>
+#else
+#endif
 
 void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out) {
 	transform_index_t *ps = p->transforms;
@@ -47,9 +50,13 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	if(sign < 0) MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
 	else         MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
 	
-	if(sign < 0) SCALAR_MULI_SIGN = -0.0f*I; 
-	else         SCALAR_MULI_SIGN = -0.0f; 
-
+	if(sign < 0) {
+		SCALAR_MULI_SIGN[0] = 0.0f; 
+		SCALAR_MULI_SIGN[1] = -0.0f; 
+	}else{
+		SCALAR_MULI_SIGN[0] = -0.0f; 
+		SCALAR_MULI_SIGN[1] = 0.0f; 
+	}
 	p->transform = NULL;
 	p->transform_base = NULL;
 	p->transforms = NULL;
@@ -172,7 +179,8 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 
 				size_t j;
 				for(j=0;j<n/4;j++) {
-					w0[j]	= W(n,j);
+					w0[j][0]	= W_re(n,j);
+					w0[j][1]	= W_im(n,j);
 				}
 
 
@@ -231,9 +239,12 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 
 				size_t j;
 				for(j=0;j<n/8;j++) {
-					w0[j]	= W(n,j*2);
-					w1[j]	= W(n,j);
-					w2[j]	= W(n,j + (n/8));
+					w0[j][0]	= W_re(n,j*2);
+					w0[j][1]	= W_im(n,j*2);
+					w1[j][0]	= W_re(n,j);
+					w1[j][1]	= W_im(n,j);
+					w2[j][0]	= W_re(n,j + (n/8));
+					w2[j][1]	= W_im(n,j + (n/8));
 
 				}
 

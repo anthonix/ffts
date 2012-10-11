@@ -9,9 +9,10 @@
 #include <string.h>
 #include <limits.h>	   /* for PAGESIZE */
 
-typedef struct _ffts_plan_t ffts_plan_t;
+#include "cp_sse.h"
+//typedef struct _ffts_plan_t ffts_plan_t;
 
-typedef void (*transform_func_t)(float *data, size_t N, float *LUT);
+//typedef void (*transform_func_t)(float *data, size_t N, float *LUT);
 
 void ffts_generate_func_code(ffts_plan_t *, size_t N, size_t leafN); 
 

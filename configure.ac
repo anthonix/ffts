@@ -44,7 +44,16 @@ if test "$have_neon" = "yes"; then
 fi
 AM_CONDITIONAL(HAVE_NEON, test "$have_neon" = "yes")
 
-
+#AC_CANONICAL_HOST
+AC_MSG_NOTICE([host is "${host}"])
+case "${host}" in
+	arm* )
+		CFLAGS="$CFLAGS -mfloat-abi=softfp -mfpu=neon -std=c99"
+		CCASFLAGS="$CCASFLAGS -mfloat-abi=softfp -mfpu=neon "
+		;;
+	*)
+		;;
+esac
 #if test "$ord_sr" = "no"; then
 #	AC_DEFINE(SFFT_ORD_SR,0,[Define to enable ordinary split radix.])
 #fi
@@ -63,7 +72,10 @@ AC_TYPE_INT32_T
 AC_C_RESTRICT
 AC_TYPE_SIZE_T
 AC_TYPE_UINT64_T
-
+AC_PROG_CC_STDC
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_LIBTOOL
 # Checks for library functions.
 #AC_FUNC_MALLOC
 AC_CHECK_FUNCS([gettimeofday pow])
@@ -72,5 +84,6 @@ AC_CHECK_FUNCS([gettimeofday pow])
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  tests/Makefile
+								 ffts.pc
                  ])
 AC_OUTPUT

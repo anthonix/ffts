@@ -30,8 +30,12 @@
 */
 
 #include <stdio.h>
-#include <complex.h>
-#include <xmmintrin.h>
+
+#ifdef __ARM_NEON__
+
+#else
+	#include <xmmintrin.h>
+#endif 
 
 #include "ffts.h"
 
@@ -41,16 +45,23 @@ main(int argc, char *argv[]) {
   int n = atoi(argv[1]);
  	int sign = atoi(argv[2]);
 
-	float complex __attribute__ ((aligned(32))) *input = _mm_malloc(n * sizeof(float complex), 32);
-  float complex __attribute__ ((aligned(32))) *output = _mm_malloc(n * sizeof(float complex), 32);
+#ifdef __ARM_NEON__
+	float __attribute__ ((aligned(32))) *input = valloc(2 * n * sizeof(float));
+  float __attribute__ ((aligned(32))) *output = valloc(2 * n * sizeof(float));
+#else
+	float __attribute__ ((aligned(32))) *input = _mm_malloc(2 * n * sizeof(float), 32);
+  float __attribute__ ((aligned(32))) *output = _mm_malloc(2 * n * sizeof(float), 32);
+#endif
 
-	for(i=0;i<n;i++) input[i] = i;
-
+	for(i=0;i<n;i++) {
+		input[2*i]   = i;
+		input[2*i+1] = 0.0f;
+	}
 	ffts_plan_t *p = ffts_init(i, sign);
 	if(p) {
 	
   	p->transform(p, input, output);
-  	for(i=0;i<n;i++) printf("%d %f %f\n", i, creal(output[i]), cimag(output[i]));
+  	for(i=0;i<n;i++) printf("%d %f %f\n", i, output[2*i], output[2*i+1]);
   	ffts_free(p);
 	
 	}else{

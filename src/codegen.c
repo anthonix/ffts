@@ -2,7 +2,11 @@
 #include "macros.h"
 //#include "mini_macros.h"
 #include "cp_sse.h"
-#include <libkern/OSCacheControl.h>
+
+#ifdef __APPLE__
+	#include <libkern/OSCacheControl.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/mman.h>
 
@@ -13,6 +17,10 @@
 #else
 	#include "codegen_sse.h"
 	#include "sse_float.h"
+#endif
+
+#ifdef __ANDROID__
+	#include <unistd.h>
 #endif
 
 int tree_count(int N, int leafN, int offset) {
@@ -133,8 +141,14 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 	else p->transform_size = 16384 + 2*N/8 * __builtin_ctzl(N);
 #endif
 
+#ifdef __APPLE__
 	p->transform_base = mmap(NULL, p->transform_size, PROT_WRITE | PROT_READ, MAP_ANON | MAP_SHARED, -1, 0);
-	/*
+#else
+#define MAP_ANONYMOUS 0x20	
+	p->transform_base = mmap(NULL, p->transform_size, PROT_WRITE | PROT_READ, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+#endif
+
+/*
 	if(p->transform_base == MAP_FAILED) {
 		fprintf(stderr, "MAP FAILED\n");
 		exit(1);
@@ -520,9 +534,11 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN) {
 		perror("Couldn't mprotect");
 		exit(1);
 	}
-
+#ifdef __APPLE__
 	sys_icache_invalidate(func, p->transform_size);
-
+#elif __ANDROID__
+	cacheflush((long)(func), (long)(func) + p->transform_size, 0);
+#endif
 
 //fprintf(stderr, "size of transform %zu = %d\n", N, (fp-func)*4);
 

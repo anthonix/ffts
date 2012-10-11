@@ -34,10 +34,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <complex.h>
 #include <math.h>
 #include <stdint.h>
 #include <stddef.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
 
 typedef size_t transform_index_t;
 
@@ -52,7 +56,7 @@ struct _ffts_plan_t {
 	void *lastlut;
 	transform_index_t *transforms; 
 	//transform_func_t transform;
-	void (*transform)(struct _ffts_plan_t * restrict, const float * restrict, float * restrict);
+	void (*transform)(struct _ffts_plan_t * , const float * , float * );
 	void *transform_base;
 	size_t transform_size;
 	void *constants;
@@ -60,8 +64,12 @@ struct _ffts_plan_t {
 
 typedef struct _ffts_plan_t ffts_plan_t;
 
-void ffts_execute(ffts_plan_t * restrict, const void * restrict, const void * restrict);
+void ffts_execute(ffts_plan_t * , const void * , const void * );
 ffts_plan_t *ffts_init(size_t N, int sign);
 void ffts_free(ffts_plan_t *);
+
+#ifdef __cplusplus
+}  /* extern "C" */
+#endif /* __cplusplus */
 
 #endif

@@ -4,17 +4,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <complex.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdalign.h>
+//#include <stdalign.h>
 
 //#include "codegen.h"
+#include "types.h"
 
-typedef complex float cdata_t;
-typedef alignas(16) float data_t;
+//#define W(N,k) (cexp(-2.0f * M_PI * I * (float)(k) / (float)(N)))
 
-#define W(N,k) (cexp(-2.0f * M_PI * I * (float)(k) / (float)(N)))
+inline float W_re(float N, float k) {
+	return cos(-2.0f * M_PI * k / N);
+}
+
+inline float W_im(float N, float k) {
+	return sin(-2.0f * M_PI * k / N);
+}
+
 
 typedef size_t transform_index_t;
 
