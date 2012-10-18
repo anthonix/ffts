@@ -1,4 +1,6 @@
 #/bin/sh
+# Compiles ffts for iOS 
+# Modify INSTALL_DIR, SDKVER and DEVROOT to suit your situation
 
 INSTALL_DIR="`pwd`/build"
 
@@ -13,6 +15,8 @@ export CC="clang"
 mkdir -p $INSTALL_DIR
 ./configure --enable-neon --build=i386-apple-darwin10.8.0 --host=arm-eabi --prefix=$INSTALL_DIR
 
+make clean
 make 
 make install
 
+exit 0
