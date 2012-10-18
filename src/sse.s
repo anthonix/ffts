@@ -12,9 +12,13 @@ _neon_x8:
 _neon_x8_t:
 
 
+#ifdef __APPLE__
 	.globl _leaf_ee_init
-#	.align	4, 0x90
 _leaf_ee_init:
+#else
+	.globl leaf_ee_init
+leaf_ee_init:
+#endif
  		#lea L_sse_constants(%rip), %r9 
 		movq 0xe0(%rdi), %r9
 		xorl	%eax, %eax
@@ -25,39 +29,44 @@ _leaf_ee_init:
 # r8 is offsets pointer
 # r9 is constants pointer
 # scratch: rax r11 r12
-	.globl _leaf_ee
 #	.align	4, 0x90
 
 # _leaf_ee + 9 needs 16 byte alignment
+#ifdef __APPLE__
+	.globl _leaf_ee
 _leaf_ee:
+#else
+	.globl leaf_ee
+leaf_ee:
+#endif
 		movaps    32(%r9), %xmm0            #83.5
  		movaps    (%r9), %xmm8            #83.5
 LEAF_EE_1:
 LEAF_EE_const_0:
-				movaps    0xBEBAFECA(%rsi,%rax,4), %xmm7                           #83.5
+				movaps    0xFECA(%rsi,%rax,4), %xmm7                           #83.5
 LEAF_EE_const_2:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm12                         #83.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm12                         #83.5
         movaps    %xmm7, %xmm6                                  #83.5
 LEAF_EE_const_3:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm10                         #83.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm10                         #83.5
         movaps    %xmm12, %xmm11                                #83.5
         subps     %xmm10, %xmm12                                #83.5
         addps     %xmm10, %xmm11                                #83.5
         xorps     %xmm8, %xmm12                                 #83.5
 LEAF_EE_const_1:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm9                          #83.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm9                          #83.5
 LEAF_EE_const_4:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm10                         #83.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm10                         #83.5
         addps     %xmm9, %xmm6                                  #83.5
         subps     %xmm9, %xmm7                                  #83.5
 LEAF_EE_const_5:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm13                         #83.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm13                         #83.5
         movaps    %xmm10, %xmm9                                 #83.5
 LEAF_EE_const_6:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm3                          #83.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm3                          #83.5
         movaps    %xmm6, %xmm5                                  #83.5
 LEAF_EE_const_7:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm14                          #83.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm14                          #83.5
         movaps    %xmm3, %xmm15                                 #83.5
         shufps    $177, %xmm12, %xmm12                          #83.5
         movaps    %xmm7, %xmm4                                  #83.5
@@ -129,35 +138,40 @@ LEAF_EE_const_7:
         jne      LEAF_EE_1 
         
 
-	.globl _leaf_oo
 
 # _leaf_oo + 4 needs to be 16 byte aligned
+#ifdef __APPLE__
+	.globl _leaf_oo
 _leaf_oo:
+#else
+	.globl _leaf_oo
+_leaf_oo:
+#endif
         movaps    (%r9), %xmm5            #92.7
 LEAF_OO_1:
 LEAF_OO_const_0:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm4                           #93.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm4                           #93.5
         movaps    %xmm4, %xmm6                                  #93.5
 LEAF_OO_const_1:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm7                          #93.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm7                          #93.5
 LEAF_OO_const_2:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm10                         #93.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm10                         #93.5
         addps     %xmm7, %xmm6                                  #93.5
         subps     %xmm7, %xmm4                                  #93.5
 LEAF_OO_const_3:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm8                          #93.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm8                          #93.5
         movaps    %xmm10, %xmm9                                 #93.5
 LEAF_OO_const_4:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm1                          #93.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm1                          #93.5
         movaps    %xmm6, %xmm3                                  #93.5
 LEAF_OO_const_5:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm11                         #93.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm11                         #93.5
         movaps    %xmm1, %xmm2                                  #93.5
 LEAF_OO_const_6:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm14                         #93.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm14                         #93.5
         movaps    %xmm4, %xmm15                                 #93.5
 LEAF_OO_const_7:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm12                          #93.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm12                          #93.5
         movaps    %xmm14, %xmm13                                #93.5
         movslq    (%r8, %rax, 4), %r11                                   #83.44
         subps     %xmm8, %xmm10                                 #93.5
@@ -205,19 +219,23 @@ LEAF_OO_const_7:
 				cmpq	%rcx, %rax
         jne       LEAF_OO_1       # Prob 95%                      #92.14
 
-
+#ifdef __APPLE__
 	.globl _leaf_eo
 _leaf_eo:
+#else
+	.globl leaf_eo
+leaf_eo:
+#endif
 LEAF_EO_const_0:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm9                          #88.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm9                          #88.5
 LEAF_EO_const_2:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm7                          #88.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm7                          #88.5
         movaps    %xmm9, %xmm11                                 #88.5
 LEAF_EO_const_3:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm5                           #88.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm5                           #88.5
         movaps    %xmm7, %xmm6                                  #88.5
 LEAF_EO_const_1:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm4                          #88.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm4                          #88.5
         subps     %xmm5, %xmm7                                  #88.5
         addps     %xmm4, %xmm11                                 #88.5
         subps     %xmm4, %xmm9                                  #88.5
@@ -240,16 +258,16 @@ LEAF_EO_const_1:
         movaps    %xmm10, (%rdx,%r12,4)                         #88.5
         movaps    %xmm11, 16(%rdx,%r12,4)                       #88.5
 LEAF_EO_const_4:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm15                         #88.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm15                         #88.5
 LEAF_EO_const_5:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm12                         #88.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm12                         #88.5
         movaps    %xmm15, %xmm14                                #88.5
 LEAF_EO_const_6:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm4                          #88.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm4                          #88.5
         addps     %xmm12, %xmm14                                #88.5
         subps     %xmm12, %xmm15                                #88.5
 LEAF_EO_const_7:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm13                         #88.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm13                         #88.5
         movaps    %xmm4, %xmm5                                  #88.5
         movaps    %xmm14, %xmm7                                 #88.5
         addps     %xmm13, %xmm5                                 #88.5
@@ -300,22 +318,27 @@ LEAF_EO_const_7:
         movaps    %xmm12, 48(%rdx,%r11,4)                       #88.5
 	
 
+#ifdef __APPLE__
 	.globl _leaf_oe
 _leaf_oe:
+#else
+	.globl leaf_oe
+leaf_oe:
+#endif
         movaps    (%r9), %xmm0           #59.5
         #movaps    0x20(%r9), %xmm1           #59.5
 LEAF_OE_const_2:
-				movaps    0xBEBAFECA(%rsi,%rax,4), %xmm6                          #70.5
+				movaps    0xFECA(%rsi,%rax,4), %xmm6                          #70.5
 LEAF_OE_const_3:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm8                           #70.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm8                           #70.5
         movaps    %xmm6, %xmm10                                 #70.5
         shufps    $228, %xmm8, %xmm10                           #70.5
         movaps    %xmm10, %xmm9                                 #70.5
         shufps    $228, %xmm6, %xmm8                            #70.5
 LEAF_OE_const_0:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm12                         #70.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm12                         #70.5
 LEAF_OE_const_1:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm7                          #70.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm7                          #70.5
         movaps    %xmm12, %xmm14                                #70.5
         movslq    (%r8, %rax, 4), %r11                                   #83.44
         addps     %xmm8, %xmm9                                  #70.5
@@ -350,16 +373,16 @@ LEAF_OE_const_1:
         shufps    $177, %xmm4, %xmm4                            #70.5
         mulps     %xmm12, %xmm4                                 #70.5
 LEAF_OE_const_4:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm9                          #70.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm9                          #70.5
         addps     %xmm4, %xmm5                                  #70.5
 LEAF_OE_const_6:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm7                          #70.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm7                          #70.5
         movaps    %xmm9, %xmm3                                  #70.5
 LEAF_OE_const_7:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm2                          #70.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm2                          #70.5
         movaps    %xmm7, %xmm6                                  #70.5
 LEAF_OE_const_5:
-        movaps    0xBEBAFECA(%rsi,%rax,4), %xmm15                         #70.5
+        movaps    0xFECA(%rsi,%rax,4), %xmm15                         #70.5
         movaps    %xmm13, %xmm4                                 #70.5
         subps     %xmm2, %xmm7                                  #70.5
         addps     %xmm15, %xmm3                                 #70.5
@@ -398,11 +421,21 @@ LEAF_OE_const_5:
         movaps    %xmm4, 48(%rdx,%r12,4)                        #70.5
 	
 	
+#ifdef __APPLE__
 	.globl	_leaf_end
 _leaf_end:
+#else
+	.globl	leaf_end
+leaf_end:
+#endif
 
+#ifdef __APPLE__
 	.globl	_x_init
 _x_init:
+#else
+	.globl	x_init
+x_init:
+#endif
         #movaps    L_sse_constants(%rip), %xmm3           #34.3
 				movaps   (%r9), %xmm3           #34.3
 				movq        0x20(%rdi),%r8
@@ -471,11 +504,15 @@ _x4:
         movaps    %xmm5, 112(%rdx)                              #34.3
 				ret	
 	
-	.globl	_x8_soft
 # _x8_soft + 5 needs to be 16 byte aligned
-
+#ifdef __APPLE__
+	.globl	_x8_soft
 _x8_soft:
-        xorl %eax, %eax
+#else
+	.globl	x8_soft
+x8_soft:
+#endif
+	xorl %eax, %eax
 				movq      %rdx, %rbx     
         movq      %r8, %rsi
 				leaq       (%rdx,%rcx,4), %r9  
@@ -574,16 +611,21 @@ X8_soft_loop:
         jne       X8_soft_loop
 				ret
 
+#ifdef __APPLE__
 	.globl	_x8_hard
 _x8_hard:
+#else
+	.globl	x8_hard
+x8_hard:
+#endif
         movaps    (%r9), %xmm5           
 X8_loop:  
         movaps    (%r8), %xmm9                                 
 X8_const_2:
-        movaps    0xBEBAFECA(%rdx,%rax,4), %xmm6  
+        movaps    0xFECA(%rdx,%rax,4), %xmm6  
         movaps    %xmm9, %xmm11                                 
 X8_const_3:
-        movaps    0xBEBAFECA(%rdx,%rax,4), %xmm7  
+        movaps    0xFECA(%rdx,%rax,4), %xmm7  
         movaps    16(%r8), %xmm8                               
         mulps     %xmm6, %xmm11                                 
         mulps     %xmm7, %xmm9                                  
@@ -598,13 +640,13 @@ X8_const_3:
         addps     %xmm9, %xmm10                                 
         subps     %xmm9, %xmm11                                 
 X8_const_0:
-        movaps    0xBEBAFECA(%rdx,%rax,4), %xmm3     
+        movaps    0xFECA(%rdx,%rax,4), %xmm3     
         movaps    %xmm15, %xmm6                                 
 X8_const_4:
-        movaps    0xBEBAFECA(%rdx,%rax,4), %xmm12
+        movaps    0xFECA(%rdx,%rax,4), %xmm12
         movaps    %xmm3, %xmm2                                  
 X8_const_6:
-        movaps    0xBEBAFECA(%rdx,%rax,4), %xmm13
+        movaps    0xFECA(%rdx,%rax,4), %xmm13
         xorps     %xmm5, %xmm11                                 
         movaps    48(%r8), %xmm14                              
         subps     %xmm10, %xmm2                                 
@@ -620,10 +662,10 @@ X8_const_6:
         subps     %xmm12, %xmm6                                 
         addps     %xmm14, %xmm15                                
 X8_const_5:
-        movaps    0xBEBAFECA(%rdx,%rax,4), %xmm7
+        movaps    0xFECA(%rdx,%rax,4), %xmm7
         movaps    %xmm10, %xmm13                                
 X8_const_7:
-        movaps    0xBEBAFECA(%rdx,%rax,4), %xmm8
+        movaps    0xFECA(%rdx,%rax,4), %xmm8
         movaps    %xmm6, %xmm12                                 
         movaps    80(%r8), %xmm9                               
         addq      $96, %r8                                     
@@ -642,7 +684,7 @@ X8_const_7:
         subps     %xmm7, %xmm13                                 
         addps     %xmm9, %xmm10                                 
 X8_const_1:
-        movaps    0xBEBAFECA(%rdx,%rax,4), %xmm4   
+        movaps    0xFECA(%rdx,%rax,4), %xmm4   
         shufps    $177, %xmm11, %xmm11                          
         movaps    %xmm4, %xmm1                                  
         shufps    $177, %xmm6, %xmm6                            
@@ -660,28 +702,28 @@ X8_const_1:
         subps     %xmm11, %xmm14                                
         shufps    $177, %xmm13, %xmm13                          
 X8_const1_0:
-        movaps    %xmm3, 0xBEBAFECA(%rdx,%rax,4)
+        movaps    %xmm3, 0xFECA(%rdx,%rax,4)
 X8_const1_1:
-        movaps    %xmm4, 0xBEBAFECA(%rdx,%rax,4)
+        movaps    %xmm4, 0xFECA(%rdx,%rax,4)
 X8_const1_2:
-        movaps    %xmm2, 0xBEBAFECA(%rdx,%rax,4) 
+        movaps    %xmm2, 0xFECA(%rdx,%rax,4) 
         subps     %xmm13, %xmm1                                 
         addps     %xmm13, %xmm6                                 
 X8_const1_3:
-        movaps    %xmm1, 0xBEBAFECA(%rdx,%rax,4) 
+        movaps    %xmm1, 0xFECA(%rdx,%rax,4) 
 X8_const1_4:
-        movaps    %xmm0, 0xBEBAFECA(%rdx,%rax,4)
+        movaps    %xmm0, 0xFECA(%rdx,%rax,4)
 X8_const1_5:
-        movaps    %xmm14, 0xBEBAFECA(%rdx,%rax,4)
+        movaps    %xmm14, 0xFECA(%rdx,%rax,4)
 X8_const1_6:
-        movaps    %xmm12, 0xBEBAFECA(%rdx,%rax,4) 
+        movaps    %xmm12, 0xFECA(%rdx,%rax,4) 
 X8_const1_7:
-        movaps    %xmm6, 0xBEBAFECA(%rdx,%rax,4)
+        movaps    %xmm6, 0xFECA(%rdx,%rax,4)
         addq      $4, %rax   
 				cmpq	%rcx, %rax
         jne       X8_loop
 
-	
+#ifdef __APPLE__	
 	.globl _sse_leaf_ee_offsets
 	.globl _sse_leaf_oo_offsets
 	.globl _sse_leaf_eo_offsets
@@ -723,12 +765,61 @@ _sse_leaf_oe_offsets:
 	.long LEAF_OE_const_5-_leaf_oe+0x5
 	.long LEAF_OE_const_6-_leaf_oe+0x4
 	.long LEAF_OE_const_7-_leaf_oe+0x4
-	
+#else
+	.globl sse_leaf_ee_offsets
+	.globl sse_leaf_oo_offsets
+	.globl sse_leaf_eo_offsets
+	.globl sse_leaf_oe_offsets
+	.align 4
+sse_leaf_ee_offsets:
+	.long LEAF_EE_const_0-leaf_ee+0x4
+	.long LEAF_EE_const_1-leaf_ee+0x5
+	.long LEAF_EE_const_2-leaf_ee+0x5
+	.long LEAF_EE_const_3-leaf_ee+0x5
+	.long LEAF_EE_const_4-leaf_ee+0x5
+	.long LEAF_EE_const_5-leaf_ee+0x5
+	.long LEAF_EE_const_6-leaf_ee+0x4
+	.long LEAF_EE_const_7-leaf_ee+0x5
+sse_leaf_oo_offsets:
+	.long LEAF_OO_const_0-leaf_oo+0x4
+	.long LEAF_OO_const_1-leaf_oo+0x4
+	.long LEAF_OO_const_2-leaf_oo+0x5
+	.long LEAF_OO_const_3-leaf_oo+0x5
+	.long LEAF_OO_const_4-leaf_oo+0x4
+	.long LEAF_OO_const_5-leaf_oo+0x5
+	.long LEAF_OO_const_6-leaf_oo+0x5
+	.long LEAF_OO_const_7-leaf_oo+0x5
+sse_leaf_eo_offsets:
+	.long LEAF_EO_const_0-leaf_eo+0x5
+	.long LEAF_EO_const_1-leaf_eo+0x4
+	.long LEAF_EO_const_2-leaf_eo+0x4
+	.long LEAF_EO_const_3-leaf_eo+0x4
+	.long LEAF_EO_const_4-leaf_eo+0x5
+	.long LEAF_EO_const_5-leaf_eo+0x5
+	.long LEAF_EO_const_6-leaf_eo+0x4
+	.long LEAF_EO_const_7-leaf_eo+0x5
+sse_leaf_oe_offsets:
+	.long LEAF_OE_const_0-leaf_oe+0x5
+	.long LEAF_OE_const_1-leaf_oe+0x4
+	.long LEAF_OE_const_2-leaf_oe+0x4
+	.long LEAF_OE_const_3-leaf_oe+0x5
+	.long LEAF_OE_const_4-leaf_oe+0x5
+	.long LEAF_OE_const_5-leaf_oe+0x5
+	.long LEAF_OE_const_6-leaf_oe+0x4
+	.long LEAF_OE_const_7-leaf_oe+0x4
+#endif
+
+
 #	.section	__TEXT, __const
 	.data
-	.globl _sse_constants
 	.align 4
+#ifdef __APPLE__	
+	.globl _sse_constants
 _sse_constants:
+#else
+	.globl sse_constants
+sse_constants:
+#endif
 L_sse_constants:
 L_2il0floatpacket.719:
 	.long	0x00000000,0x80000000,0x00000000,0x80000000
