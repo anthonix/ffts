@@ -439,9 +439,13 @@ x_init:
         #movaps    L_sse_constants(%rip), %xmm3           #34.3
 				movaps   (%r9), %xmm3           #34.3
 				movq        0x20(%rdi),%r8
-
+#ifdef __APPLE__
 	.globl	_x4
 _x4:
+#else	
+	.globl	x4
+x4:
+#endif
         movaps    64(%rdx), %xmm0                               #34.3
         movaps    96(%rdx), %xmm1                               #34.3
         movaps    (%rdx), %xmm7                                 #34.3
