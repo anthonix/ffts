@@ -12,13 +12,14 @@
 #include "types.h"
 
 //#define W(N,k) (cexp(-2.0f * M_PI * I * (float)(k) / (float)(N)))
+#define PI 3.1415926535897932384626433832795
 
 inline float W_re(float N, float k) {
-	return cos(-2.0f * M_PI * k / N);
+	return cos(-2.0f * PI * k / N);
 }
 
 inline float W_im(float N, float k) {
-	return sin(-2.0f * M_PI * k / N);
+	return sin(-2.0f * PI * k / N);
 }
 
 
