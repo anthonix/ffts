@@ -144,8 +144,8 @@ LEAF_EE_const_7:
 	.globl _leaf_oo
 _leaf_oo:
 #else
-	.globl _leaf_oo
-_leaf_oo:
+	.globl leaf_oo
+leaf_oo:
 #endif
         movaps    (%r9), %xmm5            #92.7
 LEAF_OO_1:
