@@ -813,9 +813,12 @@ sse_leaf_oe_offsets:
 	.long LEAF_OE_const_7-leaf_oe+0x4
 #endif
 
-
-#	.section	__TEXT, __const
+#ifdef __APPLE__
 	.data
+#else
+	.section .data
+	.p2align 4
+#endif
 	.align 4
 #ifdef __APPLE__	
 	.globl _sse_constants
