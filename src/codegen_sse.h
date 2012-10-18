@@ -21,7 +21,7 @@ void x8_hard();
 
 void sse_constants();
 
-	typedef uint8_t insns_t;
+//	typedef uint8_t insns_t;
 
 extern const uint32_t sse_leaf_ee_offsets[8];
 extern const uint32_t sse_leaf_oo_offsets[8];
@@ -147,7 +147,7 @@ void ADDI(uint8_t **p, uint8_t dst, int32_t imm) {
 	else          IMM8(p, imm);
 }
 
-void CALL(uint8_t **p, insns_t *func) {
+void CALL(uint8_t **p, uint8_t *func) {
 	*(*p)++ = 0xe8;
 	IMM32(p, ((void *)func) - (void *)(*p) - 4); 
 }
