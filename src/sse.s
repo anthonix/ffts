@@ -817,9 +817,8 @@ sse_leaf_oe_offsets:
 	.data
 #else
 	.section .data
-	.p2align 4
 #endif
-	.align 4
+	.p2align 4
 #ifdef __APPLE__	
 	.globl _sse_constants
 _sse_constants:
