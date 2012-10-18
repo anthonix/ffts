@@ -1,7 +1,13 @@
+#include "asm.s"
 
-	.globl	neon_x4
 	.align	4
+#ifdef __APPLE__
+	.globl	_neon_x4
+_neon_x4:
+#else
+	.globl	neon_x4
 neon_x4:
+#endif
 @	add r3, r0, #0
 
 	vld1.32 {q8,q9}, [r0, :128]
@@ -43,9 +49,14 @@ neon_x4:
 	vst1.32 {q6,q7}, [r6, :128]
 	bx lr
 
-	.globl neon_x8
 	.align 4
+#ifdef __APPLE__
+	.globl	_neon_x8
+_neon_x8:
+#else
+	.globl	neon_x8
 neon_x8:
+#endif
 	mov r11, #0
 	add r3, r0, #0           @ data0
 	add r5, r0, r1, lsl #1   @ data2
@@ -159,9 +170,14 @@ neon_x8_loop:
 
 	bx lr
 
-	.globl neon_x8_t
 	.align 4
+#ifdef __APPLE__
+	.globl	_neon_x8_t
+_neon_x8_t:
+#else
+	.globl	neon_x8_t
 neon_x8_t:
+#endif
 	mov r11, #0
 	add r3, r0, #0           @ data0
 	add r5, r0, r1, lsl #1   @ data2
@@ -281,9 +297,14 @@ neon_x8_t_loop:
 @         r3-r10 = data pointers
 @         r11 = loop iterations
 @         r2 & lr = temps
-	.globl neon_ee
 	.align 4
+#ifdef __APPLE__
+	.globl	_neon_ee
+_neon_ee:
+#else
+	.globl	neon_ee
 neon_ee:
+#endif
 	vld1.32	{d16, d17}, [r2, :128]
 _neon_ee_loop:
 	vld2.32 {q15}, [r10, :128]!
@@ -357,10 +378,14 @@ _neon_ee_loop:
 @         r3-r10 = data pointers
 @         r11 = loop iterations
 @         r2 & lr = temps
-	.globl neon_oo
 	.align 4
+#ifdef __APPLE__
+	.globl	_neon_oo
+_neon_oo:
+#else
+	.globl	neon_oo
 neon_oo:
-
+#endif
 _neon_oo_loop:
 	vld2.32 {q8}, [r6, :128]!
 	vld2.32 {q9}, [r5, :128]!
@@ -411,9 +436,14 @@ _neon_oo_loop:
 @         r3-r10 = data pointers
 @         r11 = addr of twiddle 
 @         r2 & lr = temps
-	.globl neon_eo
 	.align 4
+#ifdef __APPLE__
+	.globl	_neon_eo
+_neon_eo:
+#else
+	.globl	neon_eo
 neon_eo:
+#endif
 	vld2.32 {q9}, [r5, :128]! @tag2
 	vld2.32 {q13}, [r3, :128]! @tag0
 	vld2.32 {q12}, [r4, :128]! @tag1
@@ -488,9 +518,14 @@ neon_eo:
 @         r3-r10 = data pointers
 @         r11 = addr of twiddle 
 @         r2 & lr = temps
-	.globl neon_oe
 	.align 4
+#ifdef __APPLE__
+	.globl	_neon_oe
+_neon_oe:
+#else
+	.globl	neon_oe
 neon_oe:
+#endif
 	vld1.32 {q8}, [r5, :128]!
 	vld1.32 {q10}, [r6, :128]!
 	vld2.32 {q11}, [r4, :128]!
@@ -564,7 +599,12 @@ neon_oe:
 	vstmia lr!, {q4-q7}
 	
 	
+	.align 4
+#ifdef __APPLE__
+	.globl	_neon_end
+_neon_end:
+#else
 	.globl	neon_end
-	.align	4
 neon_end:
+#endif
 	bx lr

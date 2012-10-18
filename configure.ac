@@ -76,6 +76,7 @@ AC_PROG_CC_STDC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_LIBTOOL
+
 # Checks for library functions.
 #AC_FUNC_MALLOC
 AC_CHECK_FUNCS([gettimeofday pow])

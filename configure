@@ -15999,6 +15999,7 @@ $as_echo "no, using $LN_S" >&6; }
 fi
 
 
+
 # Checks for library functions.
 #AC_FUNC_MALLOC
 for ac_func in gettimeofday pow

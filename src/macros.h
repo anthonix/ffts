@@ -48,10 +48,14 @@ static inline V VLIT4(data_t f3, data_t f2, data_t f1, data_t f0) {
 #define FFTS_FREE(d) (free(d))
 
 __INLINE void STORESPR(data_t * addr,  VS p) {
-	__asm__ __volatile__ ("vst1.32 {%q1,%q2}, [%0, :128]\n\t"
-									 		: 
-		                	: "r" (addr), "w" (p.val[0]), "w" (p.val[1])
-	                 		: "memory");
+
+	vst1q_f32(addr, p.val[0]);
+	vst1q_f32(addr + 4, p.val[1]);
+	
+//__asm__ __volatile__ ("vst1.32 {%q1,%q2}, [%0, :128]\n\t"
+//								 		: 
+//	                	: "r" (addr), "w" (p.val[0]), "w" (p.val[1])
+//                 		: "memory");
 }
 
 #else 
