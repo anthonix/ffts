@@ -103,8 +103,9 @@ cdata_t SCALAR_MULI_SIGN;
 V MULI_SIGN;
 V LEAFLUT[12];
 
-__INLINE V IMULI(V a) {
-	return VSWAPPAIRS(VXOR(a, MULI_SIGN));
+__INLINE V IMULI(int inv, V a) {
+	if(inv) return VSWAPPAIRS(VXOR(a, VLIT4(0.0f, -0.0f, 0.0f, -0.0f)));
+	else    return VSWAPPAIRS(VXOR(a, VLIT4(-0.0f, 0.0f, -0.0f, 0.0f)));
 }
 
 __INLINE void 
@@ -122,6 +123,7 @@ __INLINE void L_S2(const data_t * restrict i0, const data_t * restrict i1, V * r
   *r0 = VADD(t0, t1);
   *r1 = VSUB(t0, t1);
 }
+/*
 __INLINE void 
 L_2(const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
 									  V *r0, V *r1, V *r2, V *r3) {
@@ -156,13 +158,13 @@ K_0(V *r0, V *r1, V *r2, V *r3) {
   V uk, uk2, zk, zk_d;
 	uk   = *r0; uk2  = *r1;
   zk   = VADD(*r2, *r3);
-  zk_d = IMULI(VSUB(*r2, *r3));
+  zk_d = IMULI(0, VSUB(*r2, *r3));
   *r0 = VADD(uk, zk);
   *r2 = VSUB(uk, zk);
   *r1 = VSUB(uk2, zk_d);
   *r3 = VADD(uk2, zk_d);
 }
-
+*/
 __INLINE V IMUL(V d, V re, V im) {
   re = VMUL(re, d);                   
   im = VMUL(im, VSWAPPAIRS(d));
@@ -176,14 +178,14 @@ __INLINE V IMULJ(V d, V re, V im) {
 }
 
 __INLINE void 
-K_N(V re, V im, V *r0, V *r1, V *r2, V *r3) {
+K_N(int inv, V re, V im, V *r0, V *r1, V *r2, V *r3) {
 	V uk, uk2, zk_p, zk_n, zk, zk_d;
 	uk   = *r0; uk2  = *r1;
   zk_p = IMUL(*r2, re, im);
   zk_n = IMULJ(*r3, re, im);
 	
 	zk   = VADD(zk_p, zk_n);
-  zk_d = IMULI(VSUB(zk_p, zk_n));
+  zk_d = IMULI(inv, VSUB(zk_p, zk_n));
   
 	*r2 = VSUB(uk, zk);
   *r0 = VADD(uk, zk);
@@ -198,14 +200,14 @@ __INLINE void TX2(V *a, V *b) {
 }
 
 __INLINE void 
-L_4_4(const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
+L_4_4(int inv, const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
 									V *r0, V *r1, V *r2, V *r3) {
   V t0, t1, t2, t3, t4, t5, t6, t7;
 	t0 = VLD(i0);    t1 = VLD(i1);    t2 = VLD(i2);    t3 = VLD(i3);    
 	t4 = VADD(t0, t1);
 	t5 = VSUB(t0, t1);
 	t6 = VADD(t2, t3);
-	t7 = IMULI(VSUB(t2, t3));
+	t7 = IMULI(inv, VSUB(t2, t3));
 	t0 = VADD(t4, t6);
 	t2 = VSUB(t4, t6);
 	t1 = VSUB(t5, t7);
@@ -228,7 +230,7 @@ L_2_2(const data_t * restrict i0, const data_t * restrict i1, const data_t * res
 }
 
 __INLINE void 
-L_2_4(const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
+L_2_4(int inv, const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
 									  V *r0, V *r1, V *r2, V *r3) {
   V t0, t1, t2, t3, t4, t5, t6, t7;
   t0 = VLD(i0);    t1 = VLD(i1);    t2 = VLD(i2);    t3 = VLD(i3);    
@@ -238,7 +240,7 @@ L_2_4(const data_t * restrict i0, const data_t * restrict i1, const data_t * res
   t7 = VSUB(t2, t3);
   *r0 = VUNPACKLO(t4, t5);
   *r1 = VUNPACKLO(t6, t7);
-  t5 = IMULI(t5);
+  t5 = IMULI(inv, t5);
   t0 = VADD(t6, t4);
   t2 = VSUB(t6, t4);
   t1 = VSUB(t7, t5);
@@ -248,7 +250,7 @@ L_2_4(const data_t * restrict i0, const data_t * restrict i1, const data_t * res
 }
 
 __INLINE void 
-L_4_2(const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
+L_4_2(int inv, const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
 									  V *r0, V *r1, V *r2, V *r3) {
   V t0, t1, t2, t3, t4, t5, t6, t7;
   t0 = VLD(i0);    t1 = VLD(i1);    t6 = VLD(i2);    t7 = VLD(i3);    
@@ -260,7 +262,7 @@ L_4_2(const data_t * restrict i0, const data_t * restrict i1, const data_t * res
   t7 = VSUB(t2, t3);
   *r2 = VUNPACKHI(t4, t5);
   *r3 = VUNPACKHI(t6, t7);
- 	t7 = IMULI(t7);
+ 	t7 = IMULI(inv, t7);
   t0 = VADD(t4, t6);
   t2 = VSUB(t4, t6);
   t1 = VSUB(t5, t7);
@@ -270,26 +272,48 @@ L_4_2(const data_t * restrict i0, const data_t * restrict i1, const data_t * res
 }
 
 __INLINE void 
-firstpass_16(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
+firstpass_16_f(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
   V r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15;
-  float *LUT8 = p->ws ;//+ p->ws_is[0];
-//  float *LUT16 = ((float *)p->ws) + 8;//(p->ws_is[1]*4);
+  float *LUT8 = p->ws ;
 
-  L_4_4(in+0,in+16,in+8,in+24,&r0_1,&r2_3,&r8_9,&r10_11);
-  L_2_4(in+4,in+20,in+28,in+12,&r4_5,&r6_7,&r14_15,&r12_13);
-  K_N(VLD(LUT8),VLD(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
-  K_N(VLD(LUT8+8),VLD(LUT8+12),&r0_1,&r4_5,&r8_9,&r12_13);
+  L_4_4(0, in+0,in+16,in+8,in+24,&r0_1,&r2_3,&r8_9,&r10_11);
+  L_2_4(0, in+4,in+20,in+28,in+12,&r4_5,&r6_7,&r14_15,&r12_13);
+  K_N(0, VLD(LUT8),VLD(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
+  K_N(0, VLD(LUT8+8),VLD(LUT8+12),&r0_1,&r4_5,&r8_9,&r12_13);
   S_4(r0_1,r4_5,r8_9,r12_13,out+0,out+8,out+16,out+24);
-  K_N(VLD(LUT8+16),VLD(LUT8+20),&r2_3,&r6_7,&r10_11,&r14_15);
+  K_N(0, VLD(LUT8+16),VLD(LUT8+20),&r2_3,&r6_7,&r10_11,&r14_15);
   S_4(r2_3,r6_7,r10_11,r14_15,out+4,out+12,out+20,out+28);
 }
 
 __INLINE void 
-firstpass_8(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
+firstpass_16_b(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
+  V r0_1,r2_3,r4_5,r6_7,r8_9,r10_11,r12_13,r14_15;
+  float *LUT8 = p->ws ;
+
+  L_4_4(1, in+0,in+16,in+8,in+24,&r0_1,&r2_3,&r8_9,&r10_11);
+  L_2_4(1, in+4,in+20,in+28,in+12,&r4_5,&r6_7,&r14_15,&r12_13);
+  K_N(1, VLD(LUT8),VLD(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
+  K_N(1, VLD(LUT8+8),VLD(LUT8+12),&r0_1,&r4_5,&r8_9,&r12_13);
+  S_4(r0_1,r4_5,r8_9,r12_13,out+0,out+8,out+16,out+24);
+  K_N(1, VLD(LUT8+16),VLD(LUT8+20),&r2_3,&r6_7,&r10_11,&r14_15);
+  S_4(r2_3,r6_7,r10_11,r14_15,out+4,out+12,out+20,out+28);
+}
+
+__INLINE void 
+firstpass_8_f(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
   V r0_1,r2_3,r4_5,r6_7;
   float *LUT8 = p->ws + p->ws_is[0];
-	L_4_2(in+0,in+8,in+4,in+12,&r0_1,&r2_3,&r4_5,&r6_7);
-  K_N(VLD(LUT8),VLD(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
+	L_4_2(0, in+0,in+8,in+4,in+12,&r0_1,&r2_3,&r4_5,&r6_7);
+  K_N(0, VLD(LUT8),VLD(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
+  S_4(r0_1,r2_3,r4_5,r6_7,out+0,out+4,out+8,out+12);
+}
+
+__INLINE void 
+firstpass_8_b(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
+  V r0_1,r2_3,r4_5,r6_7;
+  float *LUT8 = p->ws + p->ws_is[0];
+	L_4_2(1, in+0,in+8,in+4,in+12,&r0_1,&r2_3,&r4_5,&r6_7);
+  K_N(1, VLD(LUT8),VLD(LUT8+4),&r0_1,&r2_3,&r4_5,&r6_7);
   S_4(r0_1,r2_3,r4_5,r6_7,out+0,out+4,out+8,out+12);
 }
 

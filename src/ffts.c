@@ -114,8 +114,10 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
   	if(N == 2) p->transform = &firstpass_2;
   	else if(N == 4 && sign == -1) p->transform = &firstpass_4_f;
   	else if(N == 4 && sign == 1) p->transform = &firstpass_4_b;
-  	else if(N == 8) p->transform = &firstpass_8;
-  	else if(N == 16) p->transform = &firstpass_16;
+  	else if(N == 8 && sign == -1) p->transform = &firstpass_8_f;
+  	else if(N == 8 && sign == 1) p->transform = &firstpass_8_b;
+  	else if(N == 16 && sign == -1) p->transform = &firstpass_16_f;
+  	else if(N == 16 && sign == 1) p->transform = &firstpass_16_b;
 
 		p->is = NULL;
 		p->offsets = NULL;
