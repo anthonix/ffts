@@ -33,8 +33,7 @@
 
 #include "codegen.h"
 #include "macros.h"
-//#include "mini_macros.h"
-#include "cp_sse.h"
+#include "ffts.h"
 
 #ifdef __APPLE__
 	#include <libkern/OSCacheControl.h>

@@ -42,7 +42,7 @@
 #include <string.h>
 #include <limits.h>	   /* for PAGESIZE */
 
-#include "cp_sse.h"
+#include "ffts.h"
 
 void ffts_generate_func_code(ffts_plan_t *, size_t N, size_t leafN, int sign); 
 

@@ -30,7 +30,7 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#include "cp_sse.h"
+#include "ffts.h"
 #include "macros.h"
 //#include "mini_macros.h"
 #include "patterns.h"

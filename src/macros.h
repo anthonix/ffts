@@ -96,7 +96,7 @@ __INLINE void STORESPR(data_t * addr,  VS p) {
 	#include "sse_float.h"
 #endif
 
-#include "cp_sse.h"
+#include "ffts.h"
 
 
 cdata_t SCALAR_MULI_SIGN;
