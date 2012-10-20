@@ -34,7 +34,9 @@
 #include "macros.h"
 //#include "mini_macros.h"
 #include "patterns.h"
-  #include <errno.h>
+#include "codegen.h"
+
+#include <errno.h>
   #include <sys/mman.h>
   #include <string.h>
   #include <limits.h>	   /* for PAGESIZE */

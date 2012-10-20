@@ -81,7 +81,7 @@ uint32_t LDRI(uint8_t dst, uint8_t base, uint32_t offset) {
 	                  | ((base & 0xf) << 16) | (offset & 0xfff) ;
 }
 
-uint32_t MOVI(uint32_t **p, uint8_t dst, uint32_t imm) {
+void MOVI(uint32_t **p, uint8_t dst, uint32_t imm) {
 	uint32_t oimm = imm;
 	
 		uint32_t shamt = (__builtin_ctzl(imm)>15)?15:__builtin_ctzl(imm);

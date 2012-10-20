@@ -614,5 +614,5 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 //fprintf(stderr, "size of transform %zu = %d\n", N, (fp-func)*4);
 
-	p->transform = start;
+	p->transform = (void *) (start);
 }
