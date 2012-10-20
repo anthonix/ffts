@@ -59,8 +59,8 @@ main(int argc, char *argv[]) {
 	}
 	ffts_plan_t *p = ffts_init(i, sign);
 	if(p) {
-	
-  	p->transform(p, input, output);
+
+		ffts_execute(p, input, output);
   	for(i=0;i<n;i++) printf("%d %f %f\n", i, output[2*i], output[2*i+1]);
   	ffts_free(p);
 	

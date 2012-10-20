@@ -43,7 +43,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-
+/*
 typedef size_t transform_index_t;
 struct _ffts_plan_t {
 	ptrdiff_t *offsets;
@@ -61,6 +61,7 @@ struct _ffts_plan_t {
 	size_t transform_size;
 	void *constants;
 };
+*/
 
 typedef struct _ffts_plan_t ffts_plan_t;
 
