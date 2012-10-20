@@ -197,27 +197,6 @@ __INLINE void TX2(V *a, V *b) {
     *a = TX2_t0; *b = TX2_t1; 
 }
 
-#ifdef __ARM_NEON__
-
-__INLINE void 
-S_4_1(V r0, V r1, V r2, V r3, data_t * restrict o0, data_t * restrict o1, data_t * restrict o2, data_t * restrict o3) {
-	register V p0 __asm__ ("q0") = r0; register V p1 __asm__ ("q1") = r1; register V p2 __asm__ ("q2") = r2; register V p3 __asm__ ("q3") = r3;
-	__asm__ __volatile__ ("vst4.32 {%q1,%q2}, [%0, :128]!\n\t"
-												"vst4.32 {%q3,%q4}, [%0, :128]!\n\t"
-									 		: 
-		                	: "r" (o0), "w" (p0), "w" (p1), "w" (p2), "w" (p3)
-	                 		: "memory");
-}
-__INLINE void 
-S_4_2(V r0, V r1, V r2, V r3, data_t * restrict o0, data_t * restrict o1, data_t * restrict o2, data_t * restrict o3) {
-	register V p0 __asm__ ("q4") = r0; register V p1 __asm__ ("q5") = r1; register V p2 __asm__ ("q6") = r2; register V p3 __asm__ ("q7") = r3;
-	__asm__ __volatile__ ("vst4.32 {%q1,%q2}, [%0, :128]!\n\t"
-												"vst4.32 {%q3,%q4}, [%0, :128]!\n\t"
-									 		: 
-		                	: "r" (o0), "w" (p0), "w" (p1), "w" (p2), "w" (p3)
-	                 		: "memory");
-}
-#endif
 __INLINE void 
 L_4_4(const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
 									V *r0, V *r1, V *r2, V *r3) {
