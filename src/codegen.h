@@ -44,6 +44,6 @@
 
 #include "cp_sse.h"
 
-void ffts_generate_func_code(ffts_plan_t *, size_t N, size_t leafN); 
+void ffts_generate_func_code(ffts_plan_t *, size_t N, size_t leafN, int sign); 
 
 #endif

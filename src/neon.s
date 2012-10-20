@@ -68,13 +68,13 @@ neon_x4:
 	vsub.f32	q13, q13, q1
 	vadd.f32	q0, q8, q15
 	vadd.f32	q1, q9, q14
-	vadd.f32	q2, q10, q13
+	vsub.f32	q2, q10, q13  @
 	vsub.f32	q4, q8, q15
-	vsub.f32	q3, q11, q12
+	vadd.f32	q3, q11, q12  @
 	vst1.32 {q0,q1}, [r0, :128]
 	vsub.f32	q5, q9, q14
-	vsub.f32	q6, q10, q13
-	vadd.f32	q7, q11, q12
+	vadd.f32	q6, q10, q13  @
+	vsub.f32	q7, q11, q12  @
 	vst1.32 {q2,q3}, [r4, :128]
 	vst1.32 {q4,q5}, [r5, :128]
 	vst1.32 {q6,q7}, [r6, :128]
@@ -121,10 +121,10 @@ neon_x8_loop:
   vsub.f32	q9, q1, q14
   vsub.f32	q15, q11, q10
   vsub.f32	q14, q9, q8
-  vadd.f32	q4, q12, q15
-  vsub.f32	q6, q12, q15
-  vsub.f32	q5, q13, q14
-  vadd.f32	q7, q13, q14
+  vsub.f32	q4, q12, q15  @
+  vadd.f32	q6, q12, q15  @ 
+  vadd.f32	q5, q13, q14  @
+  vsub.f32	q7, q13, q14  @
   vld1.32 {q14,q15}, [r9, :128]
   vld1.32 {q12,q13}, [r7, :128]
   vmul.f32	q1, q14, q2
@@ -155,16 +155,16 @@ neon_x8_loop:
   vadd.f32	q0, q11, q2
   vadd.f32	q1, q13, q15
   vsub.f32	q4, q11, q2
-  vadd.f32	q2, q8, q10
-  vsub.f32	q3, q9, q12
+  vsub.f32	q2, q8, q10  @
+  vadd.f32	q3, q9, q12  @
   vst1.32 {q0,q1}, [r3, :128]!
   vsub.f32	q5, q13, q15
   vld1.32 {q14,q15}, [r10, :128]
-  vadd.f32	q7, q9, q12
+  vsub.f32	q7, q9, q12  @
   vld1.32 {q12,q13}, [r8, :128]
   vst1.32 {q2,q3}, [r5, :128]!
   vld1.32 {q2,q3}, [r12, :128]!
-  vsub.f32	q6, q8, q10
+  vadd.f32	q6, q8, q10  @
   vmul.f32	q8, q14, q2
   vst1.32 {q4,q5}, [r7, :128]!
   vmul.f32	q10, q15, q3
@@ -187,14 +187,14 @@ neon_x8_loop:
   vld1.32 {q10,q11}, [r6, :128]
   vadd.f32	q0, q8, q13
   vadd.f32	q1, q9, q12
-  vadd.f32	q2, q10, q15
-  vsub.f32	q3, q11, q14
+  vsub.f32	q2, q10, q15  @
+  vadd.f32	q3, q11, q14  @
   vsub.f32	q4, q8, q13
   vst1.32 {q0,q1}, [r4, :128]!
   vsub.f32	q5, q9, q12
-  vsub.f32	q6, q10, q15
+  vadd.f32	q6, q10, q15  @
   vst1.32 {q2,q3}, [r6, :128]!
-  vadd.f32	q7, q11, q14
+  vsub.f32	q7, q11, q14  @
   vst1.32 {q4,q5}, [r8, :128]!
   vst1.32 {q6,q7}, [r10, :128]!
 	bne neon_x8_loop	
@@ -242,10 +242,10 @@ neon_x8_t_loop:
   vsub.f32	q9, q1, q14
   vsub.f32	q15, q11, q10
   vsub.f32	q14, q9, q8
-  vadd.f32	q4, q12, q15
-  vsub.f32	q6, q12, q15
-  vsub.f32	q5, q13, q14
-  vadd.f32	q7, q13, q14
+  vsub.f32	q4, q12, q15  @
+  vadd.f32	q6, q12, q15  @
+  vadd.f32	q5, q13, q14  @
+  vsub.f32	q7, q13, q14  @
   vld1.32 {q14,q15}, [r9, :128]
   vld1.32 {q12,q13}, [r7, :128]
   vmul.f32	q1, q14, q2
@@ -276,16 +276,16 @@ neon_x8_t_loop:
   vadd.f32	q0, q11, q2
   vadd.f32	q1, q13, q15
   vsub.f32	q4, q11, q2
-  vadd.f32	q2, q8, q10
-  vsub.f32	q3, q9, q12
+  vsub.f32	q2, q8, q10  @
+  vadd.f32	q3, q9, q12  @
   vst2.32 {q0,q1}, [r3, :128]!
   vsub.f32	q5, q13, q15
   vld1.32 {q14,q15}, [r10, :128]
-  vadd.f32	q7, q9, q12
+  vsub.f32	q7, q9, q12  @
   vld1.32 {q12,q13}, [r8, :128]
   vst2.32 {q2,q3}, [r5, :128]!
   vld1.32 {q2,q3}, [r12, :128]!
-  vsub.f32	q6, q8, q10
+  vadd.f32	q6, q8, q10  @
   vmul.f32	q8, q14, q2
   vst2.32 {q4,q5}, [r7, :128]!
   vmul.f32	q10, q15, q3
@@ -308,14 +308,14 @@ neon_x8_t_loop:
   vld1.32 {q10,q11}, [r6, :128]
   vadd.f32	q0, q8, q13
   vadd.f32	q1, q9, q12
-  vadd.f32	q2, q10, q15
-  vsub.f32	q3, q11, q14
+  vsub.f32	q2, q10, q15  @
+  vadd.f32	q3, q11, q14  @
   vsub.f32	q4, q8, q13
   vst2.32 {q0,q1}, [r4, :128]!
   vsub.f32	q5, q9, q12
-  vsub.f32	q6, q10, q15
+  vadd.f32	q6, q10, q15  @
   vst2.32 {q2,q3}, [r6, :128]!
-  vadd.f32	q7, q11, q14
+  vsub.f32	q7, q11, q14  @
   vst2.32 {q4,q5}, [r8, :128]!
   vst2.32 {q6,q7}, [r10, :128]!
 	bne neon_x8_t_loop	
@@ -353,10 +353,10 @@ _neon_ee_loop:
 	vmul.f32	d10, d2, d17
 	vmul.f32	d11, d3, d16
 	vmul.f32	d12, d3, d17
-	vmul.f32	d6, d4, d17
-	vmul.f32	d7, d5, d16
-	vmul.f32	d8, d4, d16
-	vmul.f32	d9, d5, d17
+	vmul.f32	d6, d4, d17  
+	vmul.f32	d7, d5, d16  
+	vmul.f32	d8, d4, d16  
+	vmul.f32	d9, d5, d17  
 	vmul.f32	d13, d2, d16
 	vsub.f32	d7, d7, d6
 	vadd.f32	d11, d11, d10
@@ -370,22 +370,22 @@ _neon_ee_loop:
 	vsub.f32	q7, q4, q0
 	vsub.f32	q9, q12, q11
 	vsub.f32	q13, q5, q3
-	vsub.f32	d29, d5, d2
+	vadd.f32	d29, d5, d2  @
 	vadd.f32	q5, q5, q3
 	vadd.f32	q10, q4, q0
 	vadd.f32	q11, q12, q11
-	vadd.f32	d31, d5, d2
-	vadd.f32	d28, d4, d3
-	vsub.f32	d30, d4, d3
-	vsub.f32	d5, d19, d14
-	vsub.f32	d7, d31, d26
+	vsub.f32	d31, d5, d2  @
+	vsub.f32	d28, d4, d3  @
+	vadd.f32	d30, d4, d3  @
+	vadd.f32	d5, d19, d14  @
+	vadd.f32	d7, d31, d26  @
 	vadd.f32	q1, q14, q5
 	vadd.f32	q0, q11, q10
-	vadd.f32	d6, d30, d27
-	vadd.f32	d4, d18, d15
-	vadd.f32	d13, d19, d14
-	vsub.f32	d12, d18, d15
-	vadd.f32	d15, d31, d26
+	vsub.f32	d6, d30, d27  @
+	vsub.f32	d4, d18, d15  @
+	vsub.f32	d13, d19, d14  @
+	vadd.f32	d12, d18, d15  @
+	vsub.f32	d15, d31, d26  @
 	ldr r2, [r12], #4
 	vtrn.32	q1, q3
 	ldr lr, [r12], #4
@@ -394,7 +394,7 @@ _neon_ee_loop:
 	vsub.f32	q4, q11, q10
 	add lr, r0, lr, lsl #2
 	vsub.f32	q5, q14, q5
-	vsub.f32	d14, d30, d27
+	vadd.f32	d14, d30, d27 @
 	vst2.32 {q0,q1}, [r2, :128]!
 	vst2.32 {q2,q3}, [lr, :128]!
 	vtrn.32	q4, q6
@@ -430,10 +430,10 @@ _neon_oo_loop:
 	vld2.32 {q10}, [r7, :128]!
 	vld2.32 {q13}, [r9, :128]!
 	vsub.f32	q2, q12, q11
-	vadd.f32	d7, d19, d16
-	vsub.f32	d3, d19, d16
-	vsub.f32	d6, d18, d17
-	vadd.f32	d2, d18, d17
+	vsub.f32	d7, d19, d16  @
+	vadd.f32	d3, d19, d16  @
+	vadd.f32	d6, d18, d17  @
+	vsub.f32	d2, d18, d17  @
 	vld2.32 {q9}, [r8, :128]!
 	vld2.32 {q8}, [r10, :128]!
 	vadd.f32	q0, q12, q11
@@ -445,11 +445,11 @@ _neon_oo_loop:
 	vadd.f32	q4, q12, q11
 	vtrn.32	q0, q2
 	ldr r2, [r12], #4
-	vadd.f32	d15, d19, d16
+	vsub.f32	d15, d19, d16  @
 	ldr lr, [r12], #4
-	vsub.f32	d11, d19, d16
-	vsub.f32	d14, d18, d17
-	vadd.f32	d10, d18, d17
+	vadd.f32	d11, d19, d16  @
+	vadd.f32	d14, d18, d17  @
+	vsub.f32	d10, d18, d17  @
 	add r2, r0, r2, lsl #2
 	vtrn.32	q1, q3
 	add lr, r0, lr, lsl #2
@@ -485,11 +485,11 @@ neon_eo:
 	vsub.f32	q10, q9, q8
 	vadd.f32	q8, q9, q8
 	vadd.f32	q9, q12, q8
-	vsub.f32	d9, d23, d20
-	vadd.f32	d11, d23, d20
+	vadd.f32	d9, d23, d20  @
+	vsub.f32	d11, d23, d20  @
 	vsub.f32	q8, q12, q8
-	vadd.f32	d8, d22, d21
-	vsub.f32	d10, d22, d21
+	vsub.f32	d8, d22, d21  @
+	vadd.f32	d10, d22, d21  @
 	ldr r2, [r12], #4
 	vld1.32	{d20, d21}, [r11, :128]
 	ldr lr, [r12], #4
@@ -506,11 +506,11 @@ neon_eo:
 	vsub.f32	q12, q0, q11
 	vadd.f32	q11, q0, q11
 	vadd.f32	q13, q15, q13
-	vsub.f32	d13, d29, d24
+	vadd.f32	d13, d29, d24  @
 	vadd.f32	q15, q13, q11
-	vadd.f32	d12, d28, d25
-	vadd.f32	d15, d29, d24
-	vsub.f32	d14, d28, d25
+	vsub.f32	d12, d28, d25  @
+	vsub.f32	d15, d29, d24  @
+	vadd.f32	d14, d28, d25  @
 	vtrn.32	q15, q6
 	vsub.f32	q15, q13, q11
 	vtrn.32	q15, q7
@@ -534,10 +534,10 @@ neon_eo:
 	vsub.f32	q10, q12, q10
 	vadd.f32	q0, q9, q11
 	vsub.f32	q2, q9, q11
-	vsub.f32	d3, d17, d20
-	vadd.f32	d7, d17, d20
-	vadd.f32	d2, d16, d21
-	vsub.f32	d6, d16, d21
+	vadd.f32	d3, d17, d20  @
+	vsub.f32	d7, d17, d20  @
+	vsub.f32	d2, d16, d21  @
+	vadd.f32	d6, d16, d21  @
 	vswp d1, d2
 	vswp d5, d6
 	vstmia r2!, {q0-q3}
@@ -576,11 +576,11 @@ neon_oe:
 	add lr, r0, lr, lsl #2
 	vadd.f32	q10, q10, q12
 	vadd.f32	q0, q11, q10
-	vsub.f32	d25, d19, d16
-	vadd.f32	d27, d19, d16
+	vadd.f32	d25, d19, d16  @
+	vsub.f32	d27, d19, d16  @
 	vsub.f32	q1, q11, q10
-	vadd.f32	d24, d18, d17
-	vsub.f32	d26, d18, d17
+	vsub.f32	d24, d18, d17  @
+	vadd.f32	d26, d18, d17  @
 	vtrn.32	q0, q12
 	vtrn.32	q1, q13
 	vld1.32	{d24, d25}, [r11, :128]
@@ -594,11 +594,11 @@ neon_oe:
 	vsub.f32	q0, q14, q13
 	vadd.f32	q3, q14, q13
 	vadd.f32	q2, q3, q1
-	vsub.f32	d29, d1, d30
-	vadd.f32	d27, d1, d30
+	vadd.f32	d29, d1, d30  @
+	vsub.f32	d27, d1, d30  @
 	vsub.f32	q3, q3, q1
-	vadd.f32	d28, d0, d31
-	vsub.f32	d26, d0, d31
+	vsub.f32	d28, d0, d31  @
+	vadd.f32	d26, d0, d31  @
 	vtrn.32	q2, q14
 	vtrn.32	q3, q13
 	vswp d5, d6
@@ -621,10 +621,10 @@ neon_oe:
 	vsub.f32	q8, q8, q10
 	vadd.f32	q4, q14, q9
 	vsub.f32	q6, q14, q9
-	vsub.f32	d11, d27, d16
-	vadd.f32	d15, d27, d16
-	vadd.f32	d10, d26, d17
-	vsub.f32	d14, d26, d17
+	vadd.f32	d11, d27, d16  @
+	vsub.f32	d15, d27, d16  @
+	vsub.f32	d10, d26, d17  @
+	vadd.f32	d14, d26, d17  @
 	vswp d9, d10
 	vswp d13, d14
 	vstmia lr!, {q4-q7}

@@ -584,6 +584,21 @@ firstpass_4_f(ffts_plan_t * restrict p, const data_t * restrict in, data_t * res
 __INLINE void 
 firstpass_4_b(ffts_plan_t * restrict p, const data_t * restrict in, data_t * restrict out) {
   cdata_t *i = (cdata_t *)in, *o = (cdata_t *)out;
+	cdata_t t0, t1, t2, t3, t4, t5, t6, t7;
+	t0[0] = in[0]; t0[1] = in[1];
+	t1[0] = in[4]; t1[1] = in[5];
+	t2[0] = in[2]; t2[1] = in[3];
+	t3[0] = in[6]; t3[1] = in[7];
+	
+	t4[0] = t0[0] + t1[0]; t4[1] = t0[1] + t1[1];
+	t5[0] = t0[0] - t1[0]; t5[1] = t0[1] - t1[1];
+	t6[0] = t2[0] + t3[0]; t6[1] = t2[1] + t3[1];
+	t7[0] = t2[0] - t3[0]; t7[1] = t2[1] - t3[1];
+
+	out[0] = t4[0] + t6[0]; out[1] = t4[1] + t6[1];
+	out[4] = t4[0] - t6[0]; out[5] = t4[1] - t6[1];
+	out[2] = t5[0] - t7[1]; out[3] = t5[1] + t7[0];
+	out[6] = t5[0] + t7[1]; out[7] = t5[1] - t7[0];
 /*	cdata_t t0, t1, t2, t3, t4, t5, t6, t7;
   t0 = i[0]; t1 = i[2]; t2 = i[1]; t3 = i[3];
   t4 = t0 + t1;

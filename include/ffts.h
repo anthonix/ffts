@@ -43,8 +43,8 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-typedef size_t transform_index_t;
 
+typedef size_t transform_index_t;
 struct _ffts_plan_t {
 	ptrdiff_t *offsets;
 	void __attribute__ ((aligned(32))) *ws;

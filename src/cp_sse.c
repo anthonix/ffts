@@ -201,6 +201,9 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		n = leafN*2;
 		if(hardcoded) n = 8;
 		
+		#ifdef __ARM_NEON__
+			V neg = (sign < 0) ? VLIT4(0.0f, 0.0f, 0.0f, 0.0f) : VLIT4(-0.0f, -0.0f, -0.0f, -0.0f);
+		#endif
 		
 		for(i=0;i<n_luts;i++) {
 			p->ws_is[i] = w - (cdata_t *)p->ws;	
@@ -218,7 +221,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 
 				float *fw0 = (float *)w0;
 				#ifdef __ARM_NEON__
-				if(N <= 32) {
+				if(N < 32) {
 					//w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
 					float *fw = (float *)w;
 					V temp0, temp1, temp2;
@@ -238,6 +241,7 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 					VS temp0, temp1, temp2;
 					for(j=0;j<n/4;j+=4) {
 						temp0 = VLD2(fw0 + j*2);
+						temp0.val[1] = VXOR(temp0.val[1], neg);
 						STORESPR(fw + j*2, temp0);
 					}
 					w += n/4;
@@ -287,16 +291,20 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 				//w = FFTS_MALLOC(n/8 * 3 * sizeof(cdata_t), 32);
 				float *fw = (float *)w;
 				VS temp0, temp1, temp2;
+				
 				for(j=0;j<n/8;j+=4) {
 					temp0 = VLD2(fw0 + j*2);
+					temp0.val[1] = VXOR(temp0.val[1], neg);
 					STORESPR(fw + j*2*3,      temp0);
 					//VST(fw + j*2*3,      temp0.val[0]);
 					//VST(fw + j*2*3 + 4,  temp0.val[1]);
 					temp1 = VLD2(fw1 + j*2);
+					temp1.val[1] = VXOR(temp1.val[1], neg);
 					STORESPR(fw + j*2*3 + 8,  temp1);
 					//VST(fw + j*2*3 + 8,  temp1.val[0]);
 					//VST(fw + j*2*3 + 12, temp1.val[1]);
 					temp2 = VLD2(fw2 + j*2);
+					temp2.val[1] = VXOR(temp2.val[1], neg);
 					STORESPR(fw + j*2*3 + 16, temp2);
 					//VST(fw + j*2*3 + 16, temp2.val[0]);
 					//VST(fw + j*2*3 + 20, temp2.val[1]);
@@ -349,10 +357,20 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 //	tmp += 8;
 //}
 
+	if(sign < 0) {
+		p->oe_ws = (void *)(&w_data[4]);
+		p->ee_ws = (void *)(w_data);
+		p->eo_ws = (void *)(&w_data[4]);
+	}else{
+		p->oe_ws = (void *)(w_data + 12);
+		p->ee_ws = (void *)(w_data + 8);
+		p->eo_ws = (void *)(w_data + 12);
+	}
+
 	p->N = N;
 	p->lastlut = w;
 	p->n_luts = n_luts;
-	if(N>=32)  ffts_generate_func_code(p, N, leafN);
+	if(N>=32)  ffts_generate_func_code(p, N, leafN, sign);
 #ifdef __x86_64__
 	float *temp_consts = (float *)p->constants;
 	if(sign > 0 && N>=32) {
