@@ -50,6 +50,7 @@ void x8_soft();
 void x8_hard();
 
 void sse_constants();
+void sse_constants_inv();
 
 //	typedef uint8_t insns_t;
 

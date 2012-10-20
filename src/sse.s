@@ -859,18 +859,20 @@ _sse_constants:
 	.globl sse_constants
 sse_constants:
 #endif
-L_sse_constants:
-L_2il0floatpacket.719:
 	.long	0x00000000,0x80000000,0x00000000,0x80000000
-	.align 4
-L_2il0floatpacket.720:
 	.long	0x3f3504f3,0x3f3504f3,0x3f3504f3,0x3f3504f3
-	.align 4
-L_2il0floatpacket.721:
 	.long	0xbf3504f3,0x3f3504f3,0xbf3504f3,0x3f3504f3
-	.align 4
-L_2il0floatpacket.722:
 	.long	0x3f800000,0x3f800000,0x3f3504f3,0x3f3504f3
-	.align 4
-L_2il0floatpacket.723:
 	.long	0x00000000,0x00000000,0xbf3504f3,0x3f3504f3
+#ifdef __APPLE__	
+	.globl _sse_constants_inv
+_sse_constants_inv:
+#else
+	.globl sse_constants_inv
+sse_constants_inv:
+#endif
+	.long	0x80000000,0x00000000,0x80000000,0x00000000
+	.long	0x3f3504f3,0x3f3504f3,0x3f3504f3,0x3f3504f3
+	.long	0x3f3504f3,0xbf3504f3,0x3f3504f3,0xbf3504f3
+	.long	0x3f800000,0x3f800000,0x3f3504f3,0x3f3504f3
+	.long	0x00000000,0x00000000,0x3f3504f3,0xbf3504f3

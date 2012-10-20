@@ -63,6 +63,7 @@ struct _ffts_plan_t {
 };
 */
 
+struct _ffts_plan_t;
 typedef struct _ffts_plan_t ffts_plan_t;
 
 void ffts_execute(ffts_plan_t * , const void * , const void * );

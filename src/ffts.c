@@ -46,9 +46,7 @@
 
 void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out) {
 	transform_index_t *ps = p->transforms;
-	//p->firstpass((const float *)in, (float *)out, p);
 	p->transform(p, (const float *)in, (float *)out);
-	//if(p->transform) p->transform(out, p->N, p->ws);
 }
 
 void ffts_free(ffts_plan_t *p) {
@@ -100,34 +98,6 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	if(N >= 32) {
 		ffts_init_offsets(p, N, leafN);
 		ffts_init_is(p, N, leafN, 2);
-	//	ffts_init_tree(p, N, leafN);
-		
-	//	if(N == 64) p->firstpass = &firstpass_64;
-
-		LEAFLUT[0] = VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
-		LEAFLUT[1] = VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
-		LEAFLUT[2] = VLIT4(0.92387953251128673848313610506011,0.92387953251128673848313610506011,0.92387953251128673848313610506011,0.92387953251128673848313610506011);
-		LEAFLUT[3] = VLIT4(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,0.38268343236508978177923268049199,-0.38268343236508978177923268049199);
-		LEAFLUT[4] = VLIT4(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.38268343236508983729038391174981);
-		LEAFLUT[5] = VLIT4(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.92387953251128673848313610506011,-0.92387953251128673848313610506011);
-  	
-		LEAFLUT[6] = VLIT4(0.70710678118654757273731092936941,0.70710678118654757273731092936941,1,1);
-		LEAFLUT[7] = VLIT4(0.70710678118654746171500846685376,-0.70710678118654746171500846685376,0,-0);
-		LEAFLUT[8] = VLIT4(0.92387953251128673848313610506011,0.92387953251128673848313610506011,1,1);
-		LEAFLUT[9] = VLIT4(0.38268343236508978177923268049199,-0.38268343236508978177923268049199,0,-0);
-		LEAFLUT[10] = VLIT4(0.38268343236508983729038391174981,0.38268343236508983729038391174981,0.70710678118654757273731092936941,0.70710678118654757273731092936941);
-		LEAFLUT[11] = VLIT4(0.92387953251128673848313610506011,-0.92387953251128673848313610506011,0.70710678118654746171500846685376,-0.70710678118654746171500846685376);
-
-		
-		if(sign > 0) {
-			V neg = VLIT4(-0.0f, -0.0f, -0.0f, -0.0f);
-			LEAFLUT[1] = VXOR(LEAFLUT[1], neg);
-			LEAFLUT[3] = VXOR(LEAFLUT[3], neg);
-			LEAFLUT[5] = VXOR(LEAFLUT[5], neg);
-			LEAFLUT[7] = VXOR(LEAFLUT[7], neg);
-			LEAFLUT[9] = VXOR(LEAFLUT[9], neg);
-			LEAFLUT[11] = VXOR(LEAFLUT[11], neg);
-		}
 		
 		p->i0 = N/leafN/3+1;
 		p->i1 = N/leafN/3;
@@ -144,7 +114,6 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
   	else if(N == 4 && sign == 1) p->transform = &firstpass_4_b;
   	else if(N == 8) p->transform = &firstpass_8;
   	else if(N == 16) p->transform = &firstpass_16;
-  	else if(N == 32) p->transform = &firstpass_32;
 
 		p->is = NULL;
 		p->offsets = NULL;
@@ -261,10 +230,6 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 				}
 				w += n/4 * 2;
 				#endif
-	//		  	for(j=0;j<n/2;j++) {
-	//		  		printf("%f %f\n", creal(w[j]), cimag(w[j]));
-
-	//		  	}
 
 				FFTS_FREE(w0);
 			}else{
@@ -296,18 +261,12 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 					temp0 = VLD2(fw0 + j*2);
 					temp0.val[1] = VXOR(temp0.val[1], neg);
 					STORESPR(fw + j*2*3,      temp0);
-					//VST(fw + j*2*3,      temp0.val[0]);
-					//VST(fw + j*2*3 + 4,  temp0.val[1]);
 					temp1 = VLD2(fw1 + j*2);
 					temp1.val[1] = VXOR(temp1.val[1], neg);
 					STORESPR(fw + j*2*3 + 8,  temp1);
-					//VST(fw + j*2*3 + 8,  temp1.val[0]);
-					//VST(fw + j*2*3 + 12, temp1.val[1]);
 					temp2 = VLD2(fw2 + j*2);
 					temp2.val[1] = VXOR(temp2.val[1], neg);
 					STORESPR(fw + j*2*3 + 16, temp2);
-					//VST(fw + j*2*3 + 16, temp2.val[0]);
-					//VST(fw + j*2*3 + 20, temp2.val[1]);
 				}
 				w += n/8 * 3;
 				#else
@@ -371,28 +330,6 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	p->lastlut = w;
 	p->n_luts = n_luts;
 	if(N>=32)  ffts_generate_func_code(p, N, leafN, sign);
-#ifdef __x86_64__
-	float *temp_consts = (float *)p->constants;
-	if(sign > 0 && N>=32) {
-		temp_consts[0] = -0.0f;
-		temp_consts[1] = 0.0f;
-		temp_consts[2] = -0.0f;
-		temp_consts[3] = 0.0f;
-	
-		float temp;
-  	temp = temp_consts[9];
-  	temp_consts[9] = temp_consts[8];
-  	temp_consts[8] = temp;
-  	temp = temp_consts[11];
-  	temp_consts[11] = temp_consts[10];
-  	temp_consts[10] = temp;
-
-		temp = temp_consts[18];
-		temp_consts[18] = temp_consts[19];
-		temp_consts[19] = temp;
-	}
-#endif
-//	fprintf(stderr, "sizeof(size_t) == %lu\n", sizeof(size_t));
 
 	return p;
 }
