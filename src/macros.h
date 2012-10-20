@@ -99,9 +99,9 @@ __INLINE void STORESPR(data_t * addr,  VS p) {
 #include "ffts.h"
 
 
-cdata_t SCALAR_MULI_SIGN;
-V MULI_SIGN;
-V LEAFLUT[12];
+//cdata_t SCALAR_MULI_SIGN;
+//V MULI_SIGN;
+//V LEAFLUT[12];
 
 __INLINE V IMULI(int inv, V a) {
 	if(inv) return VSWAPPAIRS(VXOR(a, VLIT4(0.0f, -0.0f, 0.0f, -0.0f)));
@@ -113,58 +113,7 @@ S_4(V r0, V r1, V r2, V r3, data_t * restrict o0, data_t * restrict o1, data_t *
  	V t0, t1, t2, t3; 
   VST(o0, r0); VST(o1, r1); VST(o2, r2); VST(o3, r3);
 }
-__INLINE void S_2(V r0, V r1, data_t * restrict o0, data_t * restrict o1) {
-  VST(o0, r0); VST(o1, r1);
-}
 
-__INLINE void L_S2(const data_t * restrict i0, const data_t * restrict i1, V * restrict r0, V * restrict r1) {
-  V t0, t1;
-  t0 = VLD(i0);    t1 = VLD(i1);    
-  *r0 = VADD(t0, t1);
-  *r1 = VSUB(t0, t1);
-}
-/*
-__INLINE void 
-L_2(const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
-									  V *r0, V *r1, V *r2, V *r3) {
-  V t0, t1, t2, t3;
-  t0 = VLD(i0);    
-  t1 = VLD(i1);    
-  t2 = VLD(i2);    
-  t3 = VLD(i3);    
-  *r0 = VADD (t0, t1);
-  *r1 = VSUB (t0, t1);
-  *r2 = VADD (t2, t3);
-  *r3 = VSUB (t2, t3);
-}
-
-__INLINE void 
-L_4(const data_t * restrict i0, const data_t * restrict i1, const data_t * restrict i2, const data_t * restrict i3, 
-									V *r0, V *r1, V *r2, V *r3) {
-  V t0, t1, t2, t3, t4, t5, t6, t7;
-  t0 = VLD(i0);    t1 = VLD(i1);    t2 = VLD(i2);    t3 = VLD(i3);    
-  t4 = VADD (t0, t1);
-  t5 = VSUB (t0, t1);
-  t6 = VADD (t2, t3);
-  t7 = IMULI(VSUB (t2, t3));
-  *r0 = VADD (t4, t6);
-  *r2 = VSUB (t4, t6);
-  *r1 = VSUB (t5, t7);
-  *r3 = VADD (t5, t7);
-}
-
-__INLINE void 
-K_0(V *r0, V *r1, V *r2, V *r3) {
-  V uk, uk2, zk, zk_d;
-	uk   = *r0; uk2  = *r1;
-  zk   = VADD(*r2, *r3);
-  zk_d = IMULI(0, VSUB(*r2, *r3));
-  *r0 = VADD(uk, zk);
-  *r2 = VSUB(uk, zk);
-  *r1 = VSUB(uk2, zk_d);
-  *r3 = VADD(uk2, zk_d);
-}
-*/
 __INLINE V IMUL(V d, V re, V im) {
   re = VMUL(re, d);                   
   im = VMUL(im, VSWAPPAIRS(d));

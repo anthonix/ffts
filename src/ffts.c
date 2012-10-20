@@ -78,17 +78,12 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 	ffts_plan_t *p = malloc(sizeof(ffts_plan_t));
 	size_t leafN = 8;	
 	size_t i;	
-		
-	if(sign < 0) MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
-	else         MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
+
+	V MULI_SIGN;
 	
-	if(sign < 0) {
-		SCALAR_MULI_SIGN[0] = 0.0f; 
-		SCALAR_MULI_SIGN[1] = -0.0f; 
-	}else{
-		SCALAR_MULI_SIGN[0] = -0.0f; 
-		SCALAR_MULI_SIGN[1] = 0.0f; 
-	}
+  if(sign < 0) MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
+  else         MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
+	
 	p->transform = NULL;
 	p->transform_base = NULL;
 	p->transforms = NULL;
@@ -312,13 +307,6 @@ ffts_plan_t *ffts_init(size_t N, int sign) {
 		}
 
 	float *tmp = (float *)p->ws;
-//for(i=0;i<lut_size*2;i+=8) {
-//	fprintf(stderr, "%08x %f %f %f %f - %f %f %f %f\n", 
-//		tmp,
-//		tmp[0], tmp[1], tmp[2], tmp[3], 
-//		tmp[4], tmp[5], tmp[6], tmp[7]);
-//	tmp += 8;
-//}
 
 	if(sign < 0) {
 		p->oe_ws = (void *)(&w_data[4]);
