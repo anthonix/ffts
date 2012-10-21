@@ -30,6 +30,7 @@
 */
 
 #include <stdio.h>
+#include <math.h>
 
 #ifdef __ARM_NEON__
 
@@ -39,11 +40,38 @@
 
 #include "ffts.h"
 
-int
-main(int argc, char *argv[]) {
-  int i;
-  int n = atoi(argv[1]);
- 	int sign = atoi(argv[2]);
+
+#define PI 3.1415926535897932384626433832795028841971693993751058209
+
+float impulse_error(int N, int sign, float *data) {
+	long double delta_sum = 0.0f;
+	long double sum = 0.0f;
+
+	int i;
+	for(i=0;i<N;i++) {
+		long double re, im;
+		if(sign < 0) {
+			re = cosl(2 * PI * (long double)i / (long double)N); 
+			im = -sinl(2 * PI * (long double)i / (long double)N); 
+		}else{
+			re = cosl(2 * PI * (long double)i / (long double)N); 
+			im = sinl(2 * PI * (long double)i / (long double)N); 
+		}
+
+		sum += re * re + im * im;
+
+		re = re - data[2*i];
+		im = im - data[2*i+1];
+		
+		delta_sum += re * re + im * im;
+
+	}
+
+	return sqrtl(delta_sum) / sqrtl(sum);
+}
+
+int 
+test_transform(int n, int sign) {
 
 #ifdef __ARM_NEON__
 	float __attribute__ ((aligned(32))) *input = valloc(2 * n * sizeof(float));
@@ -52,21 +80,79 @@ main(int argc, char *argv[]) {
 	float __attribute__ ((aligned(32))) *input = _mm_malloc(2 * n * sizeof(float), 32);
   float __attribute__ ((aligned(32))) *output = _mm_malloc(2 * n * sizeof(float), 32);
 #endif
-
+	int i;	
 	for(i=0;i<n;i++) {
-		input[2*i]   = i;
+		input[2*i]   = 0.0f;
 		input[2*i+1] = 0.0f;
 	}
+
+	input[2] = 1.0f;
+
 	ffts_plan_t *p = ffts_init(i, sign);
 	if(p) {
-
 		ffts_execute(p, input, output);
-  	for(i=0;i<n;i++) printf("%d %f %f\n", i, output[2*i], output[2*i+1]);
+		printf("%5d     | %9d | %10E\n", sign, n, impulse_error(n, sign, output));
   	ffts_free(p);
-	
 	}else{
 		printf("Plan unsupported\n");
+		return 0;
 	}
 
+	return 1;
+}
+
+int
+main(int argc, char *argv[]) {
+	
+	if(argc == 3) {
+		// test specific transform with test pattern and display output
+		int n = atoi(argv[1]);
+		int sign = atoi(argv[2]);
+
+#ifdef __ARM_NEON__
+		float __attribute__ ((aligned(32))) *input = valloc(2 * n * sizeof(float));
+		float __attribute__ ((aligned(32))) *output = valloc(2 * n * sizeof(float));
+#else
+		float __attribute__ ((aligned(32))) *input = _mm_malloc(2 * n * sizeof(float), 32);
+		float __attribute__ ((aligned(32))) *output = _mm_malloc(2 * n * sizeof(float), 32);
+#endif
+		int i;	
+		for(i=0;i<n;i++) {
+			input[2*i]   = i;
+			input[2*i+1] = 0.0f;
+		}
+
+	//	input[2] = 1.0f;
+
+		ffts_plan_t *p = ffts_init(i, sign);
+		if(p) {
+			ffts_execute(p, input, output);
+			for(i=0;i<n;i++) printf("%d %d %f %f\n", i, sign, output[2*i], output[2*i+1]);
+			ffts_free(p);
+		}else{
+			printf("Plan unsupported\n");
+			return 0;
+		}
+
+#ifdef __ARM_NEON__
+		free(input);
+		free(output);
+#else
+		_mm_free(input);
+		_mm_free(output);
+#endif
+
+	}else{
+		// test various sizes and display error
+		printf("Direction |      Size |     L2 Error\n");
+		printf("----------+-----------+-------------\n");
+		int n;
+		for(n=1;n<=18;n++) {
+			test_transform(pow(2,n), -1);
+		}
+		for(n=1;n<=18;n++) {
+			test_transform(pow(2,n), 1);
+		}
+	}
   return 0;
 }
