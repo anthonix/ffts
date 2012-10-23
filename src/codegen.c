@@ -235,7 +235,8 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 #ifdef __ARM_NEON__
 	*fp++ = PUSH_LR();
-	
+	*fp++ = 0xed2d8b10;
+
 	ADDI(&fp, 3, 1, 0);
 	ADDI(&fp, 7, 1, N);
 	ADDI(&fp, 5, 1, 2*N);
@@ -567,6 +568,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 		pps += 2;
 	}
 	
+	*fp++ = 0xecbd8b10;
 	*fp++ = POP_LR(); count++;
 #else
 	POP(&fp, R15);
