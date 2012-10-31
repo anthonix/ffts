@@ -46,12 +46,16 @@
 #else
 #endif
 
-void ffts_execute(ffts_plan_t *p, const void * restrict in, void * restrict out) {
-	transform_index_t *ps = p->transforms;
+void ffts_execute(ffts_plan_t *p, const void *  in, void *  out) {
 	p->transform(p, (const float *)in, (float *)out);
 }
 
 void ffts_free(ffts_plan_t *p) {
+	p->destroy(p);
+}
+
+
+void ffts_free_1d(ffts_plan_t *p) {
 	
 	size_t i;
 
@@ -90,7 +94,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 	p->is = NULL;
 	p->ws = NULL;
 	p->offsets = NULL;
-
+	p->destroy = ffts_free_1d;
 
 	if(N >= 32) {
 		ffts_init_offsets(p, N, leafN);

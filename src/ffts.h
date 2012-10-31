@@ -78,6 +78,9 @@ struct _ffts_plan_t {
 	struct _ffts_plan_t *plans;
 	int rank;
 	size_t *Ns;
+
+	void (*destroy)(struct _ffts_plan_t *);
+	
 };
 
 typedef struct _ffts_plan_t ffts_plan_t;
