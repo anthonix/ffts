@@ -88,10 +88,10 @@ test_transform(int n, int sign) {
 
 	input[2] = 1.0f;
 
-	ffts_plan_t *p = ffts_init(i, sign);
+	ffts_plan_t *p = ffts_init_1d(i, sign);
 	if(p) {
 		ffts_execute(p, input, output);
-		printf("%5d     | %9d | %10E\n", sign, n, impulse_error(n, sign, output));
+		printf(" %3d  | %9d | %10E\n", sign, n, impulse_error(n, sign, output));
   	ffts_free(p);
 	}else{
 		printf("Plan unsupported\n");
@@ -124,7 +124,7 @@ main(int argc, char *argv[]) {
 
 	//	input[2] = 1.0f;
 
-		ffts_plan_t *p = ffts_init(i, sign);
+		ffts_plan_t *p = ffts_init_1d(i, sign);
 		if(p) {
 			ffts_execute(p, input, output);
 			for(i=0;i<n;i++) printf("%d %d %f %f\n", i, sign, output[2*i], output[2*i+1]);
@@ -144,8 +144,8 @@ main(int argc, char *argv[]) {
 
 	}else{
 		// test various sizes and display error
-		printf("Direction |      Size |     L2 Error\n");
-		printf("----------+-----------+-------------\n");
+		printf(" Sign |      Size |     L2 Error\n");
+		printf("------+-----------+-------------\n");
 		int n;
 		for(n=1;n<=18;n++) {
 			test_transform(pow(2,n), -1);

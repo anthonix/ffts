@@ -74,7 +74,7 @@ void ffts_free(ffts_plan_t *p) {
 	free(p);
 }
 
-ffts_plan_t *ffts_init(size_t N, int sign) {
+ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 	ffts_plan_t *p = malloc(sizeof(ffts_plan_t));
 	size_t leafN = 8;	
 	size_t i;	

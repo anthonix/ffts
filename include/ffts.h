@@ -43,31 +43,14 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-/*
-typedef size_t transform_index_t;
-struct _ffts_plan_t {
-	ptrdiff_t *offsets;
-	void __attribute__ ((aligned(32))) *ws;
-	void __attribute__ ((aligned(32))) *oe_ws, *eo_ws, *ee_ws;
-	ptrdiff_t *is;
-	size_t *ws_is;
-	size_t i0, i1, n_luts;
-	size_t N;
-	void *lastlut;
-	transform_index_t *transforms; 
-	//transform_func_t transform;
-	void (*transform)(struct _ffts_plan_t * , const float * , float * );
-	void *transform_base;
-	size_t transform_size;
-	void *constants;
-};
-*/
-
 struct _ffts_plan_t;
 typedef struct _ffts_plan_t ffts_plan_t;
 
+ffts_plan_t *ffts_init_1d(size_t N, int sign);
+ffts_plan_t *ffts_init_2d(size_t N1, size_t N2, int sign);
+ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign);
+
 void ffts_execute(ffts_plan_t * , const void * , const void * );
-ffts_plan_t *ffts_init(size_t N, int sign);
 void ffts_free(ffts_plan_t *);
 
 #ifdef __cplusplus
