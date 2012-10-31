@@ -69,15 +69,17 @@ struct _ffts_plan_t {
 	void *lastlut;
 	transform_index_t *transforms; 
 	//transform_func_t transform;
-	void (*transform)(struct _ffts_plan_t * , const float * , float * );
+	void (*transform)(struct _ffts_plan_t * , const void * , void * );
 	void *transform_base;
 	size_t transform_size;
 	void *constants;
 	
 	// multi-dimensional stuff:
-	struct _ffts_plan_t *plans;
+	struct _ffts_plan_t **plans;
 	int rank;
-	size_t *Ns;
+	size_t *Ns, *Ms;
+	void *buf;
+
 
 	void (*destroy)(struct _ffts_plan_t *);
 	
@@ -85,4 +87,7 @@ struct _ffts_plan_t {
 
 typedef struct _ffts_plan_t ffts_plan_t;
 
+void ffts_free(ffts_plan_t *);
+ffts_plan_t *ffts_init_1d(size_t N, int sign); 
+void ffts_execute(ffts_plan_t *, const void *, void *);
 #endif

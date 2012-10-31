@@ -95,10 +95,11 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(libffts_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libffts_la_LIBADD =
-am__libffts_la_SOURCES_DIST = ffts.c patterns.c codegen.c neon.s sse.s
+am__libffts_la_SOURCES_DIST = ffts.c ffts_nd.c patterns.c codegen.c \
+	neon.s sse.s
 @HAVE_NEON_TRUE@am__objects_1 = neon.lo
 @HAVE_NEON_FALSE@@HAVE_SSE_TRUE@am__objects_2 = sse.lo
-am_libffts_la_OBJECTS = ffts.lo patterns.lo codegen.lo \
+am_libffts_la_OBJECTS = ffts.lo ffts_nd.lo patterns.lo codegen.lo \
 	$(am__objects_1) $(am__objects_2)
 libffts_la_OBJECTS = $(am_libffts_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -250,8 +251,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libffts.la
-libffts_la_SOURCES = ffts.c patterns.c codegen.c $(am__append_1) \
-	$(am__append_2)
+libffts_la_SOURCES = ffts.c ffts_nd.c patterns.c codegen.c \
+	$(am__append_1) $(am__append_2)
 libffts_includedir = $(includedir)/ffts
 libffts_include_HEADERS = ../include/ffts.h
 all: all-am
@@ -333,6 +334,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/codegen.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_nd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/patterns.Plo@am__quote@
 
 .c.o:

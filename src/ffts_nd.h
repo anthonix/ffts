@@ -34,6 +34,10 @@
 #ifndef __FFTS_ND_H__
 #define __FFTS_ND_H__
 
+#include <stdint.h>
+#include <stddef.h>
+#include <stdio.h>
+
 #include "ffts.h"
 
 
