@@ -48,21 +48,25 @@ void ffts_free_nd(ffts_plan_t *p) {
 	free(p);
 }
 
-void ffts_transpose(void *d, int n1, int n2) {
-	uint64_t *v = (uint64_t *)d;
-	
-	int i, j;
-	for (i = 0; i<n2; i++) {
-		for (j = i+1; j<n1; j++) {
-  		uint64_t temp = v[j*n2 + i];
-  		v[j*n2 + i] = v[i*n1 + j];
-  		v[i*n1 + j] = temp;
-//		uint64_t temp = v[i*n2 + j];
-//		v[i*n2 + j] = v[j*n1 + i];
-//		v[j*n1 + i] = temp;
-		}
-	}
+void ffts_transpose(uint64_t *m, int w, int h) {
+	int start, next, i;
+	uint64_t tmp;
 
+	for (start = 0; start <= w * h - 1; start++) {
+		next = start;
+		i = 0;
+		do {	i++;
+			next = (next % h) * w + next / h;
+		} while (next > start);
+		if (next < start || i == 1) continue;
+
+		tmp = m[next = start];
+		do {
+			i = (next % h) * w + next / h;
+			m[next] = (i == start) ? tmp : m[i];
+			next = i;
+		} while (next > start);
+	}
 }
 
 void ffts_execute_nd(ffts_plan_t *p, const void *  in, void *  out) {
@@ -80,15 +84,15 @@ void ffts_execute_nd(ffts_plan_t *p, const void *  in, void *  out) {
 	}
 	
 	size_t i,j;
-	for(i=0;i<p->Ms[0];i++) {
-		ffts_execute(p->plans[0], din + (i * p->Ns[0]), buf1 + (i * p->Ns[0]));	
+	for(i=0;i<p->Ns[0];i++) {
+		ffts_execute(p->plans[0], din + (i * p->Ms[0]), buf1 + (i * p->Ms[0]));	
 	}
 	ffts_transpose(buf1, p->Ms[0], p->Ns[0]);	
 
 	for(i=1;i<p->rank;i++) {
 		printf("t %zu\n", i);	
-		for(j=0;j<p->Ms[i];j++) { 
-			ffts_execute(p->plans[i], buf1 + (j * p->Ns[i]), buf0 + (j * p->Ns[i]));	
+		for(j=0;j<p->Ns[i];j++) { 
+			ffts_execute(p->plans[i], buf1 + (j * p->Ms[i]), buf0 + (j * p->Ms[i]));	
 		}
 		ffts_transpose(buf0, p->Ms[i], p->Ns[i]);	
 
@@ -123,7 +127,7 @@ ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign) {
 	for(i=0;i<rank;i++) {
 		p->Ms[i] = vol / p->Ns[i];
 		printf("M N %zu %zu\n", p->Ms[i], p->Ns[i]);
-		p->plans[i] = ffts_init_1d(p->Ns[i], sign); 
+		p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
 	}
 
 	return p;
