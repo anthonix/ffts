@@ -48,57 +48,34 @@ void ffts_free_nd(ffts_plan_t *p) {
 	free(p);
 }
 
-void ffts_transpose(uint64_t *m, int w, int h) {
-	int start, next, i;
-	uint64_t tmp;
+void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h) {
 
-	for (start = 0; start <= w * h - 1; start++) {
-		next = start;
-		i = 0;
-		do {	i++;
-			next = (next % h) * w + next / h;
-		} while (next > start);
-		if (next < start || i == 1) continue;
+	size_t i,j;
 
-		tmp = m[next = start];
-		do {
-			i = (next % h) * w + next / h;
-			m[next] = (i == start) ? tmp : m[i];
-			next = i;
-		} while (next > start);
+	for(i=0;i<w;i++) {
+		for(j=0;j<h;j++) {
+			out[i*h + j] = in[j*w + i];
+		}
 	}
 }
 
 void ffts_execute_nd(ffts_plan_t *p, const void *  in, void *  out) {
 
-	printf("Exe ND\n");
 	uint64_t *din = in;
-	uint64_t *buf0, *buf1;
-	
-	if(p->rank & 1) {
-		buf1 = out;
-		buf0 = p->buf;
-	}else{
-		buf1 = p->buf;
-		buf0 = out;
-	}
-	
+	uint64_t *buf = p->buf;
+	uint64_t *dout = out;
+
 	size_t i,j;
 	for(i=0;i<p->Ns[0];i++) {
-		ffts_execute(p->plans[0], din + (i * p->Ms[0]), buf1 + (i * p->Ms[0]));	
+		ffts_execute(p->plans[0], din + (i * p->Ms[0]), buf + (i * p->Ms[0]));	
 	}
-	ffts_transpose(buf1, p->Ms[0], p->Ns[0]);	
+	ffts_transpose(buf, out, p->Ms[0], p->Ns[0]);	
 
 	for(i=1;i<p->rank;i++) {
-		printf("t %zu\n", i);	
 		for(j=0;j<p->Ns[i];j++) { 
-			ffts_execute(p->plans[i], buf1 + (j * p->Ms[i]), buf0 + (j * p->Ms[i]));	
+			ffts_execute(p->plans[i], dout + (j * p->Ms[i]), buf + (j * p->Ms[i]));	
 		}
-		ffts_transpose(buf0, p->Ms[i], p->Ns[i]);	
-
-		void *b = buf0;
-		buf0 = buf1;
-		buf1 = b;
+		ffts_transpose(buf, dout, p->Ms[i], p->Ns[i]);	
 	}
 }
 
@@ -114,19 +91,15 @@ ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign) {
 	p->Ns = malloc(sizeof(size_t) * rank);
 	p->Ms = malloc(sizeof(size_t) * rank);
 	p->plans = malloc(sizeof(ffts_plan_t **) * rank);
-	printf("rank = %d\n", rank);	
 	int i;
 	for(i=0;i<rank;i++) {
 		p->Ns[i] = Ns[i];
-		printf("N %zu\n", p->Ns[i]);
 		vol *= Ns[i];	
 	}
-	printf("VOL %zu\n", vol);
 	p->buf = malloc(sizeof(float) * 2 * vol);
 
 	for(i=0;i<rank;i++) {
 		p->Ms[i] = vol / p->Ns[i];
-		printf("M N %zu %zu\n", p->Ms[i], p->Ns[i]);
 		p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
 	}
 
