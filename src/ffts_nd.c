@@ -48,13 +48,41 @@ void ffts_free_nd(ffts_plan_t *p) {
 	free(p);
 }
 
-void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h) {
+inline void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h) {
 
 	size_t i,j;
 
-	for(i=0;i<w;i++) {
-		for(j=0;j<h;j++) {
-			out[i*h + j] = in[j*w + i];
+	for(i=0;i<w;i+=2) {
+		for(j=0;j<h;j+=2) {
+#ifdef __ARM_NEON__
+//			out[i*h + j] = in[j*w + i];
+			float32x4_t Q0 = vld1q_f32(in + j*w + i);
+			float32x4_t Q1 = vld1q_f32(in + j*w + i + w);
+
+			float32x2x2_t t0;
+			float32x2x2_t t1;
+			t0.val[0] = vget_low_f32(Q0);
+			t0.val[1] = vget_high_f32(Q0);
+			t1.val[0] = vget_low_f32(Q1);
+			t1.val[1] = vget_high_f32(Q1);
+
+			__asm__ ("vswp %0,%1\n\t"
+					: "+w" (t0.val[1]), "+w" (t1.val[0])
+					:
+					);
+
+			Q0 = vcombine_f32(t0.val[0], t0.val[1]);
+			Q1 = vcombine_f32(t1.val[0], t1.val[1]);
+			vst1q_f32(out + i*h + j, Q0);
+			vst1q_f32(out + i*h + j + h, Q1);
+#else
+			__m128d q0 = _mm_load_pd(in + j*w + i);
+			__m128d q1 = _mm_load_pd(in + j*w + i + w);
+			__m128d t0 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(0, 0));
+			__m128d t1 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(1, 1));
+			_mm_store_pd(out + i*h + j, t0);
+			_mm_store_pd(out + i*h + j + h, t1);
+#endif
 		}
 	}
 }
