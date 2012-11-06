@@ -7,7 +7,7 @@ INSTALL_DIR="`pwd`/jni/ffts"
 
 case $(uname -s) in
   Darwin)
-    CONFBUILD=i386-apple-darwin10.8.0
+    CONFBUILD=i386-apple-darwin`uname -r`
     HOSTPLAT=darwin-x86
   ;;
   Linux)
@@ -17,7 +17,7 @@ case $(uname -s) in
   *) echo $0: Unknown platform; exit
 esac
 
-case x86 in
+case arm in
   arm)
     TARGPLAT=arm-linux-androideabi
     ARCH=arm
@@ -40,7 +40,7 @@ esac
 : ${NDK_ROOT:?}
 
 export PATH="$NDK_ROOT/toolchains/${TARGPLAT}-4.6/prebuilt/${HOSTPLAT}/bin/:$PATH"
-export SYS_ROOT="$NDK_ROOT/platforms/android-9/arch-${ARCH}/"
+export SYS_ROOT="$NDK_ROOT/platforms/android-8/arch-${ARCH}/"
 export CC="${TARGPLAT}-gcc --sysroot=$SYS_ROOT"
 export LD="${TARGPLAT}-ld"
 export AR="${TARGPLAT}-ar"
