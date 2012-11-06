@@ -48,7 +48,7 @@ void ffts_free_nd(ffts_plan_t *p) {
 	free(p);
 }
 
-inline void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h) {
+static inline void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h) {
 
 	size_t i,j;
 
