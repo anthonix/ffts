@@ -56,8 +56,8 @@ static inline void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h) {
 		for(j=0;j<h;j+=2) {
 #ifdef __ARM_NEON__
 //			out[i*h + j] = in[j*w + i];
-			float32x4_t Q0 = vld1q_f32(in + j*w + i);
-			float32x4_t Q1 = vld1q_f32(in + j*w + i + w);
+			float32x4_t Q0 = vld1q_f32((float32_t const *)(in + j*w + i));
+			float32x4_t Q1 = vld1q_f32((float32_t const *)(in + j*w + i + w));
 
 			float32x2x2_t t0;
 			float32x2x2_t t1;
@@ -73,8 +73,8 @@ static inline void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h) {
 
 			Q0 = vcombine_f32(t0.val[0], t0.val[1]);
 			Q1 = vcombine_f32(t1.val[0], t1.val[1]);
-			vst1q_f32(out + i*h + j, Q0);
-			vst1q_f32(out + i*h + j + h, Q1);
+			vst1q_f32((float32_t *)(out + i*h + j), Q0);
+			vst1q_f32((float32_t *)(out + i*h + j + h), Q1);
 #else
 			__m128d q0 = _mm_load_pd(in + j*w + i);
 			__m128d q1 = _mm_load_pd(in + j*w + i + w);
