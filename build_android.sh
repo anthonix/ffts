@@ -5,17 +5,51 @@
 
 INSTALL_DIR="`pwd`/jni/ffts"
 
-export PATH="$NDK_ROOT/toolchains/arm-linux-androideabi-4.6/prebuilt/darwin-x86/bin/:$PATH"
-export SYS_ROOT="$NDK_ROOT/platforms/android-8/arch-arm/"
-export CC="arm-linux-androideabi-gcc --sysroot=$SYS_ROOT"
-export LD="arm-linux-androideabi-ld"
-export AR="arm-linux-androideabi-ar"
-export RANLIB="arm-linux-androideabi-ranlib"
-export STRIP="arm-linux-androideabi-strip"
+case $(uname -s) in
+  Darwin)
+    CONFBUILD=i386-apple-darwin10.8.0
+    HOSTPLAT=darwin-x86
+  ;;
+  Linux)
+    CONFBUILD=i386-unknown-linux
+    HOSTPLAT=linux-x86
+  ;;
+  *) echo $0: Unknown platform; exit
+esac
+
+case x86 in
+  arm)
+    TARGPLAT=arm-linux-androideabi
+    ARCH=arm
+    CONFTARG=arm-eabi
+  ;;
+  x86)
+    TARGPLAT=x86
+    ARCH=x86
+    CONFTARG=x86
+  ;;
+  mips)
+  ## probably wrong
+    TARGPLAT=mipsel-linux-android
+    ARCH=mips
+    CONFTARG=mips
+  ;;
+  *) echo $0: Unknown target; exit
+esac
+
+: ${NDK_ROOT:?}
+
+export PATH="$NDK_ROOT/toolchains/${TARGPLAT}-4.6/prebuilt/${HOSTPLAT}/bin/:$PATH"
+export SYS_ROOT="$NDK_ROOT/platforms/android-9/arch-${ARCH}/"
+export CC="${TARGPLAT}-gcc --sysroot=$SYS_ROOT"
+export LD="${TARGPLAT}-ld"
+export AR="${TARGPLAT}-ar"
+export RANLIB="${TARGPLAT}-ranlib"
+export STRIP="${TARGPLAT}-strip"
 export CFLAGS="-O3"
 
 mkdir -p $INSTALL_DIR
-./configure --enable-neon --build=i386-apple-darwin10.8.0 --host=arm-eabi --prefix=$INSTALL_DIR LIBS="-lc -lgcc"
+./configure --enable-neon --build=${CONFBUILD} --host=${CONFTARG} --prefix=$INSTALL_DIR LIBS="-lc -lgcc"
 
 make clean
 make
