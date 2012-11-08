@@ -33,6 +33,9 @@
 
 #include "ffts_nd.h"
 
+#ifdef __ARM_NEON__
+#include "neon.h"
+#endif
 
 void ffts_free_nd(ffts_plan_t *p) {
 	free(p->Ns);
@@ -45,65 +48,114 @@ void ffts_free_nd(ffts_plan_t *p) {
 
 	free(p->plans);
 	free(p->buf);
+	free(p->transpose_buf);
 	free(p);
 }
 
-static inline void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h) {
+void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 
-	size_t i,j;
-
-	for(i=0;i<w;i+=2) {
-		for(j=0;j<h;j+=2) {
 #ifdef __ARM_NEON__
+	size_t i,j,k;
+	int linebytes = w*8;
+
+	for(j=0;j<h;j+=8) {
+		for(i=0;i<w;i+=8) {
+			neon_transpose_to_buf(in + j*w + i, buf, w);
+
+			uint64_t __attribute__((aligned(32))) *p = out + i*h + j;
+			uint64_t __attribute__((aligned(32))) *pbuf = buf;
+			uint64_t *ptemp;
+
+			__asm__ __volatile__(
+							 "mov %[ptemp], %[p]\n\t"
+							 "add %[p], %[p], %[w], lsl #3\n\t"
+							 "vld1.32 {q8,q9}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q10,q11}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q12,q13}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q14,q15}, [%[pbuf], :128]!\n\t"
+							 "vst1.32 {q8,q9}, [%[ptemp], :128]!\n\t"
+							 "vst1.32 {q10,q11}, [%[ptemp], :128]!\n\t"
+							 "mov %[ptemp], %[p]\n\t" 
+							 "add %[p], %[p], %[w], lsl #3\n\t"
+							 "vst1.32 {q12,q13}, [%[ptemp], :128]!\n\t"
+							 "vst1.32 {q14,q15}, [%[ptemp], :128]!\n\t"
+							 "mov %[ptemp], %[p]\n\t"
+							 "add %[p], %[p], %[w], lsl #3\n\t"
+							 "vld1.32 {q8,q9}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q10,q11}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q12,q13}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q14,q15}, [%[pbuf], :128]!\n\t"
+							 "vst1.32 {q8,q9}, [%[ptemp], :128]!\n\t"
+							 "vst1.32 {q10,q11}, [%[ptemp], :128]!\n\t"
+							 "mov %[ptemp], %[p]\n\t" 
+							 "add %[p], %[p], %[w], lsl #3\n\t"
+							 "vst1.32 {q12,q13}, [%[ptemp], :128]!\n\t"
+							 "vst1.32 {q14,q15}, [%[ptemp], :128]!\n\t"
+							 "mov %[ptemp], %[p]\n\t"
+							 "add %[p], %[p], %[w], lsl #3\n\t"
+							 "vld1.32 {q8,q9}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q10,q11}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q12,q13}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q14,q15}, [%[pbuf], :128]!\n\t"
+							 "vst1.32 {q8,q9}, [%[ptemp], :128]!\n\t"
+							 "vst1.32 {q10,q11}, [%[ptemp], :128]!\n\t"
+							 "mov %[ptemp], %[p]\n\t" 
+							 "add %[p], %[p], %[w], lsl #3\n\t"
+							 "vst1.32 {q12,q13}, [%[ptemp], :128]!\n\t"
+							 "vst1.32 {q14,q15}, [%[ptemp], :128]!\n\t"
+							 "mov %[ptemp], %[p]\n\t"
+							 "add %[p], %[p], %[w], lsl #3\n\t"
+							 "vld1.32 {q8,q9}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q10,q11}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q12,q13}, [%[pbuf], :128]!\n\t"
+							 "vld1.32 {q14,q15}, [%[pbuf], :128]!\n\t"
+							 "vst1.32 {q8,q9}, [%[ptemp], :128]!\n\t"
+							 "vst1.32 {q10,q11}, [%[ptemp], :128]!\n\t"
+							 "mov %[ptemp], %[p]\n\t" 
+							 "vst1.32 {q12,q13}, [%[ptemp], :128]!\n\t"
+							 "vst1.32 {q14,q15}, [%[ptemp], :128]!\n\t"
+							 
+						: [p] "+r" (p), [pbuf] "+r" (pbuf), [ptemp] "+r" (ptemp)
+						: [w] "r" (w)
+						: "memory", "q8", "q9", "q10", "q11"
+						);
 //			out[i*h + j] = in[j*w + i];
-			float32x4_t Q0 = vld1q_f32((float32_t const *)(in + j*w + i));
-			float32x4_t Q1 = vld1q_f32((float32_t const *)(in + j*w + i + w));
-
-			float32x2x2_t t0;
-			float32x2x2_t t1;
-			t0.val[0] = vget_low_f32(Q0);
-			t0.val[1] = vget_high_f32(Q0);
-			t1.val[0] = vget_low_f32(Q1);
-			t1.val[1] = vget_high_f32(Q1);
-
-			__asm__ ("vswp %0,%1\n\t"
-					: "+w" (t0.val[1]), "+w" (t1.val[0])
-					:
-					);
-
-			Q0 = vcombine_f32(t0.val[0], t0.val[1]);
-			Q1 = vcombine_f32(t1.val[0], t1.val[1]);
-			vst1q_f32((float32_t *)(out + i*h + j), Q0);
-			vst1q_f32((float32_t *)(out + i*h + j + h), Q1);
-#else
-			__m128d q0 = _mm_load_pd(in + j*w + i);
-			__m128d q1 = _mm_load_pd(in + j*w + i + w);
-			__m128d t0 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(0, 0));
-			__m128d t1 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(1, 1));
-			_mm_store_pd(out + i*h + j, t0);
-			_mm_store_pd(out + i*h + j + h, t1);
-#endif
 		}
 	}
+#else
+	size_t i,j;
+	for(i=0;i<w;i+=2) {
+		for(j=0;j<h;j+=2) {
+//			out[i*h + j] = in[j*w + i];
+			__m128d q0 = _mm_load_pd((double *)(in + j*w + i));
+			__m128d q1 = _mm_load_pd((double *)(in + j*w + i + w));
+			__m128d t0 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(0, 0));
+			__m128d t1 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(1, 1));
+			_mm_store_pd((double *)(out + i*h + j), t0);
+			_mm_store_pd((double *)(out + i*h + j + h), t1);
+		}
+	}
+#endif
+
 }
 
-void ffts_execute_nd(ffts_plan_t *p, const void *  in, void *  out) {
+void ffts_execute_nd(ffts_plan_t *p, const data_t *  in, data_t *  out) {
 
-	uint64_t *din = in;
+	uint64_t *din = (uint64_t *)in;
 	uint64_t *buf = p->buf;
-	uint64_t *dout = out;
+	uint64_t *dout = (uint64_t *)out;
 
 	size_t i,j;
 	for(i=0;i<p->Ns[0];i++) {
 		ffts_execute(p->plans[0], din + (i * p->Ms[0]), buf + (i * p->Ms[0]));	
 	}
-	ffts_transpose(buf, out, p->Ms[0], p->Ns[0]);	
+	ffts_transpose(buf, dout, p->Ms[0], p->Ns[0], p->transpose_buf);	
 
 	for(i=1;i<p->rank;i++) {
 		for(j=0;j<p->Ns[i];j++) { 
 			ffts_execute(p->plans[i], dout + (j * p->Ms[i]), buf + (j * p->Ms[i]));	
 		}
-		ffts_transpose(buf, dout, p->Ms[i], p->Ns[i]);	
+		ffts_transpose(buf, dout, p->Ms[i], p->Ns[i], p->transpose_buf);	
 	}
 }
 
@@ -124,13 +176,14 @@ ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign) {
 		p->Ns[i] = Ns[i];
 		vol *= Ns[i];	
 	}
-	p->buf = malloc(sizeof(float) * 2 * vol);
+	p->buf = valloc(sizeof(float) * 2 * vol);
 
 	for(i=0;i<rank;i++) {
 		p->Ms[i] = vol / p->Ns[i];
 		p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
 	}
 
+	p->transpose_buf = valloc(sizeof(float) * 2 * 8 * 8);
 	return p;
 }
 

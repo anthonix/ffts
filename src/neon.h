@@ -44,4 +44,7 @@ void neon_eo();
 void neon_oe();
 void neon_end();
 
+void neon_transpose(uint64_t *in, uint64_t *out, int w, int h); 
+void neon_transpose_to_buf(uint64_t *in, uint64_t *out, int w); 
+
 #endif

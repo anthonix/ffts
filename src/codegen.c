@@ -604,12 +604,12 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 	free(ps);
 	
-	if (mprotect(func, p->transform_size, PROT_READ | PROT_EXEC)) {
-		perror("Couldn't mprotect");
-		exit(1);
-	}
+  if (mprotect(func, p->transform_size, PROT_READ | PROT_EXEC)) {
+  	perror("Couldn't mprotect");
+  	exit(1);
+  }
 #ifdef __APPLE__
-	sys_icache_invalidate(func, p->transform_size);
+//	sys_icache_invalidate(func, p->transform_size);
 #elif __ANDROID__
 	cacheflush((long)(func), (long)(func) + p->transform_size, 0);
 #endif

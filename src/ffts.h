@@ -69,7 +69,7 @@ struct _ffts_plan_t {
 	void *lastlut;
 	transform_index_t *transforms; 
 	//transform_func_t transform;
-	void (*transform)(struct _ffts_plan_t * , const void * , void * );
+	void (*transform)(struct _ffts_plan_t * , const data_t * , data_t * );
 	void *transform_base;
 	size_t transform_size;
 	void *constants;
@@ -80,6 +80,7 @@ struct _ffts_plan_t {
 	size_t *Ns, *Ms;
 	void *buf;
 
+	void *transpose_buf;
 
 	void (*destroy)(struct _ffts_plan_t *);
 	

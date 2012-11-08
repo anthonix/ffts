@@ -46,7 +46,7 @@ export LD="${TARGPLAT}-ld"
 export AR="${TARGPLAT}-ar"
 export RANLIB="${TARGPLAT}-ranlib"
 export STRIP="${TARGPLAT}-strip"
-export CFLAGS="-O3"
+export CFLAGS="-Os"
 
 mkdir -p $INSTALL_DIR
 ./configure --enable-neon --build=${CONFBUILD} --host=${CONFTARG} --prefix=$INSTALL_DIR LIBS="-lc -lgcc"

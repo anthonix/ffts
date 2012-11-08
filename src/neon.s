@@ -639,3 +639,99 @@ _neon_end:
 neon_end:
 #endif
 	bx lr
+
+
+	.align 4
+#ifdef __APPLE__
+	.globl _neon_transpose
+_neon_transpose:
+#else
+	.globl neon_transpose
+neon_transpose:
+#endif
+	push {r4-r8}
+	@ vpush {q8-q9}
+	mov r5, r3 
+_neon_transpose_col:
+	mov r7, r1
+	add r8, r1, r3, lsl #3
+	mov r4, r2
+	add r6, r0, r2, lsl #3
+_neon_transpose_row:
+	vld1.32 {q8,q9}, [r0, :128]!
+@	vld1.32 {q10,q11}, [r0, :128]!
+	vld1.32 {q12,q13}, [r6, :128]!
+@	vld1.32 {q14,q15}, [r6, :128]!
+	sub r4, r4, #4
+	cmp r4, #0
+	vswp d17,d24
+	vswp d19,d26
+	vswp d21,d28
+	vswp d23,d30
+	vst1.32 {q8}, [r7, :128]
+	vst1.32 {q12}, [r8, :128]
+	add r7, r7, r3, lsl #4
+	add r8, r8, r3, lsl #4
+	vst1.32 {q9}, [r7, :128]
+	vst1.32 {q13}, [r8, :128]
+	add r7, r7, r3, lsl #4
+	add r8, r8, r3, lsl #4
+@@vst1.32 {q10}, [r7, :128]
+@@vst1.32 {q14}, [r8, :128]
+@@add r7, r7, r3, lsl #4
+@@add r8, r8, r3, lsl #4
+@@vst1.32 {q11}, [r7, :128]
+@@vst1.32 {q15}, [r8, :128]
+@@add r7, r7, r3, lsl #4
+@@add r8, r8, r3, lsl #4
+	bne _neon_transpose_row
+	sub r5, r5, #2
+	cmp r5, #0
+	add r0, r0, r2, lsl #3
+	add r1, r1, #16
+	bne _neon_transpose_col
+	@ vpop {q8-q9}
+	pop {r4-r8}
+	bx lr
+
+	.align 4
+#ifdef __APPLE__
+	.globl _neon_transpose_to_buf
+_neon_transpose_to_buf:
+#else
+	.globl neon_transpose_to_buf
+neon_transpose_to_buf:
+#endif
+	push {r4-r10}
+	mov r5, #8 
+_neon_transpose_to_buf_col:
+	mov r4, #8
+	add r6, r0, r2, lsl #3
+	mov r7, r1
+	add r8, r1, #64 
+	add r9, r1, #128
+	add r10, r1, #192
+_neon_transpose_to_buf_row:
+	vld1.32 {q8,q9}, [r0, :128]!
+	vld1.32 {q12,q13}, [r6, :128]!
+	sub r4, r4, #4
+	cmp r4, #0
+	vswp d17,d24
+	vswp d19,d26
+	vst1.32 {q8}, [r7, :128]
+	vst1.32 {q12}, [r8, :128]
+	vst1.32 {q9}, [r9, :128]
+	vst1.32 {q13}, [r10, :128]
+	add r7, r7, #256 
+	add r8, r8, #256
+	add r9, r9, #256 
+	add r10, r10, #256
+	bne _neon_transpose_to_buf_row
+	sub r5, r5, #2
+	cmp r5, #0
+	sub r0, r0, #64
+	add r0, r0, r2, lsl #4
+	add r1, r1, #16
+	bne _neon_transpose_to_buf_col
+	pop {r4-r10}
+	bx lr
