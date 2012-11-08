@@ -2,7 +2,7 @@
 
 lib_LTLIBRARIES = libffts.la
 
-libffts_la_SOURCES = ffts.c ffts_nd.c patterns.c codegen.c
+libffts_la_SOURCES = ffts.c ffts_nd.c ffts_real.c patterns.c codegen.c
 
 libffts_includedir=$(includedir)/ffts
 libffts_include_HEADERS = ../include/ffts.h

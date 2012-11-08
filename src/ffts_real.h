@@ -1,8 +1,10 @@
 /*
  
- This file is part of FFTS.
+ This file is part of FFTS -- The Fastest Fourier Transform in the South
   
- Copyright (c) 2012, Anthony M. Blake
+ Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
+ Copyright (c) 2012, The University of Waikato 
+ 
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -29,35 +31,21 @@
 
 */
 
-#ifndef __FFTS_H__
-#define __FFTS_H__
+#ifndef __FFTS_REAL_H__
+#define __FFTS_REAL_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+#include "ffts.h"
 
-struct _ffts_plan_t;
-typedef struct _ffts_plan_t ffts_plan_t;
+#ifdef __ARM_NEON__
+	#include <arm_neon.h>
+#else
+	#include <xmmintrin.h>
+#endif
 
-ffts_plan_t *ffts_init_1d(size_t N, int sign);
-ffts_plan_t *ffts_init_2d(size_t N1, size_t N2, int sign);
-ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign);
-
-ffts_plan_t *ffts_init_1d_real(size_t N, int sign);
-
-
-void ffts_execute(ffts_plan_t * , const void * , void * );
-void ffts_free(ffts_plan_t *);
-
-#ifdef __cplusplus
-}  /* extern "C" */
-#endif /* __cplusplus */
 
 #endif
+

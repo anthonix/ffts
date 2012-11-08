@@ -83,7 +83,8 @@ struct _ffts_plan_t {
 	void *transpose_buf;
 
 	void (*destroy)(struct _ffts_plan_t *);
-	
+
+	float *A, *B;
 };
 
 typedef struct _ffts_plan_t ffts_plan_t;
