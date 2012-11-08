@@ -58,8 +58,8 @@ void ffts_execute_1d_real(ffts_plan_t *p, const void *vin, void *vout) {
 	for(i=0;i<N/2;i++) {
 		out[2*i]   = buf[2*i]*A[2*i] - buf[2*i+1]*A[2*i+1] + buf[N-2*i]*B[2*i] + buf[N-2*i+1]*B[2*i+1];
 		out[2*i+1] = buf[2*i+1]*A[2*i] + buf[2*i]*A[2*i+1] + buf[N-2*i]*B[2*i+1] - buf[N-2*i+1]*B[2*i];
-		out[2*N - 2*i] = out[2*i];
-		out[2*N - 2*i + 1] = -out[2*i+1];
+//	out[2*N - 2*i] = out[2*i];
+//	out[2*N - 2*i + 1] = -out[2*i+1];
 	}
 	
 	out[N] = buf[0] - buf[1];

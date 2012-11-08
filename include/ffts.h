@@ -50,10 +50,14 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign);
 ffts_plan_t *ffts_init_2d(size_t N1, size_t N2, int sign);
 ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign);
 
+// For real transforms, sign == -1 implies a real-to-complex forwards tranform,
+// and sign == 1 implies a complex-to-real backwards transform
+// The output of a real-to-complex transform is N/2+1 complex numbers, where the
+// redundant outputs have been omitted.
 ffts_plan_t *ffts_init_1d_real(size_t N, int sign);
 
 
-void ffts_execute(ffts_plan_t * , const void * , void * );
+void ffts_execute(ffts_plan_t * , const void *input, void *output);
 void ffts_free(ffts_plan_t *);
 
 #ifdef __cplusplus
