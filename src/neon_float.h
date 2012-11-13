@@ -68,7 +68,7 @@ typedef float32x4x2_t VS;
 
 #define VBLEND(x,y) (vcombine_f32(vget_low_f32(x), vget_high_f32(y)))
 
-static inline V VLIT4(data_t f3, data_t f2, data_t f1, data_t f0) {
+__INLINE V VLIT4(data_t f3, data_t f2, data_t f1, data_t f0) {
     data_t __attribute__ ((aligned(16))) d[4] = {f0, f1, f2, f3};
     return VLD(d);
 }

@@ -50,8 +50,8 @@ static const __attribute__ ((aligned(64))) float w_data[16] = {0.707106781186547
 																									0.70710678118654757273731092936941,0.70710678118654746171500846685376, 0.70710678118654757273731092936941,0.70710678118654746171500846685376,
 																									1.0f,0.70710678118654757273731092936941f, 0.0f,0.70710678118654746171500846685376};
 
-inline float W_re(float N, float k) { return cos(-2.0f * PI * k / N); }
-inline float W_im(float N, float k) { return sin(-2.0f * PI * k / N); }
+__INLINE float W_re(float N, float k) { return cos(-2.0f * PI * k / N); }
+__INLINE float W_im(float N, float k) { return sin(-2.0f * PI * k / N); }
 
 typedef size_t transform_index_t;
 
