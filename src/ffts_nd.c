@@ -43,7 +43,14 @@ void ffts_free_nd(ffts_plan_t *p) {
 
 	int i;
 	for(i=0;i<p->rank;i++) {
-		ffts_free(p->plans[i]);
+		
+		ffts_plan_t *x = p->plans[i];
+		int k;
+		for(k=0;k<i;k++) {
+			if(x == p->plans[k]) x = NULL;
+		}
+		
+		ffts_free(x);
 	}
 
 	free(p->plans);
@@ -180,7 +187,15 @@ ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign) {
 
 	for(i=0;i<rank;i++) {
 		p->Ms[i] = vol / p->Ns[i];
-		p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
+
+		p->plans[i] = NULL;
+		int k;
+		for(k=0;k<i;k++) {
+			if(p->Ms[k] == p->Ms[i]) 
+				p->plans[i] = p->plans[k];
+		}
+
+		if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
 	}
 
 	p->transpose_buf = valloc(sizeof(float) * 2 * 8 * 8);
