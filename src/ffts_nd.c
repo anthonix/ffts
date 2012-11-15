@@ -133,13 +133,13 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 	size_t i,j;
 	for(i=0;i<w;i+=2) {
 		for(j=0;j<h;j+=2) {
-//			out[i*h + j] = in[j*w + i];
-			__m128d q0 = _mm_load_pd((double *)(in + j*w + i));
-			__m128d q1 = _mm_load_pd((double *)(in + j*w + i + w));
-			__m128d t0 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(0, 0));
-			__m128d t1 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(1, 1));
-			_mm_store_pd((double *)(out + i*h + j), t0);
-			_mm_store_pd((double *)(out + i*h + j + h), t1);
+//		out[i*h + j] = in[j*w + i];
+  		__m128d q0 = _mm_load_pd((double *)(in + j*w + i));
+  		__m128d q1 = _mm_load_pd((double *)(in + j*w + i + w));
+  		__m128d t0 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(0, 0));
+  		__m128d t1 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(1, 1));
+  		_mm_store_pd((double *)(out + i*h + j), t0);
+  		_mm_store_pd((double *)(out + i*h + j + h), t1);
 		}
 	}
 #endif
