@@ -104,6 +104,10 @@ void ffts_execute_1d_real(ffts_plan_t *p, const void *vin, void *vout) {
 	for(i=0;i<N/2;i++) {
 		out[2*i]   = buf[2*i]*A[2*i] - buf[2*i+1]*A[2*i+1] + buf[N-2*i]*B[2*i] + buf[N-2*i+1]*B[2*i+1];
 		out[2*i+1] = buf[2*i+1]*A[2*i] + buf[2*i]*A[2*i+1] + buf[N-2*i]*B[2*i+1] - buf[N-2*i+1]*B[2*i];
+
+//	out[2*N-2*i] = out[2*i];
+//	out[2*N-2*i+1] = -out[2*i+1];
+
 #endif	
 	}
 	
@@ -122,6 +126,7 @@ void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout) {
 	
 	float *p_buf0 = in;
 	float *p_buf1 = in + N - 2;
+	
 	float *p_out = buf;
 	
 	size_t i;
@@ -197,13 +202,23 @@ ffts_plan_t *ffts_init_1d_real(size_t N, int sign) {
 	p->A = valloc(sizeof(float) * N);
 	p->B = valloc(sizeof(float) * N);
 
-	int i;
-	for (i = 0; i < N/2; i++) {
-		p->A[2 * i]     = 0.5 * (1.0 - sin (2 * PI / (double) N * (double) i));
-		p->A[2 * i + 1] = 0.5 * (-1.0 * cos (2 * PI / (double) N * (double) i));
-		p->B[2 * i]     = 0.5 * (1.0 + sin (2 * PI / (double) N * (double) i));
-		p->B[2 * i + 1] = 0.5 * (1.0 * cos (2 * PI / (double) N * (double) i));
-	}
+  if(sign < 0) {
+		int i;
+		for (i = 0; i < N/2; i++) {
+			p->A[2 * i]     = 0.5 * (1.0 - sin (2.0f * PI / (double) (N) * (double) i));
+			p->A[2 * i + 1] = 0.5 * (-1.0 * cos (2.0f * PI / (double) (N) * (double) i));
+			p->B[2 * i]     = 0.5 * (1.0 + sin (2.0f * PI / (double) (N) * (double) i));
+			p->B[2 * i + 1] = 0.5 * (1.0 * cos (2.0f * PI / (double) (N) * (double) i));
+		}
+	}else{
+		int i;
+		for (i = 0; i < N/2; i++) {
+			p->A[2 * i]     = 1.0 * (1.0 - sin (2.0f * PI / (double) (N) * (double) i));
+			p->A[2 * i + 1] = 1.0 * (-1.0 * cos (2.0f * PI / (double) (N) * (double) i));
+			p->B[2 * i]     = 1.0 * (1.0 + sin (2.0f * PI / (double) (N) * (double) i));
+			p->B[2 * i + 1] = 1.0 * (1.0 * cos (2.0f * PI / (double) (N) * (double) i));
+		}
+  }
 	
 	return p;
 }
