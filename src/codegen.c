@@ -144,10 +144,13 @@ void insert_nops(uint8_t **p, uint32_t count) {
 	}
 }
 
+
 void align_mem16(uint8_t **p, uint32_t offset) {
+#ifdef __ARM_NEON__
 	int r = (16 - (offset & 0xf)) - ((uint32_t)(*p) & 0xf);
 	r = (16 + r) & 0xf;
 	insert_nops(p, r);	
+#endif
 }
 
 void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {

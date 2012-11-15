@@ -46,6 +46,7 @@
 	#include <xmmintrin.h>
 #endif
 
+ffts_plan_t *ffts_init_1d_real(size_t N, int sign);
 
 #endif
 

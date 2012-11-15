@@ -58,6 +58,8 @@ typedef size_t transform_index_t;
 //typedef void (*transform_func_t)(float *data, size_t N, float *LUT);
 typedef void (*transform_func_t)(float *data, size_t N, float *LUT);
 
+typedef struct _ffts_plan_t ffts_plan_t;
+
 struct _ffts_plan_t {
 	ptrdiff_t *offsets;
 	void __attribute__ ((aligned(32))) *ws;
@@ -69,7 +71,7 @@ struct _ffts_plan_t {
 	void *lastlut;
 	transform_index_t *transforms; 
 	//transform_func_t transform;
-	void (*transform)(struct _ffts_plan_t * , const data_t * , data_t * );
+	void (*transform)(ffts_plan_t * , const void * , void * );
 	void *transform_base;
 	size_t transform_size;
 	void *constants;
@@ -82,12 +84,11 @@ struct _ffts_plan_t {
 
 	void *transpose_buf;
 
-	void (*destroy)(struct _ffts_plan_t *);
+	void (*destroy)(ffts_plan_t *);
 
 	float *A, *B;
 };
 
-typedef struct _ffts_plan_t ffts_plan_t;
 
 void ffts_free(ffts_plan_t *);
 ffts_plan_t *ffts_init_1d(size_t N, int sign); 

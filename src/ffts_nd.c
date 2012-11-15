@@ -146,7 +146,7 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 
 }
 
-void ffts_execute_nd(ffts_plan_t *p, const data_t *  in, data_t *  out) {
+void ffts_execute_nd(ffts_plan_t *p, const void *  in, void *  out) {
 
 	uint64_t *din = (uint64_t *)in;
 	uint64_t *buf = p->buf;
