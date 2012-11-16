@@ -78,15 +78,15 @@ void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *  in, void *  out) {
 	float *doutr = (float *)out;
 
 	size_t i,j;
-	ffts_scalar_transpose(din, buf, p->Ns[0], p->Ms[0], p->transpose_buf);	
+	ffts_scalar_transpose(din, buf, p->Ms[0], p->Ns[0], p->transpose_buf);	
 
-	for(i=0;i<p->Ns[0];i++) {
-		p->plans[0]->transform(p->plans[0], buf + (i * p->Ms[0]), dout + (i * p->Ms[0]));	
+	for(i=0;i<p->Ms[0];i++) {
+		p->plans[0]->transform(p->plans[0], buf + (i * p->Ns[0]), dout + (i * p->Ns[0]));	
 	}
 	
-	ffts_scalar_transpose(dout, buf, p->Ms[0], p->Ns[0], p->transpose_buf);	
-  for(j=0;j<p->Ns[1];j++) { 
-  	p->plans[1]->transform(p->plans[1], buf + (j * (p->Ns[0])), &doutr[j * p->Ms[1]]);	
+	ffts_scalar_transpose(dout, buf, p->Ns[0], p->Ms[0], p->transpose_buf);	
+	for(j=0;j<p->Ms[1];j++) { 
+  	p->plans[1]->transform(p->plans[1], buf + (j * (p->Ms[0])), &doutr[j * p->Ns[1]]);	
   }
 }
 
@@ -125,11 +125,10 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
 		}else{
   		for(k=0;k<i;k++) {
-  			if(p->Ms[k] == p->Ms[i]) p->plans[i] = p->plans[k];
+  			if(p->Ns[k] == p->Ns[i]) p->plans[i] = p->plans[k];
   		}
-			if(i==rank-1) {        p->plans[i] = ffts_init_1d_real(p->Ms[i], sign); 
-			}
-			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
+			if(i==rank-1)         p->plans[i] = ffts_init_1d_real(p->Ns[i], sign); 
+			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ns[i], sign); 
 		}
 	}
 	if(sign < 0) {
@@ -138,7 +137,7 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 		}
 	}else{
   	for(i=0;i<rank-1;i++) {
-  		p->Ns[i] = p->Ns[i] / 2 + 1;
+  		p->Ms[i] = p->Ms[i] / 2 + 1;
   	}
 	}
 
