@@ -37,6 +37,16 @@
 #include "neon.h"
 #endif
 
+void ffts_scalar_transpose_r(float *in, float *out, int w, int h, uint64_t *buf) {
+
+	size_t i,j;
+	for(i=0;i<w;i+=1) {
+		for(j=0;j<h;j+=1) {
+			out[i*h + j] = in[j*w + i];
+		}
+	}
+
+}
 void ffts_scalar_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 
 	size_t i,j;
@@ -68,12 +78,36 @@ void ffts_execute_nd_real(ffts_plan_t *p, const void *  in, void *  out) {
 	}
 }
 
+void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *  in, void *  out) {
+
+	uint64_t *din = (uint64_t *)in;
+	uint64_t *buf = p->buf;
+	uint64_t *dout = (uint64_t *)out;
+	
+	float *bufr = (float *)(p->buf);
+	float *doutr = (float *)out;
+
+	size_t i,j;
+	ffts_scalar_transpose(din, buf, p->Ns[0], p->Ms[0], p->transpose_buf);	
+
+	for(i=0;i<p->Ns[0];i++) {
+		p->plans[0]->transform(p->plans[0], buf + (i * p->Ms[0]), dout + (i * p->Ms[0]));	
+	}
+	
+	ffts_scalar_transpose(dout, buf, p->Ms[0], p->Ns[0], p->transpose_buf);	
+  for(j=0;j<p->Ns[1];j++) { 
+  	p->plans[1]->transform(p->plans[1], buf + (j * (p->Ns[0])), &doutr[j * p->Ms[1]]);	
+  }
+}
+
 ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 	size_t vol = 1;
 
 	ffts_plan_t *p = malloc(sizeof(ffts_plan_t));
 
-	p->transform = &ffts_execute_nd_real;
+	if(sign < 0) p->transform = &ffts_execute_nd_real;
+	else         p->transform = &ffts_execute_nd_real_inv;
+
 	p->destroy = &ffts_free_nd;
 
 	p->rank = rank;
@@ -89,21 +123,33 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 
 	for(i=0;i<rank;i++) {
 		p->Ms[i] = vol / p->Ns[i];
-
+		
 		p->plans[i] = NULL;
 		int k;
-  	for(k=1;k<i;k++) {
-  		if(p->Ms[k] == p->Ms[i]) 
-  			p->plans[i] = p->plans[k];
-  	}
 
-		if(!i)                p->plans[i] = ffts_init_1d_real(p->Ms[i], sign); 
-		else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
-	
+		if(sign < 0) {
+			for(k=1;k<i;k++) {
+				if(p->Ms[k] == p->Ms[i]) p->plans[i] = p->plans[k];
+			}
+			if(!i)                p->plans[i] = ffts_init_1d_real(p->Ms[i], sign); 
+			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
+		}else{
+  		for(k=0;k<i;k++) {
+  			if(p->Ms[k] == p->Ms[i]) p->plans[i] = p->plans[k];
+  		}
+			if(i==rank-1) {        p->plans[i] = ffts_init_1d_real(p->Ms[i], sign); 
+			}
+			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
+		}
 	}
-
-	for(i=1;i<rank;i++) {
-		p->Ns[i] = p->Ns[i] / 2 + 1;
+	if(sign < 0) {
+		for(i=1;i<rank;i++) {
+			p->Ns[i] = p->Ns[i] / 2 + 1;
+		}
+	}else{
+  	for(i=0;i<rank-1;i++) {
+  		p->Ns[i] = p->Ns[i] / 2 + 1;
+  	}
 	}
 
 	p->transpose_buf = valloc(sizeof(float) * 2 * 8 * 8);
