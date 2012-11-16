@@ -37,16 +37,6 @@
 #include "neon.h"
 #endif
 
-void ffts_scalar_transpose_r(float *in, float *out, int w, int h, uint64_t *buf) {
-
-	size_t i,j;
-	for(i=0;i<w;i+=1) {
-		for(j=0;j<h;j+=1) {
-			out[i*h + j] = in[j*w + i];
-		}
-	}
-
-}
 void ffts_scalar_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 
 	size_t i,j;
