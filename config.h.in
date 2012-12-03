@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to disable dynamic code generation. */
+#undef DYNAMIC_DISABLED
+
 /* Define to FFT in single precision. */
 #undef FFTS_PREC_SINGLE
 

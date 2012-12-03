@@ -30,36 +30,72 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+#include "ffts_static.h"
 
-#ifndef __NEON_H__
-#define __NEON_H__
+void ffts_static_rec_i(ffts_plan_t *p, float *data, size_t N) {
+	if(N > 16) {
+		size_t N1 = N >> 1;
+		size_t N2 = N >> 2;
+		size_t N3 = N >> 3;
+		float *ws = ((float *)(p->ws)) + (p->ws_is[__builtin_ctzl(N)-4] << 1);
 
-#include "ffts.h"
+		ffts_static_rec_i(p, data, N2);
+		ffts_static_rec_i(p, data + N1, N3);
+		ffts_static_rec_i(p, data + N1 + N2, N3);
+		ffts_static_rec_i(p, data + N, N2);
+		ffts_static_rec_i(p, data + N + N1, N2);
 
-void neon_x4(float *, size_t, float *);
-void neon_x8(float *, size_t, float *);
-void neon_x8_t(float *, size_t, float *);
-void neon_ee();
-void neon_oo();
-void neon_eo();
-void neon_oe();
-void neon_end();
+  	if(N == p->N) {
+  		neon_static_x8_t_i(data, N, ws);
+  	}else{
+  		neon_static_x8_i(data, N, ws); 
+  	}
 
-void neon_transpose(uint64_t *in, uint64_t *out, int w, int h); 
-void neon_transpose_to_buf(uint64_t *in, uint64_t *out, int w); 
+	}else if(N==16){
+	  neon_static_x4_i(data, N, p->ws);
+	}
 
-//typedef struct _ffts_plan_t ffts_plan_t;
+}
+void ffts_static_rec_f(ffts_plan_t *p, float *data, size_t N) {
+	if(N > 16) {
+		size_t N1 = N >> 1;
+		size_t N2 = N >> 2;
+		size_t N3 = N >> 3;
+		float *ws = ((float *)(p->ws)) + (p->ws_is[__builtin_ctzl(N)-4] << 1);
 
-void neon_static_e_f(ffts_plan_t * , const void * , void * );
-void neon_static_o_f(ffts_plan_t * , const void * , void * );
-void neon_static_x4_f(float *, size_t, float *);
-void neon_static_x8_f(float *, size_t, float *);
-void neon_static_x8_t_f(float *, size_t, float *);
+		ffts_static_rec_f(p, data, N2);
+		ffts_static_rec_f(p, data + N1, N3);
+		ffts_static_rec_f(p, data + N1 + N2, N3);
+		ffts_static_rec_f(p, data + N, N2);
+		ffts_static_rec_f(p, data + N + N1, N2);
 
-void neon_static_e_i(ffts_plan_t * , const void * , void * );
-void neon_static_o_i(ffts_plan_t * , const void * , void * );
-void neon_static_x4_i(float *, size_t, float *);
-void neon_static_x8_i(float *, size_t, float *);
-void neon_static_x8_t_i(float *, size_t, float *);
+  	if(N == p->N) {
+  		neon_static_x8_t_f(data, N, ws);
+  	}else{
+  		neon_static_x8_f(data, N, ws); 
+  	}
 
-#endif
+	}else if(N==16){
+	  neon_static_x4_f(data, N, p->ws);
+	}
+
+}
+
+void ffts_static_transform_f(ffts_plan_t *p, const void *in, void *out) {
+
+	if(__builtin_ctzl(p->N) & 1) 
+		neon_static_o_f(p, in, out);
+	else 
+		neon_static_e_f(p, in, out);
+	ffts_static_rec_f(p, out, p->N);
+}
+
+
+void ffts_static_transform_i(ffts_plan_t *p, const void *in, void *out) {
+
+	if(__builtin_ctzl(p->N) & 1) 
+		neon_static_o_i(p, in, out);
+	else 
+		neon_static_e_i(p, in, out);
+	ffts_static_rec_i(p, out, p->N);
+}

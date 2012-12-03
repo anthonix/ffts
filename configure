@@ -639,6 +639,8 @@ HAVE_NEON_FALSE
 HAVE_NEON_TRUE
 HAVE_SSE_FALSE
 HAVE_SSE_TRUE
+DYNAMIC_DISABLED_FALSE
+DYNAMIC_DISABLED_TRUE
 am__fastdepCCAS_FALSE
 am__fastdepCCAS_TRUE
 CCASDEPMODE
@@ -770,6 +772,7 @@ enable_fast_install
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
+enable_dynamic_code
 enable_single
 enable_sse
 enable_neon
@@ -1416,6 +1419,7 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --enable-dynamic-code   dynamically generate code
   --enable-single         compile single-precision library
   --enable-sse            enable SSE extensions
   --enable-neon           enable NEON extensions
@@ -15342,6 +15346,26 @@ fi
 #SFFT_AR="/usr/bin/ar"
 #SFFT_CFLAGS="$CFLAGS"
 #SFFT_CC="$CC"
+# Check whether --enable-dynamic-code was given.
+if test "${enable_dynamic_code+set}" = set; then :
+  enableval=$enable_dynamic_code; sfft_dynamic=$enableval
+else
+  sfft_dynamic=yes
+fi
+
+if test "$sfft_dynamic" = "no"; then
+
+$as_echo "#define DYNAMIC_DISABLED 1" >>confdefs.h
+
+fi
+ if test "$sfft_dynamic" = "no"; then
+  DYNAMIC_DISABLED_TRUE=
+  DYNAMIC_DISABLED_FALSE='#'
+else
+  DYNAMIC_DISABLED_TRUE='#'
+  DYNAMIC_DISABLED_FALSE=
+fi
+
 
 # Check whether --enable-single was given.
 if test "${enable_single+set}" = set; then :
@@ -16157,6 +16181,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCCAS_TRUE}" && test -z "${am__fastdepCCAS_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCCAS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${DYNAMIC_DISABLED_TRUE}" && test -z "${DYNAMIC_DISABLED_FALSE}"; then
+  as_fn_error $? "conditional \"DYNAMIC_DISABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_SSE_TRUE}" && test -z "${HAVE_SSE_FALSE}"; then

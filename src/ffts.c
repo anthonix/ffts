@@ -34,7 +34,12 @@
 #include "macros.h"
 //#include "mini_macros.h"
 #include "patterns.h"
-#include "codegen.h"
+
+#ifdef DYNAMIC_DISABLED
+	#include "ffts_static.h"
+#else
+	#include "codegen.h"
+#endif
 
 #include <errno.h>
   #include <sys/mman.h>
@@ -53,7 +58,6 @@ void ffts_execute(ffts_plan_t *p, const void *  in, void *  out) {
 void ffts_free(ffts_plan_t *p) {
 	p->destroy(p);
 }
-
 
 void ffts_free_1d(ffts_plan_t *p) {
 	
@@ -325,7 +329,17 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 	p->N = N;
 	p->lastlut = w;
 	p->n_luts = n_luts;
+#ifdef DYNAMIC_DISABLED
+	if(sign < 0) { 
+		if(N >= 32) p->transform = ffts_static_transform_f; 
+	}else{
+		if(N >= 32) p->transform = ffts_static_transform_i; 
+	}
+
+#else
 	if(N>=32)  ffts_generate_func_code(p, N, leafN, sign);
+#endif
 
 	return p;
 }
+

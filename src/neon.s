@@ -323,7 +323,8 @@ neon_x8_t_loop:
 	@bx lr
 
 @ assumes r0 = out 
-@         
+@         r1 = in ? 
+@
 @         r12 = offsets
 @         r3-r10 = data pointers
 @         r11 = loop iterations

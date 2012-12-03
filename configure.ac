@@ -20,6 +20,11 @@ AM_PROG_AS
 #SFFT_AR="/usr/bin/ar"
 #SFFT_CFLAGS="$CFLAGS"
 #SFFT_CC="$CC"
+AC_ARG_ENABLE(dynamic-code, [AC_HELP_STRING([--enable-dynamic-code],[dynamically generate code])], sfft_dynamic=$enableval, sfft_dynamic=yes)
+if test "$sfft_dynamic" = "no"; then
+	AC_DEFINE(DYNAMIC_DISABLED,1,[Define to disable dynamic code generation.])
+fi
+AM_CONDITIONAL(DYNAMIC_DISABLED, test "$sfft_dynamic" = "no")
 
 AC_ARG_ENABLE(single, [AC_HELP_STRING([--enable-single],[compile single-precision library])], sfft_single=$enableval, sfft_single=no)
 if test "$sfft_single" = "yes"; then

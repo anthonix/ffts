@@ -51,8 +51,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@HAVE_NEON_TRUE@am__append_1 = neon.s
-@HAVE_NEON_FALSE@@HAVE_SSE_TRUE@am__append_2 = sse.s
+@DYNAMIC_DISABLED_TRUE@am__append_1 = ffts_static.c
+@DYNAMIC_DISABLED_FALSE@am__append_2 = codegen.c
+@DYNAMIC_DISABLED_TRUE@@HAVE_NEON_TRUE@am__append_3 = neon_static_f.s neon_static_i.s
+@DYNAMIC_DISABLED_FALSE@@HAVE_NEON_TRUE@am__append_4 = neon.s 
+@HAVE_NEON_FALSE@@HAVE_SSE_TRUE@am__append_5 = sse.s
 subdir = src
 DIST_COMMON = $(libffts_include_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/depcomp
@@ -96,12 +99,18 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libffts_la_LIBADD =
 am__libffts_la_SOURCES_DIST = ffts.c ffts_nd.c ffts_real.c \
-	ffts_real_nd.c patterns.c codegen.c neon.s sse.s
-@HAVE_NEON_TRUE@am__objects_1 = neon.lo
-@HAVE_NEON_FALSE@@HAVE_SSE_TRUE@am__objects_2 = sse.lo
+	ffts_real_nd.c patterns.c ffts_static.c codegen.c \
+	neon_static_f.s neon_static_i.s neon.s sse.s
+@DYNAMIC_DISABLED_TRUE@am__objects_1 = ffts_static.lo
+@DYNAMIC_DISABLED_FALSE@am__objects_2 = codegen.lo
+@DYNAMIC_DISABLED_TRUE@@HAVE_NEON_TRUE@am__objects_3 =  \
+@DYNAMIC_DISABLED_TRUE@@HAVE_NEON_TRUE@	neon_static_f.lo \
+@DYNAMIC_DISABLED_TRUE@@HAVE_NEON_TRUE@	neon_static_i.lo
+@DYNAMIC_DISABLED_FALSE@@HAVE_NEON_TRUE@am__objects_4 = neon.lo
+@HAVE_NEON_FALSE@@HAVE_SSE_TRUE@am__objects_5 = sse.lo
 am_libffts_la_OBJECTS = ffts.lo ffts_nd.lo ffts_real.lo \
-	ffts_real_nd.lo patterns.lo codegen.lo $(am__objects_1) \
-	$(am__objects_2)
+	ffts_real_nd.lo patterns.lo $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5)
 libffts_la_OBJECTS = $(am_libffts_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -253,7 +262,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libffts.la
 libffts_la_SOURCES = ffts.c ffts_nd.c ffts_real.c ffts_real_nd.c \
-	patterns.c codegen.c $(am__append_1) $(am__append_2)
+	patterns.c $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5)
 libffts_includedir = $(includedir)/ffts
 libffts_include_HEADERS = ../include/ffts.h
 all: all-am
@@ -269,9 +279,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Makefile
+	  $(AUTOMAKE) --foreign src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -338,6 +348,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_nd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_real.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_real_nd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_static.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/patterns.Plo@am__quote@
 
 .c.o:

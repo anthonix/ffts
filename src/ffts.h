@@ -62,8 +62,8 @@ typedef struct _ffts_plan_t ffts_plan_t;
 
 struct _ffts_plan_t {
 	ptrdiff_t *offsets;
-	void __attribute__ ((aligned(32))) *ws;
-	void __attribute__ ((aligned(32))) *oe_ws, *eo_ws, *ee_ws;
+	void  *ws;
+	void  *oe_ws, *eo_ws, *ee_ws;
 	ptrdiff_t *is;
 	size_t *ws_is;
 	size_t i0, i1, n_luts;
