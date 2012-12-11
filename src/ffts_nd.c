@@ -38,8 +38,6 @@
 #endif
 
 void ffts_free_nd(ffts_plan_t *p) {
-	free(p->Ns);
-	free(p->Ms);
 
 	int i;
 	for(i=0;i<p->rank;i++) {
@@ -47,12 +45,14 @@ void ffts_free_nd(ffts_plan_t *p) {
 		ffts_plan_t *x = p->plans[i];
 		int k;
 		for(k=0;k<i;k++) {
-			if(x == p->plans[k]) x = NULL;
+			if(p->Ms[i] == p->Ms[k]) x = NULL;
 		}
 		
-		ffts_free(x);
+		if(x)	ffts_free(x);
 	}
 
+	free(p->Ns);
+	free(p->Ms);
 	free(p->plans);
 	free(p->buf);
 	free(p->transpose_buf);
