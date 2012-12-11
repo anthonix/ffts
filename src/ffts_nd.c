@@ -69,8 +69,8 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 		for(i=0;i<w;i+=8) {
 			neon_transpose_to_buf(in + j*w + i, buf, w);
 
-			uint64_t __attribute__((aligned(32))) *p = out + i*h + j;
-			uint64_t __attribute__((aligned(32))) *pbuf = buf;
+			uint64_t *p = out + i*h + j;
+			uint64_t *pbuf = buf;
 			uint64_t *ptemp;
 
 			__asm__ __volatile__(
