@@ -67,6 +67,7 @@ void ffts_free_1d(ffts_plan_t *p) {
 		FFTS_FREE(p->ws);
 	}
 	if(p->is) free(p->is);
+	if(p->ws_is) free(p->ws_is);
 	if(p->offsets)		free(p->offsets);
 	//free(p->transforms);
 	if(p->transforms) free(p->transforms);
@@ -96,6 +97,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 	p->transform_base = NULL;
 	p->transforms = NULL;
 	p->is = NULL;
+	p->ws_is = NULL;
 	p->ws = NULL;
 	p->offsets = NULL;
 	p->destroy = ffts_free_1d;
