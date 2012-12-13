@@ -58,10 +58,45 @@ void ffts_free_nd(ffts_plan_t *p) {
 	free(p->transpose_buf);
 	free(p);
 }
-
+#define TSIZE 32
+#include <string.h>
 void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 
 #ifdef __ARM_NEON__
+	uint64_t tmp[TSIZE*TSIZE] __attribute__((aligned(64)));
+	int tx, ty;
+	int x, y;
+	int tw = w / TSIZE;
+	int th = h / TSIZE;
+	for (ty=0;ty<th;ty++) {
+		for (tx=0;tx<tw;tx++) {
+			uint64_t *ip0 = in + w*ty*TSIZE + tx * TSIZE;
+			uint64_t *op0 = tmp;
+
+			// Copy/transpose to tmp
+			for (y=0;y<TSIZE;y+=1) {
+				uint64_t *ip = ip0;
+				uint64_t *op = op0;
+
+				ip0 += w;
+				op0 += 1;
+
+				for (x=0;x<TSIZE;x+=1) {
+					op[x*TSIZE] = ip[x];
+				}
+			}
+
+			// Copy from tmp to output
+			op0 = out + w*tx*TSIZE + ty * TSIZE;
+			ip0 = tmp;
+			for (y=0;y<TSIZE;y+=1) {
+				memcpy(op0, ip0, TSIZE * sizeof(*ip0));
+				op0 += w;
+				ip0 += TSIZE;
+			}
+		}
+	}
+/*
 	size_t i,j,k;
 	int linebytes = w*8;
 
@@ -129,6 +164,7 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 //			out[i*h + j] = in[j*w + i];
 		}
 	}
+	*/
 #else
 	size_t i,j;
 	for(i=0;i<w;i+=2) {
