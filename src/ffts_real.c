@@ -197,7 +197,7 @@ ffts_plan_t *ffts_init_1d_real(size_t N, int sign) {
 
 	p->plans[0] = ffts_init_1d(N/2, sign); 
 
-	p->buf = valloc(sizeof(float) * 2 * (N/2) + 1);
+	p->buf = valloc(sizeof(float) * 2 * ((N/2) + 1));
 
 	p->A = valloc(sizeof(float) * N);
 	p->B = valloc(sizeof(float) * N);
