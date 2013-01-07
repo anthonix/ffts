@@ -44,11 +44,26 @@
 #define PI 3.1415926535897932384626433832795028841971693993751058209
 
 float impulse_error(int N, int sign, float *data) {
+#ifdef __ANDROID__
+	double delta_sum = 0.0f;
+	double sum = 0.0f;
+#else
 	long double delta_sum = 0.0f;
 	long double sum = 0.0f;
+#endif 
 
 	int i;
 	for(i=0;i<N;i++) {
+#ifdef __ANDROID__
+		double re, im;
+		if(sign < 0) {
+			re = cos(2 * PI * (double)i / (double)N); 
+			im = -sin(2 * PI * (double)i / (double)N); 
+		}else{
+			re = cos(2 * PI * (double)i / (double)N); 
+			im = sin(2 * PI * (double)i / (double)N); 
+		}
+#else
 		long double re, im;
 		if(sign < 0) {
 			re = cosl(2 * PI * (long double)i / (long double)N); 
@@ -57,7 +72,7 @@ float impulse_error(int N, int sign, float *data) {
 			re = cosl(2 * PI * (long double)i / (long double)N); 
 			im = sinl(2 * PI * (long double)i / (long double)N); 
 		}
-
+#endif
 		sum += re * re + im * im;
 
 		re = re - data[2*i];
@@ -66,8 +81,11 @@ float impulse_error(int N, int sign, float *data) {
 		delta_sum += re * re + im * im;
 
 	}
-
+#ifdef __ANDROID__
+	return sqrt(delta_sum) / sqrt(sum);
+#else
 	return sqrtl(delta_sum) / sqrtl(sum);
+#endif
 }
 
 int 
