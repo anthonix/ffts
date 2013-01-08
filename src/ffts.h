@@ -33,6 +33,8 @@
 #ifndef __CP_SSE_H__
 #define __CP_SSE_H__
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
