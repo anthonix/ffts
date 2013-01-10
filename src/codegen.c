@@ -237,8 +237,8 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	insns_t *start = fp;
 
 #ifdef __ARM_NEON__
-	*fp++ = PUSH_LR();
-	*fp++ = 0xed2d8b10;
+	*fp = PUSH_LR(); fp++;
+	*fp = 0xed2d8b10; fp++;
 
 	ADDI(&fp, 3, 1, 0);
 	ADDI(&fp, 7, 1, N);
@@ -249,7 +249,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	ADDI(&fp, 6, 4, 2*N);
 	ADDI(&fp, 9, 8, 2*N);
 	
-  *fp++ = LDRI(12, 0, ((uint32_t)&p->offsets) - ((uint32_t)p)); // load offsets into r12
+  *fp = LDRI(12, 0, ((uint32_t)&p->offsets) - ((uint32_t)p)); fp++; // load offsets into r12
 //  *fp++ = LDRI(1, 0, 4); // load ws into r1
 	ADDI(&fp, 1, 0, 0);
 
@@ -258,7 +258,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 
 #ifdef __ARM_NEON__
-	*fp++ = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); 
+	*fp = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); fp++; 
 	MOVI(&fp, 11, p->i0);
 #else
 	align_mem16(&fp, 0);
@@ -443,7 +443,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 			fp += (neon_eo - neon_oo) / 4;
 		}
 		
-		*fp++ = LDRI(11, 1, ((uint32_t)&p->oe_ws) - ((uint32_t)p)); 
+		*fp = LDRI(11, 1, ((uint32_t)&p->oe_ws) - ((uint32_t)p)); fp++; 
 
 		memcpy(fp, neon_oe, neon_end - neon_oe);
 		if(sign < 0) {
@@ -455,7 +455,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 	}else{
 		
-		*fp++ = LDRI(11, 1, ((uint32_t)&p->eo_ws) - ((uint32_t)p)); 
+		*fp = LDRI(11, 1, ((uint32_t)&p->eo_ws) - ((uint32_t)p)); fp++; 
 
 		memcpy(fp, neon_eo, neon_oe - neon_eo);
 		if(sign < 0) {
@@ -508,7 +508,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 		ADDI(&fp, 9, 10, 0);
 		ADDI(&fp, 10, 2, 0);
 
-		*fp++ = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); 
+		*fp = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); fp++; 
 	  MOVI(&fp, 11, p->i1);
   	memcpy(fp, neon_ee, neon_oo - neon_ee);
   	if(sign < 0) {
@@ -520,7 +520,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 	}
 	
-  *fp++ = LDRI(2, 1, ((uint32_t)&p->ws) - ((uint32_t)p)); // load offsets into r12
+  *fp = LDRI(2, 1, ((uint32_t)&p->ws) - ((uint32_t)p)); fp++; // load offsets into r12
 	//ADDI(&fp, 2, 1, 0);
 	MOVI(&fp, 1, 0);
 	
@@ -548,7 +548,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 
   	if(pps[0] == 2*leafN) {
-      *fp++ = BL(fp+2, x_4_addr);
+      *fp = BL(fp+2, x_4_addr); fp++;
   	}else if(!pps[2]){
   	  //uint32_t *x_8_t_addr = fp;
   		memcpy(fp, neon_x8_t, neon_ee - neon_x8_t);
@@ -560,7 +560,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
   		fp += (neon_ee - neon_x8_t) / 4;
   		//*fp++ = BL(fp+2, x_8_t_addr);
   	}else{
-  		*fp++ = BL(fp+2, x_8_addr);
+  		*fp = BL(fp+2, x_8_addr); fp++;
   	}
 
 		pAddr = pps[1] * 4;
