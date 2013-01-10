@@ -10,9 +10,11 @@ To build for Linux or OS X on x86, run
 make
 make install
 
+FFTS dynamically generates code at runtime. This can be disabled with 
+--disable-dynamic-code
 
 
-If you like FFTS, please show your support by sending me a postcard to:
+If you like FFTS, please show your support by sending a postcard to:
 
 Anthony Blake
 Department of Computer Science
