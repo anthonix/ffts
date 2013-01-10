@@ -9,3 +9,14 @@ To build for Linux or OS X on x86, run
 ./configure --enable-sse --enable-single --prefix=/usr/local
 make
 make install
+
+
+
+If you like FFTS, please show your support by sending me a postcard to:
+
+Anthony Blake
+Department of Computer Science
+The University of Waikato
+Private Bag 3105
+Hamilton 3240
+NEW ZEALAND
