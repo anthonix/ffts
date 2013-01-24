@@ -58,45 +58,11 @@ void ffts_free_nd(ffts_plan_t *p) {
 	free(p->transpose_buf);
 	free(p);
 }
-#define TSIZE 32
+#define TSIZE 8
 #include <string.h>
 void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 
 #ifdef __ARM_NEON__
-	uint64_t tmp[TSIZE*TSIZE] __attribute__((aligned(64)));
-	int tx, ty;
-	int x, y;
-	int tw = w / TSIZE;
-	int th = h / TSIZE;
-	for (ty=0;ty<th;ty++) {
-		for (tx=0;tx<tw;tx++) {
-			uint64_t *ip0 = in + w*ty*TSIZE + tx * TSIZE;
-			uint64_t *op0 = tmp;
-
-			// Copy/transpose to tmp
-			for (y=0;y<TSIZE;y+=1) {
-				uint64_t *ip = ip0;
-				uint64_t *op = op0;
-
-				ip0 += w;
-				op0 += 1;
-
-				for (x=0;x<TSIZE;x+=1) {
-					op[x*TSIZE] = ip[x];
-				}
-			}
-
-			// Copy from tmp to output
-			op0 = out + w*tx*TSIZE + ty * TSIZE;
-			ip0 = tmp;
-			for (y=0;y<TSIZE;y+=1) {
-				memcpy(op0, ip0, TSIZE * sizeof(*ip0));
-				op0 += w;
-				ip0 += TSIZE;
-			}
-		}
-	}
-/*
 	size_t i,j,k;
 	int linebytes = w*8;
 
@@ -164,8 +130,74 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 //			out[i*h + j] = in[j*w + i];
 		}
 	}
-	*/
 #else
+	uint64_t tmp[TSIZE*TSIZE] __attribute__((aligned(64)));
+	int tx, ty;
+	int x, y;
+	int tw = w / TSIZE;
+	int th = h / TSIZE;
+	for (ty=0;ty<th;ty++) {
+		for (tx=0;tx<tw;tx++) {
+			uint64_t *ip0 = in + w*TSIZE*ty + tx * TSIZE;
+			uint64_t *op0 = tmp;//out + h*TSIZE*tx + ty*TSIZE;
+
+			// Copy/transpose to tmp
+			for (y=0;y<TSIZE;y+=2) {
+				//for (x=0;x<TSIZE;x+=2) {
+					//op[x*TSIZE] = ip[x];
+					__m128d q0 = _mm_load_pd((double *)(ip0 + 0*w));
+					__m128d q1 = _mm_load_pd((double *)(ip0 + 1*w));
+					__m128d q2 = _mm_load_pd((double *)(ip0 + 2*w));
+					__m128d q3 = _mm_load_pd((double *)(ip0 + 3*w));
+					__m128d q4 = _mm_load_pd((double *)(ip0 + 4*w));
+					__m128d q5 = _mm_load_pd((double *)(ip0 + 5*w));
+					__m128d q6 = _mm_load_pd((double *)(ip0 + 6*w));
+					__m128d q7 = _mm_load_pd((double *)(ip0 + 7*w));
+					ip0 += 2;	
+					
+					__m128d t0 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(0, 0));
+					__m128d t1 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(1, 1));
+					__m128d t2 = _mm_shuffle_pd(q2, q3, _MM_SHUFFLE2(0, 0));
+					__m128d t3 = _mm_shuffle_pd(q2, q3, _MM_SHUFFLE2(1, 1));
+					__m128d t4 = _mm_shuffle_pd(q4, q5, _MM_SHUFFLE2(0, 0));
+					__m128d t5 = _mm_shuffle_pd(q4, q5, _MM_SHUFFLE2(1, 1));
+					__m128d t6 = _mm_shuffle_pd(q6, q7, _MM_SHUFFLE2(0, 0));
+					__m128d t7 = _mm_shuffle_pd(q6, q7, _MM_SHUFFLE2(1, 1));
+					//_mm_store_pd((double *)(op0 + y*h + x), t0);
+					//_mm_store_pd((double *)(op0 + y*h + x + h), t1);
+					_mm_store_pd((double *)(op0 + 0), t0);
+					_mm_store_pd((double *)(op0 + 0 + TSIZE), t1);
+					_mm_store_pd((double *)(op0 + 2 ), t2);
+					_mm_store_pd((double *)(op0 + 2 + TSIZE), t3);
+					_mm_store_pd((double *)(op0 + 4 ), t4);
+					_mm_store_pd((double *)(op0 + 4 + TSIZE), t5);
+					_mm_store_pd((double *)(op0 + 6 ), t6);
+					_mm_store_pd((double *)(op0 + 6 + TSIZE), t7);
+				//}
+				op0 += 2*TSIZE;
+			}
+			
+			op0 = out + h*tx*TSIZE + ty*TSIZE;
+			ip0 = tmp;
+			for (y=0;y<TSIZE;y+=1) {
+		//		memcpy(op0, ip0, TSIZE * sizeof(*ip0));
+				
+				__m128d q0 = _mm_load_pd((double *)(ip0 + 0));
+				__m128d q1 = _mm_load_pd((double *)(ip0 + 2));
+				__m128d q2 = _mm_load_pd((double *)(ip0 + 4));
+				__m128d q3 = _mm_load_pd((double *)(ip0 + 6));
+				_mm_store_pd((double *)(op0 + 0), q0);
+				_mm_store_pd((double *)(op0 + 2), q1);
+				_mm_store_pd((double *)(op0 + 4), q2);
+				_mm_store_pd((double *)(op0 + 6), q3);
+				
+				op0 += w;
+				ip0 += TSIZE;
+			}
+
+		}
+	}
+/*
 	size_t i,j;
 	for(i=0;i<w;i+=2) {
 		for(j=0;j<h;j+=2) {
@@ -178,6 +210,7 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
   		_mm_store_pd((double *)(out + i*h + j + h), t1);
 		}
 	}
+*/
 #endif
 
 }
