@@ -18,7 +18,7 @@ if HAVE_NEON
 if DYNAMIC_DISABLED
 libffts_la_SOURCES += neon_static_f.s neon_static_i.s
 else
-libffts_la_SOURCES += neon.s 
+libffts_la_SOURCES += neon.s vfp.s 
 endif
 
 else 

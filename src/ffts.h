@@ -94,6 +94,7 @@ struct _ffts_plan_t {
 	void (*destroy)(ffts_plan_t *);
 
 	float *A, *B;
+	size_t i2;
 };
 
 

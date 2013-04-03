@@ -104,13 +104,30 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 
 	if(N >= 32) {
 		ffts_init_offsets(p, N, leafN);
-		ffts_init_is(p, N, leafN, 2);
+#ifdef __arm__
+#ifdef __ARM_NEON__
+		ffts_init_is(p, N, leafN, 1);
+#else
+		ffts_init_is(p, N, leafN, 1);
+#endif
+#else
+		ffts_init_is(p, N, leafN, 1);
+#endif
 		
 		p->i0 = N/leafN/3+1;
 		p->i1 = N/leafN/3;
 		if((N/leafN) % 3 > 1) p->i1++;
-		p->i0/=2;
-		p->i1/=2;
+		p->i2 = N/leafN/3;
+		
+	#ifdef __arm__	
+	#ifdef __ARM_NEON__
+	p->i0/=2;
+	p->i1/=2;
+	#endif
+	#else
+	p->i0/=2;
+	p->i1/=2;
+	#endif
 
 	}else{
 		p->transforms = malloc(2 * sizeof(transform_index_t));
@@ -198,7 +215,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 
 
 				float *fw0 = (float *)w0;
-				#ifdef __ARM_NEON__
+				#ifdef __arm__
 				if(N < 32) {
 					//w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
 					float *fw = (float *)w;
@@ -217,11 +234,18 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 					//w = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
 					float *fw = (float *)w;
 					VS temp0, temp1, temp2;
+  				#ifdef __ARM_NEON__
 					for(j=0;j<n/4;j+=4) {
-						temp0 = VLD2(fw0 + j*2);
-						temp0.val[1] = VXOR(temp0.val[1], neg);
-						STORESPR(fw + j*2, temp0);
+  					temp0 = VLD2(fw0 + j*2);
+  					temp0.val[1] = VXOR(temp0.val[1], neg);
+  					STORESPR(fw + j*2, temp0);
+  				}
+					#else
+  				for(j=0;j<n/4;j+=1) {
+  					fw[j*2] = fw0[j*2];
+  					fw[j*2+1] = fw0[j*2+1];
 					}
+					#endif
 					w += n/4;
 				}
 				#else
@@ -261,22 +285,32 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 				float *fw0 = (float *)w0;
 				float *fw1 = (float *)w1;
 				float *fw2 = (float *)w2;
-				#ifdef __ARM_NEON__
+				#ifdef __arm__
 				//w = FFTS_MALLOC(n/8 * 3 * sizeof(cdata_t), 32);
 				float *fw = (float *)w;
 				VS temp0, temp1, temp2;
-				
-				for(j=0;j<n/8;j+=4) {
-					temp0 = VLD2(fw0 + j*2);
-					temp0.val[1] = VXOR(temp0.val[1], neg);
-					STORESPR(fw + j*2*3,      temp0);
-					temp1 = VLD2(fw1 + j*2);
-					temp1.val[1] = VXOR(temp1.val[1], neg);
-					STORESPR(fw + j*2*3 + 8,  temp1);
-					temp2 = VLD2(fw2 + j*2);
-					temp2.val[1] = VXOR(temp2.val[1], neg);
-					STORESPR(fw + j*2*3 + 16, temp2);
-				}
+				#ifdef __ARM_NEON__	
+  			for(j=0;j<n/8;j+=4) {
+  				temp0 = VLD2(fw0 + j*2);
+  				temp0.val[1] = VXOR(temp0.val[1], neg);
+  				STORESPR(fw + j*2*3,      temp0);
+  				temp1 = VLD2(fw1 + j*2);
+  				temp1.val[1] = VXOR(temp1.val[1], neg);
+  				STORESPR(fw + j*2*3 + 8,  temp1);
+  				temp2 = VLD2(fw2 + j*2);
+  				temp2.val[1] = VXOR(temp2.val[1], neg);
+  				STORESPR(fw + j*2*3 + 16, temp2);
+  			}
+				#else
+  			for(j=0;j<n/8;j+=1) {
+  					fw[j*6] = fw0[j*2];
+  					fw[j*6+1] = fw0[j*2+1];
+  					fw[j*6+2] = fw1[j*2+0];
+  					fw[j*6+3] = fw1[j*2+1];
+  					fw[j*6+4] = fw2[j*2+0];
+  					fw[j*6+5] = fw2[j*2+1];
+  			}
+				#endif
 				w += n/8 * 3;
 				#else
 				//w = FFTS_MALLOC(n/8 * 3 * 2 * sizeof(cdata_t), 32);
