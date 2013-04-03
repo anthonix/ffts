@@ -49,6 +49,15 @@ if test "$have_neon" = "yes"; then
 fi
 AM_CONDITIONAL(HAVE_NEON, test "$have_neon" = "yes")
 
+AC_ARG_ENABLE(vfp, [AC_HELP_STRING([--enable-vfp],[enable VFP extensions])], have_vfp=$enableval, have_vfp=no)
+if test "$have_vfp" = "yes"; then
+	if test "$SIMD" != "sse"; then
+		AC_MSG_ERROR([conflicting SIMD extensisons specified])
+	fi
+	AC_DEFINE(HAVE_VFP,1,[Define to FFT with ARM VFP.])
+fi
+AM_CONDITIONAL(HAVE_VFP, test "$have_vfp" = "yes")
+
 #AC_CANONICAL_HOST
 AC_MSG_NOTICE([host is "${host}"])
 case "${host}" in

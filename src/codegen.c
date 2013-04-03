@@ -42,10 +42,11 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
-#ifdef __ARM_NEON__
-	#include "codegen_neon.h"
-//	#include "neon_float.h"
+#ifdef HAVE_NEON
+	#include "codegen_arm.h"
 	#include "neon.h"
+#elif HAVE_VFP
+	#include "codegen_arm.h"
 	#include "vfp.h"
 #else
 	#include "codegen_sse.h"
@@ -99,7 +100,7 @@ uint32_t LUT_offset(size_t N, size_t leafN) {
 		for(i=0;i<n_luts-1;i++) {
 			p_lut_size = lut_size;
 			if(!i || hardcoded) {
-			#ifdef __ARM_NEON__
+			#ifdef __arm__
 				if(N <= 32) lut_size += n/4 * 2 * sizeof(cdata_t);
 			else lut_size += n/4 * sizeof(cdata_t);
 			#else
@@ -107,7 +108,7 @@ uint32_t LUT_offset(size_t N, size_t leafN) {
 			#endif
 			//	n *= 2;
 			} else {
-			#ifdef __ARM_NEON__
+			#ifdef __arm__ 
 				lut_size += n/8 * 3 * sizeof(cdata_t);
 			#else
 				lut_size += n/8 * 3 * 2 * sizeof(cdata_t);
@@ -118,7 +119,7 @@ uint32_t LUT_offset(size_t N, size_t leafN) {
 	return lut_size;
 }
 
-#ifdef __ARM_NEON__
+#ifdef __arm__ 
 	typedef uint32_t insns_t;
 #else
 	typedef uint8_t insns_t;
@@ -147,7 +148,7 @@ void insert_nops(uint8_t **p, uint32_t count) {
 
 
 void align_mem16(uint8_t **p, uint32_t offset) {
-#ifdef __ARM_NEON__
+#ifdef __x86_64__
 	int r = (16 - (offset & 0xf)) - ((uint32_t)(*p) & 0xf);
 	r = (16 + r) & 0xf;
 	insert_nops(p, r);	
@@ -170,7 +171,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 	pps = ps;
 
-#ifdef __ARM_NEON__
+#ifdef __arm__ 
 	if(N < 8192) p->transform_size = 8192;
 	else p->transform_size = N;
 #else
@@ -203,7 +204,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 	insns_t *x_8_addr = fp;
 #ifdef __arm__
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
 	if(sign < 0) {
 		fp[31] ^= 0x00200000; fp[32] ^= 0x00200000; fp[33] ^= 0x00200000; fp[34] ^= 0x00200000;
@@ -229,7 +230,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	insns_t *x_4_addr = fp;
 #ifdef __arm__
 
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON
 	memcpy(fp, neon_x4, neon_x8 - neon_x4);
 	if(sign < 0) {
 		fp[26] ^= 0x00200000; fp[28] ^= 0x00200000; fp[31] ^= 0x00200000; fp[32] ^= 0x00200000;
@@ -248,7 +249,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 #endif
 	insns_t *start = fp;
 
-#ifdef __ARM_NEON__
+#ifdef __arm__ 
 	*fp = PUSH_LR(); fp++;
 	*fp = 0xed2d8b10; fp++;
 
@@ -271,7 +272,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 #ifdef __arm__
 		*fp = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); fp++; 
-  	#ifdef __ARM_NEON__
+  	#ifdef HAVE_NEON
   		MOVI(&fp, 11, p->i0);
   	#else 
   		MOVI(&fp, 11, p->i0);
@@ -291,7 +292,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 #endif
 	//fp++;
 #ifdef __arm__
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON
 	memcpy(fp, neon_ee, neon_oo - neon_ee);
 	if(sign < 0) {
 		fp[33] ^= 0x00200000; fp[37] ^= 0x00200000; fp[38] ^= 0x00200000; fp[39] ^= 0x00200000;
@@ -425,14 +426,14 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 
   	if(pps[0] == 2*leafN) {
-   //   CALL(&fp, x_4_addr);
+      CALL(&fp, x_4_addr);
 //  	}else if(!pps[2]){
 //	  //uint32_t *x_8_t_addr = fp;
 //		memcpy(fp, neon_x8_t, neon_ee - neon_x8_t);
 //		fp += (neon_ee - neon_x8_t) / 4;
 //		//*fp++ = BL(fp+2, x_8_t_addr);
   	}else{
-    //		CALL(&fp, x_8_addr);
+    		CALL(&fp, x_8_addr);
   	}
 
 		pAddr = pps[1] * 4;
@@ -445,7 +446,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	}
 #endif
 #ifdef __arm__
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON
 	if(__builtin_ctzl(N) & 1){
 		ADDI(&fp, 2, 7, 0);
 		ADDI(&fp, 7, 9, 0);
@@ -612,7 +613,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
       *fp = BL(fp+2, x_4_addr); fp++;
   	}else if(!pps[2]){
   	  //uint32_t *x_8_t_addr = fp;
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON
   		memcpy(fp, neon_x8_t, neon_ee - neon_x8_t);
   		if(sign < 0) {
   			fp[31] ^= 0x00200000; fp[32] ^= 0x00200000; fp[33] ^= 0x00200000; fp[34] ^= 0x00200000;

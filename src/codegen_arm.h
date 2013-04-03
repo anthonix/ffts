@@ -31,8 +31,8 @@
 
 */
 
-#ifndef __CODEGEN_NEON_H__
-#define __CODEGEN_NEON_H__
+#ifndef __CODEGEN_ARM_H__
+#define __CODEGEN_ARM_H__
 
 
 

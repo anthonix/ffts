@@ -13,16 +13,21 @@ endif
 libffts_includedir=$(includedir)/ffts
 libffts_include_HEADERS = ../include/ffts.h
 
+
+if HAVE_VFP
+libffts_la_SOURCES += vfp.s 
+else
 if HAVE_NEON
 
 if DYNAMIC_DISABLED
 libffts_la_SOURCES += neon_static_f.s neon_static_i.s
 else
-libffts_la_SOURCES += neon.s vfp.s 
+libffts_la_SOURCES += neon.s
 endif
 
 else 
 if HAVE_SSE
 libffts_la_SOURCES += sse.s
+endif
 endif
 endif

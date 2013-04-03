@@ -105,7 +105,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 	if(N >= 32) {
 		ffts_init_offsets(p, N, leafN);
 #ifdef __arm__
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON
 		ffts_init_is(p, N, leafN, 1);
 #else
 		ffts_init_is(p, N, leafN, 1);
@@ -120,7 +120,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 		p->i2 = N/leafN/3;
 		
 	#ifdef __arm__	
-	#ifdef __ARM_NEON__
+	#ifdef HAVE_NEON
 	p->i0/=2;
 	p->i1/=2;
 	#endif
@@ -164,7 +164,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 
 		for(i=0;i<n_luts;i++) {
 			if(!i || hardcoded) {
-			#ifdef __ARM_NEON__
+			#ifdef HAVE_NEON
 				if(N <= 32) lut_size += n/4 * 2 * sizeof(cdata_t);
 				else lut_size += n/4 * sizeof(cdata_t);
 			#else
@@ -172,7 +172,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 			#endif
 				n *= 2;
 			} else {
-			#ifdef __ARM_NEON__
+			#ifdef HAVE_NEON
 				lut_size += n/8 * 3 * sizeof(cdata_t);
 			#else
 				lut_size += n/8 * 3 * 2 * sizeof(cdata_t);
@@ -196,7 +196,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 		n = leafN*2;
 		if(hardcoded) n = 8;
 		
-		#ifdef __ARM_NEON__
+		#ifdef HAVE_NEON
 			V neg = (sign < 0) ? VLIT4(0.0f, 0.0f, 0.0f, 0.0f) : VLIT4(-0.0f, -0.0f, -0.0f, -0.0f);
 		#endif
 		
@@ -234,7 +234,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 					//w = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
 					float *fw = (float *)w;
 					VS temp0, temp1, temp2;
-  				#ifdef __ARM_NEON__
+  				#ifdef HAVE_NEON
 					for(j=0;j<n/4;j+=4) {
   					temp0 = VLD2(fw0 + j*2);
   					temp0.val[1] = VXOR(temp0.val[1], neg);
@@ -289,7 +289,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 				//w = FFTS_MALLOC(n/8 * 3 * sizeof(cdata_t), 32);
 				float *fw = (float *)w;
 				VS temp0, temp1, temp2;
-				#ifdef __ARM_NEON__	
+				#ifdef HAVE_NEON	
   			for(j=0;j<n/8;j+=4) {
   				temp0 = VLD2(fw0 + j*2);
   				temp0.val[1] = VXOR(temp0.val[1], neg);
