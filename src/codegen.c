@@ -302,6 +302,11 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	fp += (neon_oo - neon_ee) / 4;
 #else
 		memcpy(fp, vfp_e, vfp_o - vfp_e);
+		if(sign > 0) {
+			fp[33] ^= 0x00200000; fp[37] ^= 0x00200000; fp[38] ^= 0x00200000; fp[39] ^= 0x00200000;
+			fp[40] ^= 0x00200000; fp[41] ^= 0x00200000; fp[44] ^= 0x00200000; fp[45] ^= 0x00200000;
+			fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
+		}
 		fp += (vfp_o - vfp_e) / 4;
 #endif
 #else

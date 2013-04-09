@@ -378,15 +378,15 @@ _neon_ee_loop:
 	vsub.f32	d31, d5, d2  @
 	vsub.f32	d28, d4, d3  @
 	vadd.f32	d30, d4, d3  @
-	vadd.f32	d5, d19, d14  @
-	vadd.f32	d7, d31, d26  @
+	vadd.f32	d5, d19, d14  @-
+	vadd.f32	d7, d31, d26  @-
 	vadd.f32	q1, q14, q5
 	vadd.f32	q0, q11, q10
-	vsub.f32	d6, d30, d27  @
-	vsub.f32	d4, d18, d15  @
-	vsub.f32	d13, d19, d14  @
-	vadd.f32	d12, d18, d15  @
-	vsub.f32	d15, d31, d26  @
+	vsub.f32	d6, d30, d27  @-
+	vsub.f32	d4, d18, d15  @-
+	vsub.f32	d13, d19, d14  @-
+	vadd.f32	d12, d18, d15  @-
+	vsub.f32	d15, d31, d26  @-
 	ldr r2, [r12], #4
 	vtrn.32	q1, q3
 	ldr lr, [r12], #4
@@ -395,7 +395,7 @@ _neon_ee_loop:
 	vsub.f32	q4, q11, q10
 	add lr, r0, lr, lsl #2
 	vsub.f32	q5, q14, q5
-	vadd.f32	d14, d30, d27 @
+	vadd.f32	d14, d30, d27 @-
 	vst2.32 {q0,q1}, [r2, :128]!
 	vst2.32 {q2,q3}, [lr, :128]!
 	vtrn.32	q4, q6

@@ -88,11 +88,20 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 	size_t leafN = 8;	
 	size_t i;	
 
+#ifdef __arm__
+#ifdef HAVE_NEON
 	V MULI_SIGN;
 	
   if(sign < 0) MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
   else         MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
+#endif 
+#else
+	V MULI_SIGN;
 	
+  if(sign < 0) MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
+  else         MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
+#endif
+
 	p->transform = NULL;
 	p->transform_base = NULL;
 	p->transforms = NULL;
@@ -164,7 +173,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 
 		for(i=0;i<n_luts;i++) {
 			if(!i || hardcoded) {
-			#ifdef HAVE_NEON
+			#ifdef __arm__ 
 				if(N <= 32) lut_size += n/4 * 2 * sizeof(cdata_t);
 				else lut_size += n/4 * sizeof(cdata_t);
 			#else
@@ -172,7 +181,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 			#endif
 				n *= 2;
 			} else {
-			#ifdef HAVE_NEON
+			#ifdef __arm__
 				lut_size += n/8 * 3 * sizeof(cdata_t);
 			#else
 				lut_size += n/8 * 3 * 2 * sizeof(cdata_t);
@@ -221,6 +230,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 					float *fw = (float *)w;
 					V temp0, temp1, temp2;
 					for(j=0;j<n/4;j+=2) {
+						#ifdef HAVE_NEON
 						temp0 = VLD(fw0 + j*2);
 						V re, im;
 						re = VDUPRE(temp0);
@@ -228,6 +238,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 						im = VXOR(im, MULI_SIGN);
 						VST(fw + j*4  , re);
 						VST(fw + j*4+4, im);
+						#endif
 					}
 					w += n/4 * 2;
 				}else{

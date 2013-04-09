@@ -107,41 +107,41 @@ _vfp_e_loop:
 	vadd.f32	s1, s4, s0
 	vadd.f32	s9, s2, s18
 	vsub.f32	s11, s2, s18
-	vadd.f32	s15, s22, s12
-	vadd.f32	s7, s5, s14
-	vsub.f32	s18, s5, s14
+	vadd.f32	s15, s22, s12 @*
+	vadd.f32	s7, s5, s14   @*
+	vsub.f32	s18, s5, s14  @*
 	vsub.f32	s5, s4, s0
-	vsub.f32	s22, s22, s12
+	vsub.f32	s22, s22, s12  @*
 	vadd.f32	s12, s10, s8
 	vadd.f32	s2, s6, s3
 	vsub.f32	s0, s6, s3
 	vsub.f32	s8, s10, s8
-	vsub.f32	s4, s16, s13
+	vsub.f32	s4, s16, s13 
 	vadd.f32	s14, s16, s13
 	vadd.f32	s3, s28, s26
-	vsub.f32	s6, s28, s26
+	vsub.f32	s6, s28, s26 
 	vadd.f32	s20, s9, s1
-	vsub.f32	s16, s9, s1
+	vsub.f32	s16, s9, s1  
 	vadd.f32	s10, s2, s12
-	vadd.f32	s24, s15, s7
-	vsub.f32	s13, s15, s7
-	vadd.f32	s28, s11, s18
-	vsub.f32	s7, s11, s18
-	vadd.f32	s9, s0, s6
+	vadd.f32	s24, s15, s7  
+	vsub.f32	s13, s15, s7 
+	vadd.f32	s28, s11, s18 @
+	vsub.f32	s7, s11, s18 @
+	vadd.f32	s9, s0, s6 @
 ldr lr, [r12], #4
 add lr, r0, lr, lsl #2
 subs	r11, r11, #1
 	vstr	s20, [lr]
-	vsub.f32	s6, s0, s6
-	vsub.f32	s26, s22, s5
-	vadd.f32	s1, s22, s5
+	vsub.f32	s6, s0, s6  @ 
+	vsub.f32	s26, s22, s5 @
+	vadd.f32	s1, s22, s5 @
 	vstr	s24, [lr, #4]
 	vadd.f32	s5, s4, s3
-	vsub.f32	s11, s14, s8
+	vsub.f32	s11, s14, s8 @
 	vstr	s28, [lr, #16]
-	vsub.f32	s2, s2, s12
-	vsub.f32	s4, s4, s3
-	vadd.f32	s0, s14, s8
+	vsub.f32	s2, s2, s12 
+	vsub.f32	s4, s4, s3  
+	vadd.f32	s0, s14, s8 @
 	vstr	s26, [lr, #20]
 	vstr	s16, [lr, #32]
 	vstr	s13, [lr, #36]
