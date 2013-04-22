@@ -15393,11 +15393,14 @@ fi
 if test "${enable_sse+set}" = set; then :
   enableval=$enable_sse; have_sse=$enableval
 else
-  have_sse=yes
+  have_sse=no
 fi
 
 if test "$have_sse" = "yes"; then
 	SIMD=sse
+
+$as_echo "#define HAVE_SSE 1" >>confdefs.h
+
 fi
  if test "$have_sse" = "yes"; then
   HAVE_SSE_TRUE=
@@ -15416,9 +15419,9 @@ else
 fi
 
 if test "$have_neon" = "yes"; then
-	if test "$SIMD" != "sse"; then
-		as_fn_error $? "conflicting SIMD extensisons specified" "$LINENO" 5
-	fi
+#	if test "$SIMD" != "sse"; then
+#		AC_MSG_ERROR([conflicting SIMD extensisons specified])
+#	fi
 
 $as_echo "#define HAVE_NEON 1" >>confdefs.h
 
@@ -15440,9 +15443,9 @@ else
 fi
 
 if test "$have_vfp" = "yes"; then
-	if test "$SIMD" != "sse"; then
-		as_fn_error $? "conflicting SIMD extensisons specified" "$LINENO" 5
-	fi
+#	if test "$SIMD" != "sse"; then
+#		AC_MSG_ERROR([conflicting SIMD extensisons specified])
+#	fi
 
 $as_echo "#define HAVE_VFP 1" >>confdefs.h
 
@@ -15461,8 +15464,13 @@ fi
 $as_echo "$as_me: host is \"${host}\"" >&6;}
 case "${host}" in
 	arm* )
-		CFLAGS="$CFLAGS -mfloat-abi=softfp -mfpu=neon -std=c99"
-		CCASFLAGS="$CCASFLAGS -mfloat-abi=softfp -mfpu=neon "
+		if test "$have_vfp" = "yes"; then
+			CFLAGS="$CFLAGS -mfloat-abi=softfp -mfpu=vfp -std=c99"
+			CCASFLAGS="$CCASFLAGS -mfloat-abi=softfp -mfpu=vfp "
+		else
+			CFLAGS="$CFLAGS -mfloat-abi=softfp -mfpu=neon -std=c99"
+			CCASFLAGS="$CCASFLAGS -mfloat-abi=softfp -mfpu=neon "
+		fi
 		;;
 	*)
 		;;

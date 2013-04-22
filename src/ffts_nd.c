@@ -33,7 +33,7 @@
 
 #include "ffts_nd.h"
 
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON
 #include "neon.h"
 #endif
 
@@ -62,7 +62,7 @@ void ffts_free_nd(ffts_plan_t *p) {
 #include <string.h>
 void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON 
 	size_t i,j,k;
 	int linebytes = w*8;
 
@@ -131,6 +131,7 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 		}
 	}
 #else
+#ifdef HAVE_SSE
 	uint64_t tmp[TSIZE*TSIZE] __attribute__((aligned(64)));
 	int tx, ty;
 	int x, y;
@@ -211,6 +212,7 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 		}
 	}
 */
+#endif
 #endif
 
 }

@@ -33,8 +33,8 @@
 #include <math.h>
 
 #ifdef __ARM_NEON__
-
-#else
+#endif
+#ifdef HAVE_SSE
 	#include <xmmintrin.h>
 #endif 
 
@@ -91,12 +91,12 @@ float impulse_error(int N, int sign, float *data) {
 int 
 test_transform(int n, int sign) {
 
-#ifdef __ARM_NEON__
-	float __attribute__ ((aligned(32))) *input = valloc(2 * n * sizeof(float));
-  float __attribute__ ((aligned(32))) *output = valloc(2 * n * sizeof(float));
-#else
+#ifdef HAVE_SSE 
 	float __attribute__ ((aligned(32))) *input = _mm_malloc(2 * n * sizeof(float), 32);
   float __attribute__ ((aligned(32))) *output = _mm_malloc(2 * n * sizeof(float), 32);
+#else
+	float __attribute__ ((aligned(32))) *input = valloc(2 * n * sizeof(float));
+  float __attribute__ ((aligned(32))) *output = valloc(2 * n * sizeof(float));
 #endif
 	int i;	
 	for(i=0;i<n;i++) {
@@ -127,12 +127,12 @@ main(int argc, char *argv[]) {
 		int n = atoi(argv[1]);
 		int sign = atoi(argv[2]);
 
-#ifdef __ARM_NEON__
-		float __attribute__ ((aligned(32))) *input = valloc(2 * n * sizeof(float));
-		float __attribute__ ((aligned(32))) *output = valloc(2 * n * sizeof(float));
-#else
+#ifdef HAVE_SSE
 		float __attribute__ ((aligned(32))) *input = _mm_malloc(2 * n * sizeof(float), 32);
 		float __attribute__ ((aligned(32))) *output = _mm_malloc(2 * n * sizeof(float), 32);
+#else
+		float __attribute__ ((aligned(32))) *input = valloc(2 * n * sizeof(float));
+		float __attribute__ ((aligned(32))) *output = valloc(2 * n * sizeof(float));
 #endif
 		int i;	
 		for(i=0;i<n;i++) {
@@ -152,12 +152,12 @@ main(int argc, char *argv[]) {
 			return 0;
 		}
 
-#ifdef __ARM_NEON__
-		free(input);
-		free(output);
-#else
+#ifdef HAVE_NEON 
 		_mm_free(input);
 		_mm_free(output);
+#else
+		free(input);
+		free(output);
 #endif
 
 	}else{

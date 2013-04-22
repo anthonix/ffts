@@ -40,9 +40,10 @@
 
 #include "ffts.h"
 
-#ifdef __ARM_NEON__
+#ifdef HAVE_NEON 
 	#include <arm_neon.h>
-#else
+#endif
+#ifdef HAVE_SSE
 	#include <xmmintrin.h>
 #endif
 

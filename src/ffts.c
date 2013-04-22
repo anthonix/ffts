@@ -34,6 +34,7 @@
 #include "macros.h"
 //#include "mini_macros.h"
 #include "patterns.h"
+#include "ffts_small.h"
 
 #ifdef DYNAMIC_DISABLED
 	#include "ffts_static.h"
@@ -89,12 +90,12 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 	size_t i;	
 
 #ifdef __arm__
-#ifdef HAVE_NEON
+//#ifdef HAVE_NEON
 	V MULI_SIGN;
 	
   if(sign < 0) MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
   else         MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
-#endif 
+//#endif 
 #else
 	V MULI_SIGN;
 	
@@ -230,22 +231,27 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 					float *fw = (float *)w;
 					V temp0, temp1, temp2;
 					for(j=0;j<n/4;j+=2) {
-						#ifdef HAVE_NEON
+					//	#ifdef HAVE_NEON
 						temp0 = VLD(fw0 + j*2);
 						V re, im;
 						re = VDUPRE(temp0);
 						im = VDUPIM(temp0);
-						im = VXOR(im, MULI_SIGN);
+						#ifdef HAVE_NEON 
+							im = VXOR(im, MULI_SIGN);
+							//im = IMULI(sign>0, im);
+						#else
+							im = MULI(sign>0, im);
+						#endif
 						VST(fw + j*4  , re);
 						VST(fw + j*4+4, im);
-						#endif
+				//		#endif
 					}
 					w += n/4 * 2;
 				}else{
 					//w = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
 					float *fw = (float *)w;
-					VS temp0, temp1, temp2;
   				#ifdef HAVE_NEON
+					VS temp0, temp1, temp2;
 					for(j=0;j<n/4;j+=4) {
   					temp0 = VLD2(fw0 + j*2);
   					temp0.val[1] = VXOR(temp0.val[1], neg);
@@ -299,8 +305,8 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 				#ifdef __arm__
 				//w = FFTS_MALLOC(n/8 * 3 * sizeof(cdata_t), 32);
 				float *fw = (float *)w;
-				VS temp0, temp1, temp2;
 				#ifdef HAVE_NEON	
+				VS temp0, temp1, temp2;
   			for(j=0;j<n/8;j+=4) {
   				temp0 = VLD2(fw0 + j*2);
   				temp0.val[1] = VXOR(temp0.val[1], neg);

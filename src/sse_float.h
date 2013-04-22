@@ -63,4 +63,22 @@ typedef __m128 V;
 #define FFTS_MALLOC(d,a) (_mm_malloc(d,a))
 #define FFTS_FREE(d) (_mm_free(d))
 
+__INLINE V IMULI(int inv, V a) {
+	if(inv) return VSWAPPAIRS(VXOR(a, VLIT4(0.0f, -0.0f, 0.0f, -0.0f)));
+	else    return VSWAPPAIRS(VXOR(a, VLIT4(-0.0f, 0.0f, -0.0f, 0.0f)));
+}
+
+
+__INLINE V IMUL(V d, V re, V im) {
+  re = VMUL(re, d);                   
+  im = VMUL(im, VSWAPPAIRS(d));
+  return VSUB(re, im);  
+}
+
+__INLINE V IMULJ(V d, V re, V im) {
+  re = VMUL(re, d);                   
+  im = VMUL(im, VSWAPPAIRS(d));
+  return VADD(re, im);  
+}
+
 #endif

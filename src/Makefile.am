@@ -2,7 +2,7 @@
 
 lib_LTLIBRARIES = libffts.la
 
-libffts_la_SOURCES = ffts.c ffts_nd.c ffts_real.c ffts_real_nd.c patterns.c 
+libffts_la_SOURCES = ffts.c ffts_small.c ffts_nd.c ffts_real.c ffts_real_nd.c patterns.c 
 
 if DYNAMIC_DISABLED
 libffts_la_SOURCES += ffts_static.c
