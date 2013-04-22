@@ -50,7 +50,7 @@
 	#include "vfp.h"
 #else
 	#include "codegen_sse.h"
-	#include "sse_float.h"
+	#include "macros-sse.h"
 #endif
 
 #ifdef __ANDROID__

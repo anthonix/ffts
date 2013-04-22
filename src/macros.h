@@ -52,7 +52,7 @@
 #include "macros-alpha.h"
 #endif
 #ifdef HAVE_SSE
-	#include "sse_float.h"
+	#include "macros-sse.h"
 #endif
 
 static inline void TX2(V *a, V *b)
