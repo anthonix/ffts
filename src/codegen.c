@@ -214,6 +214,20 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	fp += (neon_x8_t - neon_x8) / 4;
 #else
 	memcpy(fp, vfp_x8, vfp_end - vfp_x8);
+	if(sign > 0) {
+		fp[65] ^= 0x00000040; 
+		fp[66] ^= 0x00000040; 
+		fp[68] ^= 0x00000040; 
+		fp[70] ^= 0x00000040; 
+  	fp[103] ^= 0x00000040; 
+  	fp[104] ^= 0x00000040; 
+  	fp[105] ^= 0x00000040; 
+  	fp[108] ^= 0x00000040; 
+  	fp[113] ^= 0x00000040; 
+  	fp[114] ^= 0x00000040; 
+  	fp[117] ^= 0x00000040; 
+  	fp[118] ^= 0x00000040; 
+	}
 	fp += (vfp_end - vfp_x8) / 4;
 #endif
 #else
@@ -238,6 +252,12 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	fp += (neon_x8 - neon_x4) / 4;
 #else
 	memcpy(fp, vfp_x4, vfp_x8 - vfp_x4);
+	if(sign > 0) {
+		fp[36] ^= 0x00000040; 
+		fp[38] ^= 0x00000040; 
+		fp[43] ^= 0x00000040; 
+		fp[44] ^= 0x00000040;
+	}
 	fp += (vfp_x8 - vfp_x4) / 4;
 #endif
 #else
@@ -245,7 +265,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	x_4_addr = fp;
 	memcpy(fp, x4, x8_soft - x4);
 	fp += (x8_soft - x4);
-//fprintf(stderr, "X4 start address = %016p\n", x_4_addr);
+
 #endif
 	insns_t *start = fp;
 
@@ -303,9 +323,9 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 #else
 		memcpy(fp, vfp_e, vfp_o - vfp_e);
 		if(sign > 0) {
-			fp[33] ^= 0x00200000; fp[37] ^= 0x00200000; fp[38] ^= 0x00200000; fp[39] ^= 0x00200000;
-			fp[40] ^= 0x00200000; fp[41] ^= 0x00200000; fp[44] ^= 0x00200000; fp[45] ^= 0x00200000;
-			fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
+			fp[64] ^= 0x00000040; fp[65] ^= 0x00000040; fp[68] ^= 0x00000040; fp[75] ^= 0x00000040;
+			fp[76] ^= 0x00000040; fp[79] ^= 0x00000040; fp[80] ^= 0x00000040; fp[83] ^= 0x00000040;
+			fp[84] ^= 0x00000040; fp[87] ^= 0x00000040; fp[91] ^= 0x00000040; fp[93] ^= 0x00000040;
 		}
 		fp += (vfp_o - vfp_e) / 4;
 #endif
@@ -559,6 +579,10 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	
 			MOVI(&fp, 11, (p->i1>0) ? p->i1 : 1);
   		memcpy(fp, vfp_o, vfp_x4 - vfp_o);
+		if(sign > 0) {
+			fp[22] ^= 0x00000040; fp[24] ^= 0x00000040; fp[25] ^= 0x00000040; fp[26] ^= 0x00000040;
+			fp[62] ^= 0x00000040; fp[64] ^= 0x00000040; fp[65] ^= 0x00000040; fp[66] ^= 0x00000040;
+		}
   		fp += (vfp_x4 - vfp_o) / 4;
 		
 		ADDI(&fp, 2, 3, 0);
@@ -584,6 +608,11 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 		*fp = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); fp++; 
 	  MOVI(&fp, 11, (p->i2>0) ? p->i2 : 1);
   	memcpy(fp, vfp_e, vfp_o - vfp_e);
+		if(sign > 0) {
+			fp[64] ^= 0x00000040; fp[65] ^= 0x00000040; fp[68] ^= 0x00000040; fp[75] ^= 0x00000040;
+			fp[76] ^= 0x00000040; fp[79] ^= 0x00000040; fp[80] ^= 0x00000040; fp[83] ^= 0x00000040;
+			fp[84] ^= 0x00000040; fp[87] ^= 0x00000040; fp[91] ^= 0x00000040; fp[93] ^= 0x00000040;
+		}
   	fp += (vfp_o - vfp_e) / 4;
 
 #endif
@@ -615,7 +644,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 
   	if(pps[0] == 2*leafN) {
-      *fp = BL(fp+2, x_4_addr); fp++;
+        *fp = BL(fp+2, x_4_addr); fp++;
   	}else if(!pps[2]){
   	  //uint32_t *x_8_t_addr = fp;
 #ifdef HAVE_NEON
@@ -629,10 +658,10 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
   		//*fp++ = BL(fp+2, x_8_t_addr);
 
 #else
-  		*fp = BL(fp+2, x_8_addr); fp++;
+    		*fp = BL(fp+2, x_8_addr); fp++;
 #endif
   	}else{
-  		*fp = BL(fp+2, x_8_addr); fp++;
+    		*fp = BL(fp+2, x_8_addr); fp++;
   	}
 
 		pAddr = pps[1] * 4;

@@ -260,7 +260,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 					#else
   				for(j=0;j<n/4;j+=1) {
   					fw[j*2] = fw0[j*2];
-  					fw[j*2+1] = fw0[j*2+1];
+  					fw[j*2+1] = (sign < 0) ? fw0[j*2+1] : -fw0[j*2+1];
 					}
 					#endif
 					w += n/4;
@@ -321,11 +321,11 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign) {
 				#else
   			for(j=0;j<n/8;j+=1) {
   					fw[j*6] = fw0[j*2];
-  					fw[j*6+1] = fw0[j*2+1];
+  					fw[j*6+1] = (sign < 0) ? fw0[j*2+1] : -fw0[j*2+1];
   					fw[j*6+2] = fw1[j*2+0];
-  					fw[j*6+3] = fw1[j*2+1];
+  					fw[j*6+3] = (sign < 0) ? fw1[j*2+1] : -fw1[j*2+1];
   					fw[j*6+4] = fw2[j*2+0];
-  					fw[j*6+5] = fw2[j*2+1];
+  					fw[j*6+5] = (sign < 0) ? fw2[j*2+1] : -fw2[j*2+1];
   			}
 				#endif
 				w += n/8 * 3;
