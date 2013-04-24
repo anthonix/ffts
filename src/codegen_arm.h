@@ -52,7 +52,7 @@ void ADDI(uint32_t **p, uint8_t dst, uint8_t src, int32_t imm) {
 	int32_t oimm = imm;
 	if(imm < 0) {
 		imm = -imm;
-		uint32_t shamt = (__builtin_ctzl(imm)>15)?15:__builtin_ctzl(imm);
+		uint32_t shamt = (__builtin_ctzl(imm)>23)?23:__builtin_ctzl(imm);
 		if(shamt & 1) shamt -= 1;
 		imm >>= shamt;
 		shamt = (32 - shamt)/2;
@@ -63,7 +63,7 @@ void ADDI(uint32_t **p, uint8_t dst, uint8_t src, int32_t imm) {
 		if(imm > 255) ADDI(p, dst, src, (oimm + ((imm & 0xff) << (32-shamt*2))));
 
 	}else{
-		uint32_t shamt = (__builtin_ctzl(imm)>15)?15:__builtin_ctzl(imm);
+		uint32_t shamt = (__builtin_ctzl(imm)>23)?23:__builtin_ctzl(imm);
 		if(shamt & 1) shamt -= 1;
 		imm >>= shamt;
 		shamt = (32 - shamt)/2;
@@ -84,7 +84,7 @@ uint32_t LDRI(uint8_t dst, uint8_t base, uint32_t offset) {
 void MOVI(uint32_t **p, uint8_t dst, uint32_t imm) {
 	uint32_t oimm = imm;
 	
-		uint32_t shamt = (__builtin_ctzl(imm)>15)?15:__builtin_ctzl(imm);
+		uint32_t shamt = (__builtin_ctzl(imm)>23)?23:__builtin_ctzl(imm);
 		if(shamt & 1) shamt -= 1;
 		imm >>= shamt;
 		shamt = (32 - shamt)/2;
