@@ -50,13 +50,21 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@ENABLE_JNI_TRUE@am__append_1 = java
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(srcdir)/ffts.pc.in $(top_srcdir)/configure config.guess \
 	config.sub depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_classpath.m4 \
+	$(top_srcdir)/m4/ax_check_java_home.m4 \
+	$(top_srcdir)/m4/ax_java_options.m4 \
+	$(top_srcdir)/m4/ax_jni_include_dir.m4 \
+	$(top_srcdir)/m4/ax_prog_jar.m4 \
+	$(top_srcdir)/m4/ax_prog_javac.m4 \
+	$(top_srcdir)/m4/ax_prog_javac_works.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -116,7 +124,7 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = src tests java
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -196,6 +204,14 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+JAR = @JAR@
+JAVA = @JAVA@
+JAVAC = @JAVAC@
+JAVACFLAGS = @JAVACFLAGS@
+JAVAFLAGS = @JAVAFLAGS@
+JAVAPREFIX = @JAVAPREFIX@
+JAVA_PATH_NAME = @JAVA_PATH_NAME@
+JNI_CPPFLAGS = @JNI_CPPFLAGS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -227,6 +243,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+_ACJNI_JAVAC = @_ACJNI_JAVAC@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -281,8 +298,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src tests 
+SUBDIRS = src tests $(am__append_1)
 EXTRA_DIST = COPYRIGHT ffts.pc.in
+ACLOCAL_AMFLAGS = -Im4
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ffts.pc
 all: config.h

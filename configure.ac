@@ -5,6 +5,8 @@ AC_PREREQ([2.68])
 AC_INIT(ffts, 0.7, amb@anthonix.com)
 AM_INIT_AUTOMAKE(ffts, 0.7)
 
+AC_CONFIG_MACRO_DIR([m4])
+
 # AC_CONFIG_SRCDIR([include/common.h])
 AC_CONFIG_HEADERS([config.h])
 
@@ -16,6 +18,21 @@ LT_INIT([disable-shared])
 AM_PROG_AS
 #CXX="clang++"
 #CXXFLAGS="$CXXFLAGS -stdlib=libc++"
+
+# Java stuff
+AX_JAVA_OPTIONS
+AC_CHECK_JAVA_HOME
+AC_CHECK_CLASSPATH
+AC_PROG_JAVAC
+# blah this whinges about something
+#AC_PROG_JAVAH
+AC_PROG_JAR
+AX_JNI_INCLUDE_DIR
+for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+do
+    JNI_CPPFLAGS="$JNI_CPPFLAGS -I$JNI_INCLUDE_DIR"
+done
+AC_SUBST(JNI_CPPFLAGS, [$JNI_CPPFLAGS])
 
 #SFFT_AR="/usr/bin/ar"
 #SFFT_CFLAGS="$CFLAGS"
@@ -59,6 +76,12 @@ if test "$have_vfp" = "yes"; then
 fi
 AM_CONDITIONAL(HAVE_VFP, test "$have_vfp" = "yes")
 
+AC_ARG_ENABLE(jni, [AC_HELP_STRING([--enable-jni],[enable JNI binding])], have_jni=$enableval, have_jni=no)
+if test "$have_jni" = "yes"; then
+	AC_DEFINE(ENABLE_JNI,1,[JNI being build.])
+fi
+AM_CONDITIONAL(ENABLE_JNI, test "$have_sse" = "yes")
+
 #AC_CANONICAL_HOST
 AC_MSG_NOTICE([host is "${host}"])
 case "${host}" in
@@ -79,8 +102,12 @@ esac
 #fi
 
 # Checks for libraries.
-# FIXME: Replace `main' with a function in `-lm':
-AC_CHECK_LIB([m], [main])
+AC_CHECK_LIB([m], [cos])
+AC_CHECK_DECLS([posix_memalign,
+                memalign],,,
+               [#define _XOPEN_SOURCE 600
+                #include <stdlib.h>
+                #include <malloc.h>])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/socket.h sys/time.h unistd.h])
@@ -105,6 +132,7 @@ AC_CHECK_FUNCS([gettimeofday pow])
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  tests/Makefile
-								 ffts.pc
+		 ffts.pc
+		 java/Makefile
                  ])
 AC_OUTPUT

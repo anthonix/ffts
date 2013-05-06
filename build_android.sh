@@ -3,7 +3,10 @@
 # Make sure you have NDK_ROOT defined in .bashrc or .bash_profile
 # Modify INSTALL_DIR to suit your situation
 
-INSTALL_DIR="`pwd`/jni/ffts"
+INSTALL_DIR="`pwd`/java/android/bin"
+
+PLATFORM=android-8
+TOOL="4.6"
 
 case $(uname -s) in
   Darwin)
@@ -11,8 +14,8 @@ case $(uname -s) in
     HOSTPLAT=darwin-x86
   ;;
   Linux)
-    CONFBUILD=i386-unknown-linux
-    HOSTPLAT=linux-x86
+    CONFBUILD=x86-unknown-linux
+    HOSTPLAT=linux-`uname -m`
   ;;
   *) echo $0: Unknown platform; exit
 esac
@@ -39,8 +42,10 @@ esac
 
 : ${NDK_ROOT:?}
 
-export PATH="$NDK_ROOT/toolchains/${TARGPLAT}-4.6/prebuilt/${HOSTPLAT}/bin/:$PATH"
-export SYS_ROOT="$NDK_ROOT/platforms/android-8/arch-${ARCH}/"
+echo "Using: $NDK_ROOT/toolchains/${TARGPLAT}-${TOOL}/prebuilt/${HOSTPLAT}/bin"
+
+export PATH="$NDK_ROOT/toolchains/${TARGPLAT}-${TOOL}/prebuilt/${HOSTPLAT}/bin/:$PATH"
+export SYS_ROOT="$NDK_ROOT/platforms/${PLATFORM}/arch-${ARCH}/"
 export CC="${TARGPLAT}-gcc --sysroot=$SYS_ROOT"
 export LD="${TARGPLAT}-ld"
 export AR="${TARGPLAT}-ar"
@@ -55,4 +60,21 @@ make clean
 make
 make install
 
+if [ -z "$ANDROID_HOME" ] ; then
+    echo ""
+    echo " No ANDROID_HOME defined"
+    echo " Android JNI interfaces will not be built"
+    echo
+else
+    echo
+    echo "Using android_home ${ANDROID_HOME}"
+    echo
+    ( cd java/android ; ${ANDROID_HOME}/tools/android update lib-project -p . ) || exit 1
+    ( cd java/android/jni ; ${NDK_ROOT}/ndk-build V=1 ) || exit 1
+    ( cd java/android ; ant release ) || exit 1
+    echo
+    echo "Android library project location:"
+    echo " `pwd`/java/android"
+    echo
+fi
 exit 0

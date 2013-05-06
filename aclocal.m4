@@ -9549,3 +9549,10 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
+m4_include([m4/ax_check_classpath.m4])
+m4_include([m4/ax_check_java_home.m4])
+m4_include([m4/ax_java_options.m4])
+m4_include([m4/ax_jni_include_dir.m4])
+m4_include([m4/ax_prog_jar.m4])
+m4_include([m4/ax_prog_javac.m4])
+m4_include([m4/ax_prog_javac_works.m4])

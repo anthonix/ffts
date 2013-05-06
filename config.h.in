@@ -3,8 +3,19 @@
 /* Define to disable dynamic code generation. */
 #undef DYNAMIC_DISABLED
 
+/* JNI being build. */
+#undef ENABLE_JNI
+
 /* Define to FFT in single precision. */
 #undef FFTS_PREC_SINGLE
+
+/* Define to 1 if you have the declaration of `memalign', and to 0 if you
+   don't. */
+#undef HAVE_DECL_MEMALIGN
+
+/* Define to 1 if you have the declaration of `posix_memalign', and to 0 if
+   you don't. */
+#undef HAVE_DECL_POSIX_MEMALIGN
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
