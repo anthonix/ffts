@@ -13,6 +13,9 @@ make install
 FFTS dynamically generates code at runtime. This can be disabled with 
 --disable-dynamic-code
 
+For JNI targets: --enable-jni will build the jni stuff automatically for
+the host target, and --enable-shared must also be added manually for it to
+work.
 
 If you like FFTS, please show your support by sending a postcard to:
 
