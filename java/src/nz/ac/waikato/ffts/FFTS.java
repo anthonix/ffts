@@ -177,7 +177,7 @@ public class FFTS {
 	}
 
 	static {
-		System.loadLibrary("ffts-jni");
+		System.loadLibrary("ffts_jni");
 	}
 
 	/*
