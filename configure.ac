@@ -10,6 +10,8 @@ AC_CONFIG_MACRO_DIR([m4])
 # AC_CONFIG_SRCDIR([include/common.h])
 AC_CONFIG_HEADERS([config.h])
 
+AC_CANONICAL_HOST
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
@@ -18,21 +20,6 @@ LT_INIT([disable-shared])
 AM_PROG_AS
 #CXX="clang++"
 #CXXFLAGS="$CXXFLAGS -stdlib=libc++"
-
-# Java stuff
-AX_JAVA_OPTIONS
-AC_CHECK_JAVA_HOME
-AC_CHECK_CLASSPATH
-AC_PROG_JAVAC
-# blah this whinges about something
-#AC_PROG_JAVAH
-AC_PROG_JAR
-AX_JNI_INCLUDE_DIR
-for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
-do
-    JNI_CPPFLAGS="$JNI_CPPFLAGS -I$JNI_INCLUDE_DIR"
-done
-AC_SUBST(JNI_CPPFLAGS, [$JNI_CPPFLAGS])
 
 #SFFT_AR="/usr/bin/ar"
 #SFFT_CFLAGS="$CFLAGS"
@@ -60,43 +47,55 @@ AM_CONDITIONAL(HAVE_SSE, test "$have_sse" = "yes")
 
 AC_ARG_ENABLE(neon, [AC_HELP_STRING([--enable-neon],[enable NEON extensions])], have_neon=$enableval, have_neon=no)
 if test "$have_neon" = "yes"; then
-#	if test "$SIMD" != "sse"; then
-#		AC_MSG_ERROR([conflicting SIMD extensisons specified])
-#	fi
 	AC_DEFINE(HAVE_NEON,1,[Define to FFT with ARM NEON.])
 fi
 AM_CONDITIONAL(HAVE_NEON, test "$have_neon" = "yes")
 
 AC_ARG_ENABLE(vfp, [AC_HELP_STRING([--enable-vfp],[enable VFP extensions])], have_vfp=$enableval, have_vfp=no)
 if test "$have_vfp" = "yes"; then
-#	if test "$SIMD" != "sse"; then
-#		AC_MSG_ERROR([conflicting SIMD extensisons specified])
-#	fi
 	AC_DEFINE(HAVE_VFP,1,[Define to FFT with ARM VFP.])
 fi
 AM_CONDITIONAL(HAVE_VFP, test "$have_vfp" = "yes")
 
+AC_ARG_WITH(float-abi, [AS_HELP_STRING([--with-float-abi=ABI],[set float abi for arm, hard or softfp (default is softfp)])],
+		       float_abi=$withval, float_abi=softfp)
+
 AC_ARG_ENABLE(jni, [AC_HELP_STRING([--enable-jni],[enable JNI binding])], have_jni=$enableval, have_jni=no)
 if test "$have_jni" = "yes"; then
-	AC_DEFINE(ENABLE_JNI,1,[JNI being build.])
-fi
-AM_CONDITIONAL(ENABLE_JNI, test "$have_sse" = "yes")
+    # Java stuff
+    AX_JAVA_OPTIONS
+    AC_CHECK_JAVA_HOME
+    AC_CHECK_CLASSPATH
+    AC_PROG_JAVAC
+    # blah this whinges about something
+    #AC_PROG_JAVAH
+    AC_PROG_JAR
+    AX_JNI_INCLUDE_DIR
+    for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+    do
+          JNI_CPPFLAGS="$JNI_CPPFLAGS -I$JNI_INCLUDE_DIR"
+    done
+    AC_SUBST(JNI_CPPFLAGS, [$JNI_CPPFLAGS])
 
-#AC_CANONICAL_HOST
+    AC_DEFINE(ENABLE_JNI,1,[JNI being built.])
+fi
+AM_CONDITIONAL(ENABLE_JNI, test "$have_jni" = "yes")
+
+fpu=""
+AS_IF([test "$have_vfp" = "yes"],[fpu="-mfpu=vfp"],
+      [test "$have_neon" = "yes"],[fpu="-mfpu=neon"],
+      [])
+
 AC_MSG_NOTICE([host is "${host}"])
 case "${host}" in
 	arm* )
-		if test "$have_vfp" = "yes"; then
-			CFLAGS="$CFLAGS -mfloat-abi=softfp -mfpu=vfp -std=c99"
-			CCASFLAGS="$CCASFLAGS -mfloat-abi=softfp -mfpu=vfp "
-		else
-			CFLAGS="$CFLAGS -mfloat-abi=softfp -mfpu=neon -std=c99"
-			CCASFLAGS="$CCASFLAGS -mfloat-abi=softfp -mfpu=neon "
-		fi
+		CFLAGS="$CFLAGS -mfloat-abi=${float_abi} ${fpu} -std=c99"
+		CCASFLAGS="$CCASFLAGS -mfloat-abi=${float_abi} ${fpu}"
 		;;
 	*)
 		;;
 esac
+
 #if test "$ord_sr" = "no"; then
 #	AC_DEFINE(SFFT_ORD_SR,0,[Define to enable ordinary split radix.])
 #fi

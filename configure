@@ -637,14 +637,6 @@ LTLIBOBJS
 LIBOBJS
 ENABLE_JNI_FALSE
 ENABLE_JNI_TRUE
-HAVE_VFP_FALSE
-HAVE_VFP_TRUE
-HAVE_NEON_FALSE
-HAVE_NEON_TRUE
-HAVE_SSE_FALSE
-HAVE_SSE_TRUE
-DYNAMIC_DISABLED_FALSE
-DYNAMIC_DISABLED_TRUE
 JNI_CPPFLAGS
 _ACJNI_JAVAC
 JAR
@@ -654,6 +646,14 @@ JAVA
 JAVAFLAGS
 JAVACFLAGS
 JAVAPREFIX
+HAVE_VFP_FALSE
+HAVE_VFP_TRUE
+HAVE_NEON_FALSE
+HAVE_NEON_TRUE
+HAVE_SSE_FALSE
+HAVE_SSE_TRUE
+DYNAMIC_DISABLED_FALSE
+DYNAMIC_DISABLED_TRUE
 am__fastdepCCAS_FALSE
 am__fastdepCCAS_TRUE
 CCASDEPMODE
@@ -681,14 +681,6 @@ FGREP
 EGREP
 GREP
 SED
-host_os
-host_vendor
-host_cpu
-host
-build_os
-build_vendor
-build_cpu
-build
 LIBTOOL
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
@@ -713,6 +705,14 @@ CPPFLAGS
 LDFLAGS
 CXXFLAGS
 CXX
+host_os
+host_vendor
+host_cpu
+host
+build_os
+build_vendor
+build_cpu
+build
 am__untar
 am__tar
 AMTAR
@@ -785,15 +785,16 @@ enable_fast_install
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
-with_java_prefix
-with_javac_flags
-with_java_flags
 enable_dynamic_code
 enable_single
 enable_sse
 enable_neon
 enable_vfp
+with_float_abi
 enable_jni
+with_java_prefix
+with_javac_flags
+with_java_flags
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1452,6 +1453,8 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot=DIR Search for dependent libraries within DIR
                         (or the compiler's sysroot if not specified).
+  --with-float-abi=ABI    set float abi for arm, hard or softfp (default is
+                          softfp)
   --with-java-prefix=PFX  prefix where Java runtime is installed (optional)
   --with-javac-flags=FLAGS flags to pass to the Java compiler (optional)
   --with-java-flags=FLAGS flags to pass to the Java VM (optional)
@@ -3135,6 +3138,78 @@ am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
 ac_config_headers="$ac_config_headers config.h"
 
 
+# Make sure we can run config.sub.
+$SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
+  as_fn_error $? "cannot run $SHELL $ac_aux_dir/config.sub" "$LINENO" 5
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking build system type" >&5
+$as_echo_n "checking build system type... " >&6; }
+if ${ac_cv_build+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_build_alias=$build_alias
+test "x$ac_build_alias" = x &&
+  ac_build_alias=`$SHELL "$ac_aux_dir/config.guess"`
+test "x$ac_build_alias" = x &&
+  as_fn_error $? "cannot guess build type; you must specify one" "$LINENO" 5
+ac_cv_build=`$SHELL "$ac_aux_dir/config.sub" $ac_build_alias` ||
+  as_fn_error $? "$SHELL $ac_aux_dir/config.sub $ac_build_alias failed" "$LINENO" 5
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_build" >&5
+$as_echo "$ac_cv_build" >&6; }
+case $ac_cv_build in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical build" "$LINENO" 5;;
+esac
+build=$ac_cv_build
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_build
+shift
+build_cpu=$1
+build_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+build_os=$*
+IFS=$ac_save_IFS
+case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking host system type" >&5
+$as_echo_n "checking host system type... " >&6; }
+if ${ac_cv_host+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "x$host_alias" = x; then
+  ac_cv_host=$ac_cv_build
+else
+  ac_cv_host=`$SHELL "$ac_aux_dir/config.sub" $host_alias` ||
+    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $host_alias failed" "$LINENO" 5
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_host" >&5
+$as_echo "$ac_cv_host" >&6; }
+case $ac_cv_host in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical host" "$LINENO" 5;;
+esac
+host=$ac_cv_host
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_host
+shift
+host_cpu=$1
+host_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+host_os=$*
+IFS=$ac_save_IFS
+case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
+
+
+
 # Checks for programs.
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -4526,77 +4601,6 @@ macro_revision='1.3337'
 
 
 ltmain="$ac_aux_dir/ltmain.sh"
-
-# Make sure we can run config.sub.
-$SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
-  as_fn_error $? "cannot run $SHELL $ac_aux_dir/config.sub" "$LINENO" 5
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking build system type" >&5
-$as_echo_n "checking build system type... " >&6; }
-if ${ac_cv_build+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_build_alias=$build_alias
-test "x$ac_build_alias" = x &&
-  ac_build_alias=`$SHELL "$ac_aux_dir/config.guess"`
-test "x$ac_build_alias" = x &&
-  as_fn_error $? "cannot guess build type; you must specify one" "$LINENO" 5
-ac_cv_build=`$SHELL "$ac_aux_dir/config.sub" $ac_build_alias` ||
-  as_fn_error $? "$SHELL $ac_aux_dir/config.sub $ac_build_alias failed" "$LINENO" 5
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_build" >&5
-$as_echo "$ac_cv_build" >&6; }
-case $ac_cv_build in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical build" "$LINENO" 5;;
-esac
-build=$ac_cv_build
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_build
-shift
-build_cpu=$1
-build_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-build_os=$*
-IFS=$ac_save_IFS
-case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking host system type" >&5
-$as_echo_n "checking host system type... " >&6; }
-if ${ac_cv_host+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "x$host_alias" = x; then
-  ac_cv_host=$ac_cv_build
-else
-  ac_cv_host=`$SHELL "$ac_aux_dir/config.sub" $host_alias` ||
-    as_fn_error $? "$SHELL $ac_aux_dir/config.sub $host_alias failed" "$LINENO" 5
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_host" >&5
-$as_echo "$ac_cv_host" >&6; }
-case $ac_cv_host in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical host" "$LINENO" 5;;
-esac
-host=$ac_cv_host
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_host
-shift
-host_cpu=$1
-host_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-host_os=$*
-IFS=$ac_save_IFS
-case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
-
 
 # Backslashify metacharacters that are still active within
 # double-quoted strings.
@@ -15414,7 +15418,133 @@ fi
 #CXX="clang++"
 #CXXFLAGS="$CXXFLAGS -stdlib=libc++"
 
-# Java stuff
+#SFFT_AR="/usr/bin/ar"
+#SFFT_CFLAGS="$CFLAGS"
+#SFFT_CC="$CC"
+# Check whether --enable-dynamic-code was given.
+if test "${enable_dynamic_code+set}" = set; then :
+  enableval=$enable_dynamic_code; sfft_dynamic=$enableval
+else
+  sfft_dynamic=yes
+fi
+
+if test "$sfft_dynamic" = "no"; then
+
+$as_echo "#define DYNAMIC_DISABLED 1" >>confdefs.h
+
+fi
+ if test "$sfft_dynamic" = "no"; then
+  DYNAMIC_DISABLED_TRUE=
+  DYNAMIC_DISABLED_FALSE='#'
+else
+  DYNAMIC_DISABLED_TRUE='#'
+  DYNAMIC_DISABLED_FALSE=
+fi
+
+
+# Check whether --enable-single was given.
+if test "${enable_single+set}" = set; then :
+  enableval=$enable_single; sfft_single=$enableval
+else
+  sfft_single=no
+fi
+
+if test "$sfft_single" = "yes"; then
+
+$as_echo "#define FFTS_PREC_SINGLE 1" >>confdefs.h
+
+fi
+if test "$sfft_single" = "no"; then
+
+$as_echo "#define FFTS_PREC_SINGLE 0" >>confdefs.h
+
+fi
+
+# Check whether --enable-sse was given.
+if test "${enable_sse+set}" = set; then :
+  enableval=$enable_sse; have_sse=$enableval
+else
+  have_sse=no
+fi
+
+if test "$have_sse" = "yes"; then
+	SIMD=sse
+
+$as_echo "#define HAVE_SSE 1" >>confdefs.h
+
+fi
+ if test "$have_sse" = "yes"; then
+  HAVE_SSE_TRUE=
+  HAVE_SSE_FALSE='#'
+else
+  HAVE_SSE_TRUE='#'
+  HAVE_SSE_FALSE=
+fi
+
+
+# Check whether --enable-neon was given.
+if test "${enable_neon+set}" = set; then :
+  enableval=$enable_neon; have_neon=$enableval
+else
+  have_neon=no
+fi
+
+if test "$have_neon" = "yes"; then
+
+$as_echo "#define HAVE_NEON 1" >>confdefs.h
+
+fi
+ if test "$have_neon" = "yes"; then
+  HAVE_NEON_TRUE=
+  HAVE_NEON_FALSE='#'
+else
+  HAVE_NEON_TRUE='#'
+  HAVE_NEON_FALSE=
+fi
+
+
+# Check whether --enable-vfp was given.
+if test "${enable_vfp+set}" = set; then :
+  enableval=$enable_vfp; have_vfp=$enableval
+else
+  have_vfp=no
+fi
+
+if test "$have_vfp" = "yes"; then
+
+$as_echo "#define HAVE_VFP 1" >>confdefs.h
+
+fi
+ if test "$have_vfp" = "yes"; then
+  HAVE_VFP_TRUE=
+  HAVE_VFP_FALSE='#'
+else
+  HAVE_VFP_TRUE='#'
+  HAVE_VFP_FALSE=
+fi
+
+
+
+# Check whether --with-float-abi was given.
+if test "${with_float_abi+set}" = set; then :
+  withval=$with_float_abi; float_abi=$withval
+else
+  float_abi=softfp
+fi
+
+
+$as_echo "#define FLOAT_ABI \$float_abi" >>confdefs.h
+
+
+# Check whether --enable-jni was given.
+if test "${enable_jni+set}" = set; then :
+  enableval=$enable_jni; have_jni=$enableval
+else
+  have_jni=no
+fi
+
+if test "$have_jni" = "yes"; then
+    # Java stuff
 
 
 # Check whether --with-java-prefix was given.
@@ -15438,7 +15568,7 @@ JAVAPREFIX=$with_java_prefix
 JAVACFLAGS=$with_javac_flags
 JAVAFLAGS=$with_java_flags
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for JAVA_HOME" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JAVA_HOME" >&5
 $as_echo_n "checking for JAVA_HOME... " >&6; }
 # We used a fake loop so that we can use "break" to exit when the result
 # is found.
@@ -15617,7 +15747,7 @@ else
 JAVA_TEST=Test.java
 CLASS_TEST=Test.class
 cat << \EOF > $JAVA_TEST
-/* #line 15620 "configure" */
+/* #line 15750 "configure" */
 public class Test {
 }
 EOF
@@ -15640,8 +15770,8 @@ fi
 $as_echo "$ac_cv_prog_javac_works" >&6; }
 
 
-# blah this whinges about something
-#AC_PROG_JAVAH
+    # blah this whinges about something
+    #AC_PROG_JAVAH
 
 
 if test "x$JAVAPREFIX" = x; then
@@ -15842,138 +15972,18 @@ do
     fi
 done
 
-for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
-do
-    JNI_CPPFLAGS="$JNI_CPPFLAGS -I$JNI_INCLUDE_DIR"
-done
-JNI_CPPFLAGS=$JNI_CPPFLAGS
+    for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+    do
+          JNI_CPPFLAGS="$JNI_CPPFLAGS -I$JNI_INCLUDE_DIR"
+    done
+    JNI_CPPFLAGS=$JNI_CPPFLAGS
 
 
-#SFFT_AR="/usr/bin/ar"
-#SFFT_CFLAGS="$CFLAGS"
-#SFFT_CC="$CC"
-# Check whether --enable-dynamic-code was given.
-if test "${enable_dynamic_code+set}" = set; then :
-  enableval=$enable_dynamic_code; sfft_dynamic=$enableval
-else
-  sfft_dynamic=yes
-fi
-
-if test "$sfft_dynamic" = "no"; then
-
-$as_echo "#define DYNAMIC_DISABLED 1" >>confdefs.h
-
-fi
- if test "$sfft_dynamic" = "no"; then
-  DYNAMIC_DISABLED_TRUE=
-  DYNAMIC_DISABLED_FALSE='#'
-else
-  DYNAMIC_DISABLED_TRUE='#'
-  DYNAMIC_DISABLED_FALSE=
-fi
-
-
-# Check whether --enable-single was given.
-if test "${enable_single+set}" = set; then :
-  enableval=$enable_single; sfft_single=$enableval
-else
-  sfft_single=no
-fi
-
-if test "$sfft_single" = "yes"; then
-
-$as_echo "#define FFTS_PREC_SINGLE 1" >>confdefs.h
-
-fi
-if test "$sfft_single" = "no"; then
-
-$as_echo "#define FFTS_PREC_SINGLE 0" >>confdefs.h
-
-fi
-
-# Check whether --enable-sse was given.
-if test "${enable_sse+set}" = set; then :
-  enableval=$enable_sse; have_sse=$enableval
-else
-  have_sse=no
-fi
-
-if test "$have_sse" = "yes"; then
-	SIMD=sse
-
-$as_echo "#define HAVE_SSE 1" >>confdefs.h
-
-fi
- if test "$have_sse" = "yes"; then
-  HAVE_SSE_TRUE=
-  HAVE_SSE_FALSE='#'
-else
-  HAVE_SSE_TRUE='#'
-  HAVE_SSE_FALSE=
-fi
-
-
-# Check whether --enable-neon was given.
-if test "${enable_neon+set}" = set; then :
-  enableval=$enable_neon; have_neon=$enableval
-else
-  have_neon=no
-fi
-
-if test "$have_neon" = "yes"; then
-#	if test "$SIMD" != "sse"; then
-#		AC_MSG_ERROR([conflicting SIMD extensisons specified])
-#	fi
-
-$as_echo "#define HAVE_NEON 1" >>confdefs.h
-
-fi
- if test "$have_neon" = "yes"; then
-  HAVE_NEON_TRUE=
-  HAVE_NEON_FALSE='#'
-else
-  HAVE_NEON_TRUE='#'
-  HAVE_NEON_FALSE=
-fi
-
-
-# Check whether --enable-vfp was given.
-if test "${enable_vfp+set}" = set; then :
-  enableval=$enable_vfp; have_vfp=$enableval
-else
-  have_vfp=no
-fi
-
-if test "$have_vfp" = "yes"; then
-#	if test "$SIMD" != "sse"; then
-#		AC_MSG_ERROR([conflicting SIMD extensisons specified])
-#	fi
-
-$as_echo "#define HAVE_VFP 1" >>confdefs.h
-
-fi
- if test "$have_vfp" = "yes"; then
-  HAVE_VFP_TRUE=
-  HAVE_VFP_FALSE='#'
-else
-  HAVE_VFP_TRUE='#'
-  HAVE_VFP_FALSE=
-fi
-
-
-# Check whether --enable-jni was given.
-if test "${enable_jni+set}" = set; then :
-  enableval=$enable_jni; have_jni=$enableval
-else
-  have_jni=no
-fi
-
-if test "$have_jni" = "yes"; then
 
 $as_echo "#define ENABLE_JNI 1" >>confdefs.h
 
 fi
- if test "$have_sse" = "yes"; then
+ if test "$have_jni" = "yes"; then
   ENABLE_JNI_TRUE=
   ENABLE_JNI_FALSE='#'
 else
@@ -15982,22 +15992,24 @@ else
 fi
 
 
-#AC_CANONICAL_HOST
+fpu=""
+if test "$have_vfp" = "yes"; then :
+  fpu="-mfpu=vfp"
+elif test "$have_neon" = "yes"; then :
+  fpu="-mfpu=neon"
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: host is \"${host}\"" >&5
 $as_echo "$as_me: host is \"${host}\"" >&6;}
 case "${host}" in
 	arm* )
-		if test "$have_vfp" = "yes"; then
-			CFLAGS="$CFLAGS -mfloat-abi=softfp -mfpu=vfp -std=c99"
-			CCASFLAGS="$CCASFLAGS -mfloat-abi=softfp -mfpu=vfp "
-		else
-			CFLAGS="$CFLAGS -mfloat-abi=softfp -mfpu=neon -std=c99"
-			CCASFLAGS="$CCASFLAGS -mfloat-abi=softfp -mfpu=neon "
-		fi
+		CFLAGS="$CFLAGS -mfloat-abi=${float_abi} ${fpu} -std=c99"
+		CCASFLAGS="$CCASFLAGS -mfloat-abi=${float_abi} ${fpu}"
 		;;
 	*)
 		;;
 esac
+
 #if test "$ord_sr" = "no"; then
 #	AC_DEFINE(SFFT_ORD_SR,0,[Define to enable ordinary split radix.])
 #fi
