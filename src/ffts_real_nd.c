@@ -49,7 +49,7 @@ void ffts_free_nd_real(ffts_plan_t *p) {
 			if(x == p->plans[k]) p->plans[k] = NULL;
 		}
 		
-		ffts_free(x);
+		if(x)	ffts_free(x);
 	}
 
 	free(p->Ns);
