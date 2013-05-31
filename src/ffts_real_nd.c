@@ -37,6 +37,29 @@
 #include "neon.h"
 #endif
 
+void ffts_free_nd_real(ffts_plan_t *p) {
+
+	int i;
+	for(i=0;i<p->rank;i++) {
+		
+		ffts_plan_t *x = p->plans[i];
+
+		int k;
+		for(k=i+1;k<p->rank;k++) {
+			if(x == p->plans[k]) p->plans[k] = NULL;
+		}
+		
+		if(x)	ffts_free(x);
+	}
+
+	free(p->Ns);
+	free(p->Ms);
+	free(p->plans);
+	free(p->buf);
+	free(p->transpose_buf);
+	free(p);
+}
+
 void ffts_scalar_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 
 	size_t i,j;
@@ -98,7 +121,7 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 	if(sign < 0) p->transform = &ffts_execute_nd_real;
 	else         p->transform = &ffts_execute_nd_real_inv;
 
-	p->destroy = &ffts_free_nd;
+	p->destroy = &ffts_free_nd_real;
 
 	p->rank = rank;
 	p->Ns = malloc(sizeof(size_t) * rank);
