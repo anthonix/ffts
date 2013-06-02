@@ -79,9 +79,9 @@ void ffts_execute_nd_real(ffts_plan_t *p, const void *  in, void *  out) {
 
 	size_t i,j;
 	for(i=0;i<p->Ns[0];i++) {
-		p->plans[0]->transform(p->plans[0], din + (i * p->Ms[0]), buf + (i * p->Ms[0]));	
+		p->plans[0]->transform(p->plans[0], din + (i * p->Ms[0]), buf + (i * (p->Ms[0] / 2 + 1)));	
 	}
-	ffts_scalar_transpose(buf, dout, p->Ms[0], p->Ns[0], p->transpose_buf);	
+	ffts_scalar_transpose(buf, dout, p->Ms[0] / 2 + 1, p->Ns[0], p->transpose_buf);	
 
 	for(i=1;i<p->rank;i++) {
 		for(j=0;j<p->Ns[i];j++) { 
@@ -159,9 +159,9 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 			p->Ns[i] = p->Ns[i] / 2 + 1;
 		}
 	}else{
-  	for(i=0;i<rank-1;i++) {
-  		p->Ms[i] = p->Ms[i] / 2 + 1;
-  	}
+		for(i=0;i<rank-1;i++) {
+			p->Ms[i] = p->Ms[i] / 2 + 1;
+		}
 	}
 
 	p->transpose_buf = valloc(sizeof(float) * 2 * 8 * 8);
