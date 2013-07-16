@@ -192,7 +192,7 @@ void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
 				_mm_store_pd((double *)(op0 + 4), q2);
 				_mm_store_pd((double *)(op0 + 6), q3);
 				
-				op0 += w;
+				op0 += h;
 				ip0 += TSIZE;
 			}
 
