@@ -101,16 +101,19 @@ void ffts_init_is(ffts_plan_t *p, int N, int leafN, int VL) {
 
 	p->i0 = i0; p->i1 = i1;
 }
-
+/**
+ *
+ *
+ */
 void ffts_elaborate_offsets(ptrdiff_t *offsets, int leafN, int N, int ioffset, int ooffset, int stride, int even) {
   if((even && N == leafN) || (!even && N <= leafN)) {
 		offsets[2*(ooffset/leafN)]   = ioffset*2;
 		offsets[2*(ooffset/leafN)+1] = ooffset;
 	}else if(N > 4) {
-  	ffts_elaborate_offsets(offsets, leafN, N/2, ioffset, ooffset, stride+1, even);
-  	ffts_elaborate_offsets(offsets, leafN, N/4, ioffset+(1<<stride), ooffset+N/2, stride+2, 0);
+		ffts_elaborate_offsets(offsets, leafN, N/2, ioffset, ooffset, stride+1, even);
+		ffts_elaborate_offsets(offsets, leafN, N/4, ioffset+(1<<stride), ooffset+N/2, stride+2, 0);
   	if(N/4 >= leafN) 
-			ffts_elaborate_offsets(offsets, leafN, N/4, ioffset-(1<<stride), ooffset+3*N/4, stride+2, 0);
+		ffts_elaborate_offsets(offsets, leafN, N/4, ioffset-(1<<stride), ooffset+3*N/4, stride+2, 0);
 	}
 
 }
@@ -137,9 +140,9 @@ void ffts_init_offsets(ffts_plan_t *p, int N, int leafN) {
 	ffts_elaborate_offsets(offsets, leafN, N, 0, 0, 1, 1);
 
 	size_t i;
-  for(i=0;i<2*N/leafN;i+=2) {
-  	if(offsets[i] < 0) offsets[i] = N + offsets[i];
-  }
+	for(i=0;i<2*N/leafN;i+=2) {
+		if(offsets[i] < 0) offsets[i] = N + offsets[i];
+	}
 	
 	qsort(offsets, N/leafN, 2 * sizeof(ptrdiff_t), compare_offsets); 
 	//elaborate_is(p, N, 0, 0, 1);
@@ -151,8 +154,6 @@ void ffts_init_offsets(ffts_plan_t *p, int N, int leafN) {
 //	printf("%4d %4d\n", p->offsets[i], reverse_bits(p->offsets[i], __builtin_ctzl(2*N)));
 //}
 	free(offsets);
-
-
 }
 
 /*
