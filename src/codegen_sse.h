@@ -52,7 +52,7 @@ void x8_hard();
 void sse_constants();
 void sse_constants_inv();
 
-//	typedef uint8_t insns_t;
+typedef uint8_t insns_t;
 
 extern const uint32_t sse_leaf_ee_offsets[8];
 extern const uint32_t sse_leaf_oo_offsets[8];

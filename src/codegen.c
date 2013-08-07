@@ -120,12 +120,6 @@ uint32_t LUT_offset(size_t N, size_t leafN) {
 	return lut_size;
 }
 
-#ifdef __arm__ 
-	typedef uint32_t insns_t;
-#else
-	typedef uint8_t insns_t;
-#endif
-
 #define P(x) (*(*p)++ = x)
 
 void insert_nops(uint8_t **p, uint32_t count) {

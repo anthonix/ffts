@@ -35,6 +35,7 @@
 #define __CODEGEN_ARM_H__
 
 
+typedef uint32_t insns_t;
 
 uint32_t BL(void *pos, void *target) {
 	return 0xeb000000 | (((target - pos) / 4) & 0xffffff);
