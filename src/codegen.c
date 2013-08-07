@@ -42,17 +42,6 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
-#include "arch_codegen.h"
-#ifdef HAVE_NEON
-	#include "codegen_arm.h"
-	#include "neon.h"
-#elif HAVE_VFP
-	#include "codegen_arm.h"
-	#include "vfp.h"
-#else
-	#include "codegen_sse.h"
-	#include "macros-sse.h"
-#endif
 
 #ifdef __ANDROID__
 	#include <unistd.h>
