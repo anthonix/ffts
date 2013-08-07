@@ -32,6 +32,7 @@
 */
 
 #include "codegen.h"
+#include "arch_codegen.h"
 #include "macros.h"
 #include "ffts.h"
 
@@ -41,7 +42,7 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
-
+#include "arch_codegen.h"
 #ifdef HAVE_NEON
 	#include "codegen_arm.h"
 	#include "neon.h"
@@ -171,6 +172,7 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 
 	pps = ps;
 
+	define_transform_size(p, N);
 #ifdef __arm__ 
 	if(N < 8192) p->transform_size = 8192;
 	else p->transform_size = N;
@@ -203,6 +205,10 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	}
 
 	insns_t *x_8_addr = fp;
+
+	printf("fp before:%p" , (void * ) fp);
+	generate_size8_base_case(fp, sign);
+	printf("fp after:%p" , (void * ) fp);
 #ifdef __arm__
 #ifdef HAVE_NEON
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
@@ -245,7 +251,11 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 //uint32_t *x_8_t_addr = fp;
 //memcpy(fp, neon_x8_t, neon_end - neon_x8_t);
 //fp += (neon_end - neon_x8_t) / 4;
+	
+
+	//Generate_size4 base case
 	insns_t *x_4_addr = fp;
+	
 #ifdef __arm__
 	#ifdef HAVE_NEON
 		memcpy(fp, neon_x4, neon_x8 - neon_x4);
