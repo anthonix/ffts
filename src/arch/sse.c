@@ -1,4 +1,5 @@
 #include "arch_codegen.h"
+#include "ffts.h"
 void IMM8(uint8_t **p, int32_t imm) {
 		*(*p)++ = (imm & 0xff);
 }
@@ -140,7 +141,7 @@ void define_transform_size(ffts_plan_t *p, size_t N) {
 }
 insns_t* generate_size8_base_case(insns_t **fp, int sign ) { 
 	align_mem16(fp, 0);
-	insns_t * x_8_addr = fp;
+	insns_t * x_8_addr = *fp;
 	align_mem16(fp, 5);
 	memcpy(*fp, x8_soft, x8_hard - x8_soft);
 	*fp += (x8_hard - x8_soft);
@@ -149,7 +150,7 @@ insns_t* generate_size8_base_case(insns_t **fp, int sign ) {
 
 insns_t* generate_size4_base_case(insns_t **fp, int sign) {
 	align_mem16(fp, 0);
-	insns_t * x_4_addr = fp;
+	insns_t * x_4_addr = *fp;
 	memcpy(*fp, x4, x8_soft - x4);
 	*fp += (x8_soft - x4);
 	return x_4_addr;

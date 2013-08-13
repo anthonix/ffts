@@ -157,10 +157,8 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 		fprintf(stderr, "NOMEM\n");
 		exit(1);
 	}
-
-	printf("x_8 addr before: %p" , fp);
-	insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
-	printf("x_8 addr after : %p" , fp);
+insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
+//fprintf(stderr, "X8 start address = %016p\n", x_8_addr);
 
 
 #ifdef __arm__
@@ -194,21 +192,12 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	}
 	fp += (vfp_end - vfp_x8) / 4;
 #endif
-#else
-	align_mem16(&fp, 0);
-	x_8_addr = fp;
-	align_mem16(&fp, 5);
-	memcpy(fp, x8_soft, x8_hard - x8_soft);
-	fp += (x8_hard - x8_soft);
-//fprintf(stderr, "X8 start address = %016p\n", x_8_addr);
 #endif
 //uint32_t *x_8_t_addr = fp;
 //memcpy(fp, neon_x8_t, neon_end - neon_x8_t);
 //fp += (neon_end - neon_x8_t) / 4;
 	
 
-	//Generate_size4 base case
-	//insns_t *x_4_addr = fp;
 	insns_t *x_4_addr = generate_size4_base_case(&fp , sign);
 
 	
@@ -230,10 +219,6 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 		fp += (vfp_x8 - vfp_x4) / 4;
 	#endif
 #else
-	align_mem16(&fp, 0);
-	x_4_addr = fp;
-	memcpy(fp, x4, x8_soft - x4);
-	fp += (x8_soft - x4);
 
 #endif
 	insns_t *start = fp;
