@@ -109,35 +109,6 @@ uint32_t LUT_offset(size_t N, size_t leafN) {
 	return lut_size;
 }
 
-#define P(x) (*(*p)++ = x)
-
-void insert_nops(uint8_t **p, uint32_t count) {
-	switch(count) {
-		case 0: break;
-		case 2: P(0x66); 
-		case 1: P(0x90); break;
-		case 3: P(0x0F); P(0x1F); P(0x00); break;	
-		case 4: P(0x0F); P(0x1F); P(0x40); P(0x00); break;	
-		case 5: P(0x0F); P(0x1F); P(0x44); P(0x00); P(0x00); break;	
-		case 6: P(0x66); P(0x0F); P(0x1F); P(0x44); P(0x00); P(0x00); break;	
-		case 7: P(0x0F); P(0x1F); P(0x80); P(0x00); P(0x00); P(0x00); P(0x00); break;	
-		case 8: P(0x0F); P(0x1F); P(0x84); P(0x00); P(0x00); P(0x00); P(0x00); P(0x00); break;	
-		case 9: P(0x66); P(0x0F); P(0x1F); P(0x84); P(0x00); P(0x00); P(0x00); P(0x00); P(0x00); break;	
-		default:
-			P(0x66); P(0x0F); P(0x1F); P(0x84); P(0x00); P(0x00); P(0x00); P(0x00); P(0x00); 
-			insert_nops(p, count-9);
-			break;	
-	}
-}
-
-
-void align_mem16(uint8_t **p, uint32_t offset) {
-#ifdef __x86_64__
-	int r = (16 - (offset & 0xf)) - ((uint32_t)(*p) & 0xf);
-	r = (16 + r) & 0xf;
-	insert_nops(p, r);	
-#endif
-}
 
 void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	int count = tree_count(N, leafN, 0) + 1;
@@ -187,17 +158,17 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 		exit(1);
 	}
 
-	insns_t *x_8_addr = fp;
+	printf("x_8 addr before: %p" , fp);
+	insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
+	printf("x_8 addr after : %p" , fp);
 
-	printf("fp before:%p" , (void * ) fp);
-	generate_size8_base_case(fp, sign);
-	printf("fp after:%p" , (void * ) fp);
+
 #ifdef __arm__
 #ifdef HAVE_NEON
 	memcpy(fp, neon_x8, neon_x8_t - neon_x8);
 	/* 
 	 * Changes adds to subtracts and  vice versa to allow the computation 
-	 * of both the IFFT and FFT
+	 * o the IFFT and FFT
 	 */
 	if(sign < 0) {
 		fp[31] ^= 0x00200000; fp[32] ^= 0x00200000; fp[33] ^= 0x00200000; fp[34] ^= 0x00200000;
@@ -237,10 +208,12 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	
 
 	//Generate_size4 base case
-	insns_t *x_4_addr = fp;
+	//insns_t *x_4_addr = fp;
+	insns_t *x_4_addr = generate_size4_base_case(&fp , sign);
+
 	
 #ifdef __arm__
-	#ifdef HAVE_NEON
+	#ifdef have_neon
 		memcpy(fp, neon_x4, neon_x8 - neon_x4);
 		if(sign < 0) {
 			fp[26] ^= 0x00200000; fp[28] ^= 0x00200000; fp[31] ^= 0x00200000; fp[32] ^= 0x00200000;
@@ -297,7 +270,9 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 #else
 	align_mem16(&fp, 0);
 	start = fp;
-	
+
+	// This is a move intsruction of some sort
+	// I cant remember what though 
 	*fp++ = 0x4c;
 	*fp++ = 0x8b;
 	*fp++ = 0x07;
@@ -717,7 +692,6 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 	__clear_cache((long)(func), (long)(func) + p->transform_size);
 #endif
 #endif
-
 //fprintf(stderr, "size of transform %zu = %d\n", N, (fp-func)*4);
 
 	p->transform = (void *) (start);
