@@ -4,6 +4,7 @@
 AC_PREREQ([2.68])
 AC_INIT(ffts, 0.7, amb@anthonix.com)
 AM_INIT_AUTOMAKE(ffts, 0.7)
+AM_INIT_AUTOMAKE([subdir-objects])
 
 AC_CONFIG_MACRO_DIR([m4])
 
