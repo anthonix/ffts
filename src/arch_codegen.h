@@ -26,4 +26,12 @@
 	 * Returns a pointer the start of the function
 	 */
 	insns_t* generate_size4_base_case(insns_t **fp, int sign);
+	/**
+	 * TODO: Come up with Better documentation than this
+	 * Prints the start function preamble and to move
+	 * things onto the stack 
+	 *
+	 * Returns a pointer to start
+	 */
+	insns_t* generate_start_init(insns_t **fp, ffts_plan_t * p );
 #endif

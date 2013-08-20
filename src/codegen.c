@@ -221,7 +221,7 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 #else
 
 #endif
-	insns_t *start = fp;
+	insns_t *start = generate_start_init(&fp, p);
 
 #ifdef __arm__ 
 	*fp = PUSH_LR(); fp++;
@@ -253,11 +253,12 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
   	#endif
 
 #else
+	/*
 	align_mem16(&fp, 0);
 	start = fp;
 
-	// This is a move intsruction of some sort
-	// I cant remember what though 
+	//the following is equivilant to
+	//mov (%rdi), %r8
 	*fp++ = 0x4c;
 	*fp++ = 0x8b;
 	*fp++ = 0x07;
@@ -265,6 +266,8 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 	MOVI(&fp, RCX, lp_cnt);
 	
 	//LEA(&fp, R8, RDI, ((uint32_t)&p->offsets) - ((uint32_t)p)); 
+	*/
+	uint32_t lp_cnt = p->i0 * 4;
 #endif
 	//fp++;
 #ifdef __arm__
@@ -296,7 +299,6 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 	PUSH(&fp, R13);
 	PUSH(&fp, R14);
 	PUSH(&fp, R15);
-	
 	int i;
 	memcpy(fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	

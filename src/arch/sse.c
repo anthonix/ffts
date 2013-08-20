@@ -156,3 +156,20 @@ insns_t* generate_size4_base_case(insns_t **fp, int sign) {
 	return x_4_addr;
 
 }
+insns_t* generate_start_init(insns_t **fp, ffts_plan_t *p  ) {
+	
+	align_mem16(fp, 0);
+	insns_t	* start = *fp;
+
+	/* The following is equivilant to
+	 * mov (%rdi), %r8
+	 */
+	*(*fp)++ = 0x4c;
+	*(*fp)++ = 0x8b;
+	*(*fp)++ = 0x07;
+	uint32_t lp_cnt = p->i0 * 4;
+	MOVI(fp, RCX, lp_cnt);
+	return start;
+}
+
+
