@@ -218,8 +218,6 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 		}
 		fp += (vfp_x8 - vfp_x4) / 4;
 	#endif
-#else
-
 #endif
 	insns_t *start = generate_start_init(&fp, p);
 
@@ -252,285 +250,127 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
   		MOVI(&fp, 11, p->i0);
   	#endif
 
-#else
-	/*
-	align_mem16(&fp, 0);
-	start = fp;
-
-	//the following is equivilant to
-	//mov (%rdi), %r8
-	*fp++ = 0x4c;
-	*fp++ = 0x8b;
-	*fp++ = 0x07;
-	uint32_t lp_cnt = p->i0 * 4;
-	MOVI(&fp, RCX, lp_cnt);
-	
-	//LEA(&fp, R8, RDI, ((uint32_t)&p->offsets) - ((uint32_t)p)); 
-	*/
-	uint32_t lp_cnt = p->i0 * 4;
 #endif
-	//fp++;
 	generate_start(&fp, p , x_4_addr, x_8_addr, leafN, N , pps);	
 	
 #ifdef __arm__
-#ifdef HAVE_NEON
+	#ifdef HAVE_NEON
+			memcpy(fp, neon_ee, neon_oo - neon_ee);
+			if(sign < 0) {
+				fp[33] ^= 0x00200000; fp[37] ^= 0x00200000; fp[38] ^= 0x00200000; fp[39] ^= 0x00200000;
+				fp[40] ^= 0x00200000; fp[41] ^= 0x00200000; fp[44] ^= 0x00200000; fp[45] ^= 0x00200000;
+				fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
+			}
+			fp += (neon_oo - neon_ee) / 4;
+	#else
+				memcpy(fp, vfp_e, vfp_o - vfp_e);
+				if(sign > 0) {
+					fp[64] ^= 0x00000040; fp[65] ^= 0x00000040; fp[68] ^= 0x00000040; fp[75] ^= 0x00000040;
+					fp[76] ^= 0x00000040; fp[79] ^= 0x00000040; fp[80] ^= 0x00000040; fp[83] ^= 0x00000040;
+					fp[84] ^= 0x00000040; fp[87] ^= 0x00000040; fp[91] ^= 0x00000040; fp[93] ^= 0x00000040;
+				}
+				fp += (vfp_o - vfp_e) / 4;
+	#endif
+#endif
+#ifdef __arm__
+	#ifdef HAVE_NEON
+		if(__builtin_ctzl(N) & 1){
+			ADDI(&fp, 2, 7, 0);
+			ADDI(&fp, 7, 9, 0);
+			ADDI(&fp, 9, 2, 0);
+
+			ADDI(&fp, 2, 8, 0);
+			ADDI(&fp, 8, 10, 0);
+			ADDI(&fp, 10, 2, 0);
+		
+			if(p->i1) {
+				MOVI(&fp, 11, p->i1);
+				memcpy(fp, neon_oo, neon_eo - neon_oo);
+				if(sign < 0) {
+					fp[12] ^= 0x00200000; fp[13] ^= 0x00200000; fp[14] ^= 0x00200000; fp[15] ^= 0x00200000;
+					fp[27] ^= 0x00200000; fp[29] ^= 0x00200000; fp[30] ^= 0x00200000; fp[31] ^= 0x00200000;
+					fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
+				}
+				fp += (neon_eo - neon_oo) / 4;
+			}
+			
+			*fp = LDRI(11, 1, ((uint32_t)&p->oe_ws) - ((uint32_t)p)); fp++; 
+
+			memcpy(fp, neon_oe, neon_end - neon_oe);
+			if(sign < 0) {
+				fp[19] ^= 0x00200000; fp[20] ^= 0x00200000; fp[22] ^= 0x00200000; fp[23] ^= 0x00200000;
+				fp[37] ^= 0x00200000; fp[38] ^= 0x00200000; fp[40] ^= 0x00200000; fp[41] ^= 0x00200000;
+				fp[64] ^= 0x00200000; fp[65] ^= 0x00200000; fp[66] ^= 0x00200000; fp[67] ^= 0x00200000;
+			}
+			fp += (neon_end - neon_oe) / 4;
+
+		}else{
+			
+			*fp = LDRI(11, 1, ((uint32_t)&p->eo_ws) - ((uint32_t)p)); fp++; 
+
+			memcpy(fp, neon_eo, neon_oe - neon_eo);
+			if(sign < 0) {
+				fp[10] ^= 0x00200000; fp[11] ^= 0x00200000; fp[13] ^= 0x00200000; fp[14] ^= 0x00200000;
+				fp[31] ^= 0x00200000; fp[33] ^= 0x00200000; fp[34] ^= 0x00200000; fp[35] ^= 0x00200000;
+				fp[59] ^= 0x00200000; fp[60] ^= 0x00200000; fp[61] ^= 0x00200000; fp[62] ^= 0x00200000;
+			}
+			fp += (neon_oe - neon_eo) / 4;
+			
+			ADDI(&fp, 2, 7, 0);
+			ADDI(&fp, 7, 9, 0);
+			ADDI(&fp, 9, 2, 0);
+
+			ADDI(&fp, 2, 8, 0);
+			ADDI(&fp, 8, 10, 0);
+			ADDI(&fp, 10, 2, 0);
+		
+			if(p->i1) {
+				MOVI(&fp, 11, p->i1);
+				memcpy(fp, neon_oo, neon_eo - neon_oo);
+				if(sign < 0) {
+					fp[12] ^= 0x00200000; fp[13] ^= 0x00200000; fp[14] ^= 0x00200000; fp[15] ^= 0x00200000;
+					fp[27] ^= 0x00200000; fp[29] ^= 0x00200000; fp[30] ^= 0x00200000; fp[31] ^= 0x00200000;
+					fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
+				}
+				fp += (neon_eo - neon_oo) / 4;
+			}
+
+		}
+
+
+		if(p->i1) {
+			ADDI(&fp, 2, 3, 0);
+			ADDI(&fp, 3, 7, 0);
+			ADDI(&fp, 7, 2, 0);
+
+			ADDI(&fp, 2, 4, 0);
+			ADDI(&fp, 4, 8, 0);
+			ADDI(&fp, 8, 2, 0);
+			
+			ADDI(&fp, 2, 5, 0);
+			ADDI(&fp, 5, 9, 0);
+			ADDI(&fp, 9, 2, 0);
+
+			ADDI(&fp, 2, 6, 0);
+			ADDI(&fp, 6, 10, 0);
+			ADDI(&fp, 10, 2, 0);
+
+			ADDI(&fp, 2, 9, 0);
+			ADDI(&fp, 9, 10, 0);
+			ADDI(&fp, 10, 2, 0);
+
+			*fp = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); fp++; 
+		  MOVI(&fp, 11, p->i1);
 		memcpy(fp, neon_ee, neon_oo - neon_ee);
 		if(sign < 0) {
 			fp[33] ^= 0x00200000; fp[37] ^= 0x00200000; fp[38] ^= 0x00200000; fp[39] ^= 0x00200000;
 			fp[40] ^= 0x00200000; fp[41] ^= 0x00200000; fp[44] ^= 0x00200000; fp[45] ^= 0x00200000;
 			fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
 		}
-		fp += (neon_oo - neon_ee) / 4;
-#else
-			memcpy(fp, vfp_e, vfp_o - vfp_e);
-			if(sign > 0) {
-				fp[64] ^= 0x00000040; fp[65] ^= 0x00000040; fp[68] ^= 0x00000040; fp[75] ^= 0x00000040;
-				fp[76] ^= 0x00000040; fp[79] ^= 0x00000040; fp[80] ^= 0x00000040; fp[83] ^= 0x00000040;
-				fp[84] ^= 0x00000040; fp[87] ^= 0x00000040; fp[91] ^= 0x00000040; fp[93] ^= 0x00000040;
-			}
-			fp += (vfp_o - vfp_e) / 4;
-#endif
-#else
-/*
-//fprintf(stderr, "Body start address = %016p\n", start);
-	
-	PUSH(&fp, RBP);	
-	PUSH(&fp, RBX);
-	PUSH(&fp, R10);
-	PUSH(&fp, R11);
-	PUSH(&fp, R12);
-	PUSH(&fp, R13);
-	PUSH(&fp, R14);
-	PUSH(&fp, R15);
-	int i;
-	memcpy(fp, leaf_ee_init, leaf_ee - leaf_ee_init);
-	
-//fprintf(stderr, "Leaf ee init address = %016p\n", leaf_ee_init);
-//fprintf(stderr, "Constants address = %016p\n", sse_constants);
-//fprintf(stderr, "Constants address = %016p\n", p->constants);
-	
-//int32_t val = READ_IMM32(fp + 3);
-//fprintf(stderr, "diff = 0x%x\n", ((uint32_t)&p->constants) - ((uint32_t)p));
+			fp += (neon_oo - neon_ee) / 4;
 
-//int64_t v2 = val + (int64_t)((void *)leaf_ee_init - (void *)fp );
-//fprintf(stderr, "IMM = 0x%llx\n", v2);
-
-//IMM32_NI(fp + 3, ((int64_t) READ_IMM32(fp + 3)) + ((void *)leaf_ee_init - (void *)fp )); 
-	fp += (leaf_ee - leaf_ee_init);
-
-//fprintf(stderr, "Leaf start address = %016p\n", fp);
-	align_mem16(&fp, 9);
-	memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
-
-
-	uint32_t offsets[8] = {0, N, N/2, 3*N/2, N/4, 5*N/4, 7*N/4, 3*N/4};
-	uint32_t offsets_o[8] = {0, N, N/2, 3*N/2, 7*N/4, 3*N/4, N/4, 5*N/4};
-	uint32_t offsets_oe[8] = {7*N/4, 3*N/4, N/4, 5*N/4, 0, N, 3*N/2, N/2};
-	
-	for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_ee_offsets[i], offsets[i]*4); 
-	
-	fp += (leaf_oo - leaf_ee);
-	
-	if(__builtin_ctzl(N) & 1){
-
-		if(p->i1) {
-			lp_cnt += p->i1 * 4;
-			MOVI(&fp, RCX, lp_cnt);
-			align_mem16(&fp, 4);
-			memcpy(fp, leaf_oo, leaf_eo - leaf_oo);
-			for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_oo_offsets[i], offsets_o[i]*4); 
-			fp += (leaf_eo - leaf_oo);
 		}
-		
-
-		memcpy(fp, leaf_oe, leaf_end - leaf_oe);
-		lp_cnt += 4;
-		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_oe_offsets[i], offsets_o[i]*4); 
-		fp += (leaf_end - leaf_oe);
-
-	}else{
-
-
-		memcpy(fp, leaf_eo, leaf_oe - leaf_eo);
-		lp_cnt += 4;
-		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_eo_offsets[i], offsets[i]*4); 
-		fp += (leaf_oe - leaf_eo);
-
-		if(p->i1) {
-			lp_cnt += p->i1 * 4;
-			MOVI(&fp, RCX, lp_cnt);
-			align_mem16(&fp, 4);
-			memcpy(fp, leaf_oo, leaf_eo - leaf_oo);
-			for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_oo_offsets[i], offsets_o[i]*4); 
-			fp += (leaf_eo - leaf_oo);
-		}
-
-	}
-	if(p->i1) {
-		lp_cnt += p->i1 * 4;
-		MOVI(&fp, RCX, lp_cnt);
-		align_mem16(&fp, 9);
-		memcpy(fp, leaf_ee, leaf_oo - leaf_ee);
-		for(i=0;i<8;i++) IMM32_NI(fp + sse_leaf_ee_offsets[i], offsets_oe[i]*4); 
-		fp += (leaf_oo - leaf_ee);
-
-	}
-	
-//fprintf(stderr, "Body start address = %016p\n", fp);
-  //LEA(&fp, R8, RDI, ((uint32_t)&p->ws) - ((uint32_t)p)); 
-	memcpy(fp, x_init, x4 - x_init);
-//IMM32_NI(fp + 3, ((int64_t)READ_IMM32(fp + 3)) + ((void *)x_init - (void *)fp )); 
-	fp += (x4 - x_init);
-
-	int32_t pAddr = 0;
-	int32_t pN = 0;
-	int32_t pLUT = 0;
-	count = 2;
-	while(pps[0]) {
-	
-		if(!pN) {
-			MOVI(&fp, RCX, pps[0] / 4);
-		}else{
-  		if((pps[1]*4)-pAddr) ADDI(&fp, RDX, (pps[1] * 4)- pAddr);
-			if(pps[0] > leafN && pps[0] - pN) {
-				
-				int diff = __builtin_ctzl(pps[0]) - __builtin_ctzl(pN);
-				*fp++ = 0xc1; 
-				
-				if(diff > 0) {
-					*fp++ = 0xe1;
-					*fp++ = (diff & 0xff);
-				}else{
-					*fp++ = 0xe9;
-					*fp++ = ((-diff) & 0xff);
-				}
-			}
-		}
-		
-  		if(p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8 - pLUT)
-  			ADDI(&fp, R8, p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8 - pLUT); 
-
-
-		if(pps[0] == 2*leafN) {
-			CALL(&fp, x_4_addr);
-	//  	}else if(!pps[2]){
-	//	  //uint32_t *x_8_t_addr = fp;
-	//		memcpy(fp, neon_x8_t, neon_ee - neon_x8_t);
-	//		fp += (neon_ee - neon_x8_t) / 4;
-	//		//*fp++ = BL(fp+2, x_8_t_addr);
-		}else{
-			CALL(&fp, x_8_addr);
-		}
-
-		pAddr = pps[1] * 4;
-		if(pps[0] > leafN) 
-			pN = pps[0];
-		pLUT = p->ws_is[__builtin_ctzl(pps[0]/leafN)-1]*8;//LUT_offset(pps[0], leafN);
-//	fprintf(stderr, "LUT offset for %d is %d\n", pN, pLUT); 
-		count += 4;
-		pps += 2;
-	}
-	*/
-#endif
-#ifdef __arm__
-#ifdef HAVE_NEON
-	if(__builtin_ctzl(N) & 1){
-		ADDI(&fp, 2, 7, 0);
-		ADDI(&fp, 7, 9, 0);
-		ADDI(&fp, 9, 2, 0);
-
-		ADDI(&fp, 2, 8, 0);
-		ADDI(&fp, 8, 10, 0);
-		ADDI(&fp, 10, 2, 0);
-	
-		if(p->i1) {
-			MOVI(&fp, 11, p->i1);
-			memcpy(fp, neon_oo, neon_eo - neon_oo);
-			if(sign < 0) {
-				fp[12] ^= 0x00200000; fp[13] ^= 0x00200000; fp[14] ^= 0x00200000; fp[15] ^= 0x00200000;
-				fp[27] ^= 0x00200000; fp[29] ^= 0x00200000; fp[30] ^= 0x00200000; fp[31] ^= 0x00200000;
-				fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
-			}
-			fp += (neon_eo - neon_oo) / 4;
-		}
-		
-		*fp = LDRI(11, 1, ((uint32_t)&p->oe_ws) - ((uint32_t)p)); fp++; 
-
-		memcpy(fp, neon_oe, neon_end - neon_oe);
-		if(sign < 0) {
-			fp[19] ^= 0x00200000; fp[20] ^= 0x00200000; fp[22] ^= 0x00200000; fp[23] ^= 0x00200000;
-			fp[37] ^= 0x00200000; fp[38] ^= 0x00200000; fp[40] ^= 0x00200000; fp[41] ^= 0x00200000;
-			fp[64] ^= 0x00200000; fp[65] ^= 0x00200000; fp[66] ^= 0x00200000; fp[67] ^= 0x00200000;
-		}
-		fp += (neon_end - neon_oe) / 4;
-
-	}else{
-		
-		*fp = LDRI(11, 1, ((uint32_t)&p->eo_ws) - ((uint32_t)p)); fp++; 
-
-		memcpy(fp, neon_eo, neon_oe - neon_eo);
-		if(sign < 0) {
-			fp[10] ^= 0x00200000; fp[11] ^= 0x00200000; fp[13] ^= 0x00200000; fp[14] ^= 0x00200000;
-			fp[31] ^= 0x00200000; fp[33] ^= 0x00200000; fp[34] ^= 0x00200000; fp[35] ^= 0x00200000;
-			fp[59] ^= 0x00200000; fp[60] ^= 0x00200000; fp[61] ^= 0x00200000; fp[62] ^= 0x00200000;
-		}
-		fp += (neon_oe - neon_eo) / 4;
-		
-		ADDI(&fp, 2, 7, 0);
-		ADDI(&fp, 7, 9, 0);
-		ADDI(&fp, 9, 2, 0);
-
-		ADDI(&fp, 2, 8, 0);
-		ADDI(&fp, 8, 10, 0);
-		ADDI(&fp, 10, 2, 0);
-	
-		if(p->i1) {
-			MOVI(&fp, 11, p->i1);
-			memcpy(fp, neon_oo, neon_eo - neon_oo);
-			if(sign < 0) {
-				fp[12] ^= 0x00200000; fp[13] ^= 0x00200000; fp[14] ^= 0x00200000; fp[15] ^= 0x00200000;
-				fp[27] ^= 0x00200000; fp[29] ^= 0x00200000; fp[30] ^= 0x00200000; fp[31] ^= 0x00200000;
-				fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
-			}
-			fp += (neon_eo - neon_oo) / 4;
-		}
-
-	}
-
-
-	if(p->i1) {
-		ADDI(&fp, 2, 3, 0);
-		ADDI(&fp, 3, 7, 0);
-		ADDI(&fp, 7, 2, 0);
-
-		ADDI(&fp, 2, 4, 0);
-		ADDI(&fp, 4, 8, 0);
-		ADDI(&fp, 8, 2, 0);
-		
-		ADDI(&fp, 2, 5, 0);
-		ADDI(&fp, 5, 9, 0);
-		ADDI(&fp, 9, 2, 0);
-
-		ADDI(&fp, 2, 6, 0);
-		ADDI(&fp, 6, 10, 0);
-		ADDI(&fp, 10, 2, 0);
-
-		ADDI(&fp, 2, 9, 0);
-		ADDI(&fp, 9, 10, 0);
-		ADDI(&fp, 10, 2, 0);
-
-		*fp = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p)); fp++; 
-	  MOVI(&fp, 11, p->i1);
-  	memcpy(fp, neon_ee, neon_oo - neon_ee);
-  	if(sign < 0) {
-  		fp[33] ^= 0x00200000; fp[37] ^= 0x00200000; fp[38] ^= 0x00200000; fp[39] ^= 0x00200000;
-  		fp[40] ^= 0x00200000; fp[41] ^= 0x00200000; fp[44] ^= 0x00200000; fp[45] ^= 0x00200000;
-  		fp[46] ^= 0x00200000; fp[47] ^= 0x00200000; fp[48] ^= 0x00200000; fp[57] ^= 0x00200000;
-  	}
-		fp += (neon_oo - neon_ee) / 4;
-
-	}
-#else
+	#else
 		ADDI(&fp, 2, 7, 0);
 		ADDI(&fp, 7, 9, 0);
 		ADDI(&fp, 9, 2, 0);
@@ -577,7 +417,7 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 		}
   	fp += (vfp_o - vfp_e) / 4;
 
-#endif
+	#endif
   *fp = LDRI(2, 1, ((uint32_t)&p->ws) - ((uint32_t)p)); fp++; // load offsets into r12
 	//ADDI(&fp, 2, 1, 0);
 	MOVI(&fp, 1, 0);
@@ -636,29 +476,6 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 	
 	*fp++ = 0xecbd8b10;
 	*fp++ = POP_LR(); count++;
-#else
-/*
-	POP(&fp, R15);
-	POP(&fp, R14);
-	POP(&fp, R13);
-	POP(&fp, R12);
-	POP(&fp, R11);
-	POP(&fp, R10);
-	POP(&fp, RBX);
-	POP(&fp, RBP);
-	RET(&fp);	
-*/
-
-
-//uint8_t *pp = func;
-//int counter = 0;
-//do{ 
-//	printf("%02x ", *pp);
-//	if(counter++ % 16 == 15) printf("\n");
-//} while(++pp < fp);
-
-//printf("\n");
-
 
 #endif
 
