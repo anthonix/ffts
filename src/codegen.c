@@ -637,6 +637,7 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 	*fp++ = 0xecbd8b10;
 	*fp++ = POP_LR(); count++;
 #else
+/*
 	POP(&fp, R15);
 	POP(&fp, R14);
 	POP(&fp, R13);
@@ -646,6 +647,7 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 	POP(&fp, RBX);
 	POP(&fp, RBP);
 	RET(&fp);	
+*/
 
 
 //uint8_t *pp = func;

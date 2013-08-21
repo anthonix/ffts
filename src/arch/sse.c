@@ -188,7 +188,6 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 	PUSH(fp, R14);
 	PUSH(fp, R15);
 	int i;
-	fprintf(stderr, "first mem access");
 	memcpy(*fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	
 //fprintf(stderr, "Leaf ee init address = %016p\n", leaf_ee_init);
@@ -316,5 +315,14 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 		count += 4;
 		pps += 2;
 	}
-	fprintf(stderr, "We made it to the end");
+	POP(fp, R15);
+	POP(fp, R14);
+	POP(fp, R13);
+	POP(fp, R12);
+	POP(fp, R11);
+	POP(fp, R10);
+	POP(fp, RBX);
+	POP(fp, RBP);
+	RET(fp);	
+
 }
