@@ -34,4 +34,6 @@
 	 * Returns a pointer to start
 	 */
 	insns_t* generate_start_init(insns_t **fp, ffts_plan_t * p );
+
+	insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insns_t* x_8_addr, size_t leafN, size_t N, size_t *pps);
 #endif

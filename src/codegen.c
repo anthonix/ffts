@@ -270,6 +270,8 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 	uint32_t lp_cnt = p->i0 * 4;
 #endif
 	//fp++;
+	generate_start(&fp, p , x_4_addr, x_8_addr, leafN, N , pps);	
+	
 #ifdef __arm__
 #ifdef HAVE_NEON
 		memcpy(fp, neon_ee, neon_oo - neon_ee);
@@ -289,6 +291,7 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 			fp += (vfp_o - vfp_e) / 4;
 #endif
 #else
+/*
 //fprintf(stderr, "Body start address = %016p\n", start);
 	
 	PUSH(&fp, RBP);	
@@ -427,6 +430,7 @@ insns_t *x_8_addr = generate_size8_base_case(&fp, sign);
 		count += 4;
 		pps += 2;
 	}
+	*/
 #endif
 #ifdef __arm__
 #ifdef HAVE_NEON
