@@ -130,9 +130,6 @@ void ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leafN, int sign) {
 #ifdef __arm__ 
 	if(N < 8192) p->transform_size = 8192;
 	else p->transform_size = N;
-#else
-	if(N < 2048) p->transform_size = 16384;
-	else p->transform_size = 16384 + 2*N/8 * __builtin_ctzl(N);
 #endif
 
 #ifdef __APPLE__
