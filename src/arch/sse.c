@@ -178,7 +178,12 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 
 	uint32_t lp_cnt = p->i0 * 4;
 //fprintf(stderr, "Body start address = %016p\n", start);
-	
+	/*	
+	 *	Function Preamble
+	 *	Start has its own calling convention.
+	 *	It just saves all the registers its going to use 
+	 *	on to the stack and pops them off at the end
+	 */
 	PUSH(fp, RBP);	
 	PUSH(fp, RBX);
 	PUSH(fp, R10);
@@ -188,19 +193,10 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 	PUSH(fp, R14);
 	PUSH(fp, R15);
 	int i;
+
+
 	memcpy(*fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	
-//fprintf(stderr, "Leaf ee init address = %016p\n", leaf_ee_init);
-//fprintf(stderr, "Constants address = %016p\n", sse_constants);
-//fprintf(stderr, "Constants address = %016p\n", p->constants);
-	
-//int32_t val = READ_IMM32(fp + 3);
-//fprintf(stderr, "diff = 0x%x\n", ((uint32_t)&p->constants) - ((uint32_t)p));
-
-//int64_t v2 = val + (int64_t)((void *)leaf_ee_init - (void *)fp );
-//fprintf(stderr, "IMM = 0x%llx\n", v2);
-
-//IMM32_NI(fp + 3, ((int64_t) READ_IMM32(fp + 3)) + ((void *)leaf_ee_init - (void *)fp )); 
 	*fp += (leaf_ee - leaf_ee_init);
 
 //fprintf(stderr, "Leaf start address = %016p\n", fp);

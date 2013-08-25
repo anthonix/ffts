@@ -53,6 +53,7 @@ _leaf_ee_init:
 leaf_ee_init:
 #endif
  		#lea L_sse_constants(%rip), %r9 
+#rdi is a pointer to the ffts_plan
 		movq 0xe0(%rdi), %r9
 		xorl	%eax, %eax
 # eax is loop counter (init to 0)
@@ -76,7 +77,7 @@ leaf_ee:
  		movaps    (%r9), %xmm8            #83.5
 LEAF_EE_1:
 LEAF_EE_const_0:
-				movaps    0xFECA(%rsi,%rax,4), %xmm7                           #83.5
+		movaps    0xFECA(%rsi,%rax,4), %xmm7                           #83.5
 LEAF_EE_const_2:
         movaps    0xFECA(%rsi,%rax,4), %xmm12                         #83.5
         movaps    %xmm7, %xmm6                                  #83.5
