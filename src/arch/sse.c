@@ -139,12 +139,33 @@ void define_transform_size(ffts_plan_t *p, size_t N) {
 	if(N < 2048) p->transform_size = 16384;
 	else p->transform_size = 16384 + 2*N/8 * __builtin_ctzl(N);
 }
+
+void use_non_temperal_store(uint8_t ** fp, uint8_t offset , int instructions)  {
+	uint8_t *p = *fp-offset;
+	for(int i = 0 ; i < instructions; i ++){
+		if((*p & 0xf0 )== 0x40){
+			(p)++;
+		}
+		p ++;
+		*(p)++ = 0x2b;
+		/* Does this value have a displacement byte */
+		if( *p & 0xC0) { 
+			(p)++ ;
+		}
+		(p)++;
+		(p)++;
+	}
+
+}
 insns_t* generate_size8_base_case(insns_t **fp, int sign ) { 
 	align_mem16(fp, 0);
 	insns_t * x_8_addr = *fp;
 	align_mem16(fp, 5);
 	memcpy(*fp, x8_soft, x8_hard - x8_soft);
 	*fp += (x8_hard - x8_soft);
+	use_non_temperal_store(fp, 0x3e, 3);
+	use_non_temperal_store(fp, 0x27, 5);
+
 	return x_8_addr;
 }
 
@@ -174,10 +195,11 @@ insns_t* generate_start_init(insns_t **fp, ffts_plan_t *p  ) {
 
 
 
+
 insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insns_t* x_8_addr, size_t leafN ,size_t N, size_t *pps) {
 
 	uint32_t lp_cnt = p->i0 * 4;
-//fprintf(stderr, "Body start address = %016p\n", start);
+	//fprintf(stderr, "Body start address = %016p\n", start);
 	/*	
 	 *	Function Preamble
 	 *	Start has its own calling convention.
@@ -193,7 +215,6 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 	PUSH(fp, R14);
 	PUSH(fp, R15);
 	int i;
-
 
 	memcpy(*fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	
@@ -213,7 +234,6 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 	*fp += (leaf_oo - leaf_ee);
 	
 	if(__builtin_ctzl(N) & 1){
-
 		if(p->i1) {
 			lp_cnt += p->i1 * 4;
 			MOVI(fp, RCX, lp_cnt);
@@ -230,7 +250,6 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 		*fp += (leaf_end - leaf_oe);
 
 	}else{
-
 
 		memcpy(*fp, leaf_eo, leaf_oe - leaf_eo);
 		lp_cnt += 4;
@@ -322,3 +341,6 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 	RET(fp);	
 
 }
+
+
+
