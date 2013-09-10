@@ -168,8 +168,6 @@ insns_t* generate_size8_base_case(insns_t **fp, int sign ) {
 	align_mem16(fp, 5);
 	memcpy(*fp, x8_soft, x8_hard - x8_soft);
 	*fp += (x8_hard - x8_soft);
-	use_non_temperal_store(fp, 0x3e, 3);
-	use_non_temperal_store(fp, 0x27, 5);
 
 	return x_8_addr;
 }
@@ -241,44 +239,54 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 	
 	if(__builtin_ctzl(N) & 1){
 		if(p->i1) {
+		/* Output Leaf OO */
 			lp_cnt += p->i1 * 4;
 			MOVI(fp, RCX, lp_cnt);
 			align_mem16(fp, 4);
 			memcpy(*fp, leaf_oo, leaf_eo - leaf_oo);
 			for(i=0;i<8;i++) IMM32_NI(*fp + sse_leaf_oo_offsets[i], offsets_o[i]*4); 
 			*fp += (leaf_eo - leaf_oo);
+			use_non_temperal_store(fp, 0x37, 8);
 		}
 		
 
+		/* Output Leaf OE */
 		memcpy(*fp, leaf_oe, leaf_end - leaf_oe);
 		lp_cnt += 4;
 		for(i=0;i<8;i++) IMM32_NI(*fp + sse_leaf_oe_offsets[i], offsets_o[i]*4); 
 		*fp += (leaf_end - leaf_oe);
-
+		use_non_temperal_store(fp, 0x23, 6) ; 
 	}else{
 
+		/* Output Leaf EO */
 		memcpy(*fp, leaf_eo, leaf_oe - leaf_eo);
 		lp_cnt += 4;
 		for(i=0;i<8;i++) IMM32_NI(*fp + sse_leaf_eo_offsets[i], offsets[i]*4); 
 		*fp += (leaf_oe - leaf_eo);
+		use_non_temperal_store(fp, 0x23, 6) ; 
 
 		if(p->i1) {
+			/* Output Leaf OO */
 			lp_cnt += p->i1 * 4;
 			MOVI(fp, RCX, lp_cnt);
 			align_mem16(fp, 4);
 			memcpy(*fp, leaf_oo, leaf_eo - leaf_oo);
 			for(i=0;i<8;i++) IMM32_NI(*fp + sse_leaf_oo_offsets[i], offsets_o[i]*4); 
 			*fp += (leaf_eo - leaf_oo);
+			use_non_temperal_store(fp, 0x37, 8);
 		}
 
 	}
 	if(p->i1) {
+
+		/* Output Leaf EE */
 		lp_cnt += p->i1 * 4;
 		MOVI(fp, RCX, lp_cnt);
 		align_mem16(fp, 9);
 		memcpy(*fp, leaf_ee, leaf_oo - leaf_ee);
 		for(i=0;i<8;i++) IMM32_NI(*fp + sse_leaf_ee_offsets[i], offsets_oe[i]*4); 
 		*fp += (leaf_oo - leaf_ee);
+		use_non_temperal_store(fp, 0x37, 8);
 
 	}
 	
