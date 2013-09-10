@@ -143,13 +143,18 @@ void define_transform_size(ffts_plan_t *p, size_t N) {
 void use_non_temperal_store(uint8_t ** fp, uint8_t offset , int instructions)  {
 	uint8_t *p = *fp-offset;
 	for(int i = 0 ; i < instructions; i ++){
+		/* Are we dealing with the REX Prefix */
 		if((*p & 0xf0 )== 0x40){
 			(p)++;
 		}
 		p ++;
 		*(p)++ = 0x2b;
+		/* Does this instruction have a sib byte */
+		if( (*p & 0x38) == 0x20 ) { 
+			(p)++ ;
+		}
 		/* Does this value have a displacement byte */
-		if( *p & 0xC0) { 
+		if( (*p & 0xC0)  ) { 
 			(p)++ ;
 		}
 		(p)++;
@@ -174,6 +179,7 @@ insns_t* generate_size4_base_case(insns_t **fp, int sign) {
 	insns_t * x_4_addr = *fp;
 	memcpy(*fp, x4, x8_soft - x4);
 	*fp += (x8_soft - x4);
+	//use_non_temperal_store(fp, 0x11, 4);
 	return x_4_addr;
 
 }
