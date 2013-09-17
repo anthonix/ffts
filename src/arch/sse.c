@@ -109,7 +109,29 @@ void POP(uint8_t **p, uint8_t reg) {
 	*(*p)++ = 0x58 | (reg & 7);
 }
 
+/**
+ * Returns the cache size in bytes
+ */
+int get_cache_size()
+{
+	unsigned int eax, ebx, ecx, edx;
+	int ways, partitions, line_size, cache_size;
+	int info = 0x04;
+    __asm__(
+        "xchg %%ebx, %%edi;" /* 32bit PIC: don't clobber ebx */
+		"movl $03, %%ecx; "	
+        "cpuid;"
+        "xchg %%ebx, %%edi;"
+        :"=a" (eax), "=D" (ebx), "=c" (ecx), "=d" (edx)
+        :"a" (info) , "c" (0x04)
+    );
 
+	ways =(ebx >> 22) + 1;
+	partitions =(ebx  << 12 >> 21 ) + 1 ;
+	line_size = (ebx & 0x000fff) + 1;
+	cache_size = (ecx+ 1) * line_size * partitions * ways;
+	return  cache_size;
+}
 #define P(x) (*(*p)++ = x)
 void insert_nops(uint8_t **p, uint32_t count) {
 	switch(count) {
@@ -220,6 +242,8 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 	PUSH(fp, R15);
 	int i;
 
+
+	int use_non_temperal_store = get_cache_size();
 	memcpy(*fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	
 	*fp += (leaf_ee - leaf_ee_init);
