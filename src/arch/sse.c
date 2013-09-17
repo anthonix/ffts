@@ -243,7 +243,7 @@ insns_t * generate_start(insns_t **fp, ffts_plan_t * p, insns_t * x_4_addr, insn
 	int i;
 
 
-	int use_non_temperal_store = get_cache_size();
+	int non_temperal_store= get_cache_size();
 	memcpy(*fp, leaf_ee_init, leaf_ee - leaf_ee_init);
 	
 	*fp += (leaf_ee - leaf_ee_init);
