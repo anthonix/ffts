@@ -107,8 +107,12 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libffts_la_LIBADD =
 am__libffts_la_SOURCES_DIST = ffts.c ffts_small.c ffts_nd.c \
-	ffts_real.c ffts_real_nd.c patterns.c ffts_static.c codegen.c \
-	vfp.s neon_static_f.s neon_static_i.s neon.s sse.s
+	ffts_real.c ffts_real_nd.c patterns.c codegen.h codegen_arm.h \
+	codegen_sse.h ffts.h ffts_nd.h ffts_real.h ffts_real_nd.h \
+	ffts_small.h ffts_static.h macros-alpha.h macros-altivec.h \
+	macros-neon.h macros-sse.h macros.h neon.h neon_float.h \
+	patterns.h types.h vfp.h ffts_static.c codegen.c vfp.s \
+	neon_static_f.s neon_static_i.s neon.s sse.s
 @DYNAMIC_DISABLED_TRUE@am__objects_1 = ffts_static.lo
 @DYNAMIC_DISABLED_FALSE@am__objects_2 = codegen.lo
 @HAVE_VFP_TRUE@am__objects_3 = vfp.lo
@@ -281,7 +285,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libffts.la
 libffts_la_SOURCES = ffts.c ffts_small.c ffts_nd.c ffts_real.c \
-	ffts_real_nd.c patterns.c $(am__append_1) $(am__append_2) \
+	ffts_real_nd.c patterns.c codegen.h codegen_arm.h \
+	codegen_sse.h ffts.h ffts_nd.h ffts_real.h ffts_real_nd.h \
+	ffts_small.h ffts_static.h macros-alpha.h macros-altivec.h \
+	macros-neon.h macros-sse.h macros.h neon.h neon_float.h \
+	patterns.h types.h vfp.h $(am__append_1) $(am__append_2) \
 	$(am__append_3) $(am__append_4) $(am__append_5) \
 	$(am__append_6)
 libffts_includedir = $(includedir)/ffts
