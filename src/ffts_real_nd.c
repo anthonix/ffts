@@ -124,6 +124,7 @@ void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *  in, void *  out) {
 
 ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 	size_t vol = 1;
+	size_t bufsize;
 
 	ffts_plan_t *p = malloc(sizeof(ffts_plan_t));
 
@@ -141,7 +142,16 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 		p->Ns[i] = Ns[i];
 		vol *= Ns[i];	
 	}
-	p->buf = valloc(sizeof(float) * (sign < 0 ? 2 : 4) * vol);
+	
+	//There is probably a prettier way of doing this, but it works..
+	if(sign < 0) {
+		bufsize = 2 * vol;
+	}
+	else {
+		bufsize = 2 * (Ns[0] * ((vol / Ns[0]) / 2 + 1) + vol);
+	}
+
+	p->buf = valloc(sizeof(float) * bufsize);
 
 	for(i=0;i<rank;i++) {
 		p->Ms[i] = vol / p->Ns[i];
