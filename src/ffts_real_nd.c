@@ -95,19 +95,28 @@ void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *  in, void *  out) {
 
 	uint64_t *din = (uint64_t *)in;
 	uint64_t *buf = p->buf;
+	uint64_t *buf2;
 	uint64_t *dout = (uint64_t *)out;
+	size_t vol = 1;
 	
 	float *bufr = (float *)(p->buf);
 	float *doutr = (float *)out;
 
 	size_t i,j;
+
+	for(i=0;i<p->rank;i++) {
+		vol *= p->Ns[i];
+	}
+
+	buf2 = buf + vol;
+
 	ffts_scalar_transpose(din, buf, p->Ms[0], p->Ns[0], p->transpose_buf);	
 
 	for(i=0;i<p->Ms[0];i++) {
-		p->plans[0]->transform(p->plans[0], buf + (i * p->Ns[0]), dout + (i * p->Ns[0]));	
+		p->plans[0]->transform(p->plans[0], buf + (i * p->Ns[0]), buf2 + (i * p->Ns[0]));	
 	}
 	
-	ffts_scalar_transpose(dout, buf, p->Ns[0], p->Ms[0], p->transpose_buf);	
+	ffts_scalar_transpose(buf2, buf, p->Ns[0], p->Ms[0], p->transpose_buf);	
 	for(j=0;j<p->Ms[1];j++) { 
   	p->plans[1]->transform(p->plans[1], buf + (j * (p->Ms[0])), &doutr[j * p->Ns[1]]);	
   }
@@ -115,6 +124,7 @@ void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *  in, void *  out) {
 
 ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 	size_t vol = 1;
+	size_t bufsize;
 
 	ffts_plan_t *p = malloc(sizeof(ffts_plan_t));
 
@@ -132,7 +142,16 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 		p->Ns[i] = Ns[i];
 		vol *= Ns[i];	
 	}
-	p->buf = valloc(sizeof(float) * 2 * vol);
+	
+	//There is probably a prettier way of doing this, but it works..
+	if(sign < 0) {
+		bufsize = 2 * vol;
+	}
+	else {
+		bufsize = 2 * (Ns[0] * ((vol / Ns[0]) / 2 + 1) + vol);
+	}
+
+	p->buf = valloc(sizeof(float) * bufsize);
 
 	for(i=0;i<rank;i++) {
 		p->Ms[i] = vol / p->Ns[i];
