@@ -43,6 +43,9 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+#define POSITIVE_SIGN 1
+#define NEGATIVE_SIGN -1
+
 struct _ffts_plan_t;
 typedef struct _ffts_plan_t ffts_plan_t;
 
