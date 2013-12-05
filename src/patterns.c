@@ -206,3 +206,4 @@ void ffts_init_tree(ffts_plan_t *p, int N, int leafN) {
 
 }
 */
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

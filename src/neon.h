@@ -63,3 +63,4 @@ void neon_static_x8_i(float *, size_t, float *);
 void neon_static_x8_t_i(float *, size_t, float *);
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

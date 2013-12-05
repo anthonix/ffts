@@ -42,3 +42,4 @@ void ffts_init_offsets(ffts_plan_t *p, int N, int leafN);
 //void ffts_init_tree(ffts_plan_t *p, int N, int leafN); 
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

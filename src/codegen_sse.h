@@ -193,3 +193,4 @@ void POP(uint8_t **p, uint8_t reg) {
 }
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

@@ -1124,3 +1124,4 @@ __INLINE void neon_shl8_oe(data_t *restrict out0, data_t *restrict out1,const da
  
 }
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

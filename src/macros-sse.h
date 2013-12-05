@@ -82,3 +82,4 @@ __INLINE V IMULJ(V d, V re, V im) {
 }
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
