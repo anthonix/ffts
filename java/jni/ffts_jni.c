@@ -38,6 +38,8 @@
 // the classes ... but we can't build the project without the jni.
 #ifdef ANDROID
 #include <jni.h>
+#define NEEDS_ALIGNED
+#undef HAVE_DECL_POSIX_MEMALIGN
 #else
 #include "nz_ac_waikato_ffts_FFTS.h"
 #endif
