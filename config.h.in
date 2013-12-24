@@ -9,9 +9,6 @@
 /* Define to FFT in single precision. */
 #undef FFTS_PREC_SINGLE
 
-/* Set ARM float abi. */
-#undef FLOAT_ABI
-
 /* Define to 1 if you have the declaration of `memalign', and to 0 if you
    don't. */
 #undef HAVE_DECL_MEMALIGN
