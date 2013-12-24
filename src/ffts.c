@@ -85,6 +85,11 @@ void ffts_free_1d(ffts_plan_t *p) {
 }
 
 ffts_plan_t *ffts_init_1d(size_t N, int sign) {
+	if(N == 0 || (N & (N - 1)) != 0){
+		LOG("FFT size must be a power of two\n");
+		return NULL;
+	}
+
 	ffts_plan_t *p = malloc(sizeof(ffts_plan_t));
 	size_t leafN = 8;	
 	size_t i;	
