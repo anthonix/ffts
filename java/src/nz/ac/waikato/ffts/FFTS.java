@@ -66,11 +66,11 @@ public class FFTS {
 	/**
 	 * The sign to use for a forward transform.
 	 */
-	public static final int FORWARD = 1;
+	public static final int FORWARD = -1;
 	/**
 	 * The sign to use for a backward transform.
 	 */
-	public static final int BACKWARD = -1;
+	public static final int BACKWARD = 1;
 
 	/**
 	 * Create a FFT plan for a 1-dimensional complex transform.
