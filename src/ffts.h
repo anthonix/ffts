@@ -45,6 +45,14 @@
 //#include "codegen.h"
 #include "types.h"
 
+
+#ifdef __ANDROID__
+#include <android/log.h>
+#define LOG(s) __android_log_print(ANDROID_LOG_ERROR, "FFTS", s)
+#else
+#define LOG(s) fprintf(stderr, s)
+#endif
+
 #define PI 3.1415926535897932384626433832795028841971693993751058209
 
 static const __attribute__ ((aligned(64))) float w_data[16] = {
