@@ -56,3 +56,4 @@ ffts_plan_t *ffts_init_2d(size_t N1, size_t N2, int sign);
 
 #endif
 
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

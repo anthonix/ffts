@@ -175,3 +175,4 @@ void ffts_free(ffts_plan_t *);
 ffts_plan_t *ffts_init_1d(size_t N, int sign); 
 void ffts_execute(ffts_plan_t *, const void *, void *);
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

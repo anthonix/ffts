@@ -43,3 +43,4 @@ void vfp_x8();
 void vfp_end();
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

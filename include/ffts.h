@@ -69,3 +69,4 @@ void ffts_free(ffts_plan_t *);
 #endif /* __cplusplus */
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

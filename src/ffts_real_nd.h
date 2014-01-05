@@ -51,3 +51,4 @@
 
 #endif
 
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

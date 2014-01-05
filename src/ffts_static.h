@@ -44,3 +44,4 @@ void ffts_static_rec_i(ffts_plan_t *p, float *data, size_t N) ;
 void ffts_static_transform_i(ffts_plan_t *p, const void *in, void *out);
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

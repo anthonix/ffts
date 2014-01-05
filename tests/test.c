@@ -174,3 +174,4 @@ main(int argc, char *argv[]) {
 	}
   return 0;
 }
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

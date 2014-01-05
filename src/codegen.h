@@ -47,3 +47,4 @@
 void ffts_generate_func_code(ffts_plan_t *, size_t N, size_t leafN, int sign); 
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

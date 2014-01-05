@@ -231,3 +231,5 @@ JNIEXPORT void JNICALL Java_nz_ac_waikato_ffts_FFTS_free
 
 	ffts_free(plan);
 }
+
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

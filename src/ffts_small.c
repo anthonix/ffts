@@ -154,3 +154,4 @@
     dout[0] = r0[0]; dout[1] = r0[1];
     dout[2] = r1[0]; dout[3] = r1[1];
 }
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

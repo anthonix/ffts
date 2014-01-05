@@ -159,3 +159,4 @@ static inline void L_4_2(int inv,
     *r1 = VUNPACKLO(t2, t3);
 }
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:

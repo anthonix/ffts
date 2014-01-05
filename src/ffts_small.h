@@ -11,3 +11,4 @@ void firstpass_4_b(ffts_plan_t *  p, const void *  in, void *  out);
 void firstpass_2(ffts_plan_t *  p, const void *  in, void *  out);
 
 #endif
+// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
