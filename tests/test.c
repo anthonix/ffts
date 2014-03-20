@@ -34,7 +34,7 @@
 
 #ifdef __ARM_NEON__
 #endif
-#ifdef HAVE_SSE
+#ifdef __SSE__
 	#include <xmmintrin.h>
 #endif 
 
@@ -91,7 +91,7 @@ float impulse_error(int N, int sign, float *data) {
 int 
 test_transform(int n, int sign) {
 
-#ifdef HAVE_SSE 
+#ifdef __SSE__
 	float __attribute__ ((aligned(32))) *input = _mm_malloc(2 * n * sizeof(float), 32);
   float __attribute__ ((aligned(32))) *output = _mm_malloc(2 * n * sizeof(float), 32);
 #else
@@ -127,7 +127,7 @@ main(int argc, char *argv[]) {
 		int n = atoi(argv[1]);
 		int sign = atoi(argv[2]);
 
-#ifdef HAVE_SSE
+#ifdef __SSE__
 		float __attribute__ ((aligned(32))) *input = _mm_malloc(2 * n * sizeof(float), 32);
 		float __attribute__ ((aligned(32))) *output = _mm_malloc(2 * n * sizeof(float), 32);
 #else
