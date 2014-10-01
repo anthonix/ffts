@@ -1,10 +1,10 @@
 /*
- 
+
  This file is part of FFTS -- The Fastest Fourier Transform in the South
-  
+
  Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato 
- 
+ Copyright (c) 2012, The University of Waikato
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -41,14 +41,14 @@ void ffts_free_nd_real(ffts_plan_t *p) {
 
 	int i;
 	for(i=0;i<p->rank;i++) {
-		
+
 		ffts_plan_t *x = p->plans[i];
 
 		int k;
 		for(k=i+1;k<p->rank;k++) {
 			if(x == p->plans[k]) p->plans[k] = NULL;
 		}
-		
+
 		if(x)	ffts_free(x);
 	}
 
@@ -112,15 +112,15 @@ void ffts_execute_nd_real(ffts_plan_t *p, const void *  in, void *  out) {
 
 	size_t i,j;
 	for(i=0;i<p->Ns[0];i++) {
-		p->plans[0]->transform(p->plans[0], din + (i * p->Ms[0]), buf + (i * (p->Ms[0] / 2 + 1)));	
+		p->plans[0]->transform(p->plans[0], din + (i * p->Ms[0]), buf + (i * (p->Ms[0] / 2 + 1)));
 	}
-	ffts_scalar_transpose(buf, dout, p->Ms[0] / 2 + 1, p->Ns[0], p->transpose_buf);	
+	ffts_scalar_transpose(buf, dout, p->Ms[0] / 2 + 1, p->Ns[0], p->transpose_buf);
 
 	for(i=1;i<p->rank;i++) {
-		for(j=0;j<p->Ns[i];j++) { 
-			p->plans[i]->transform(p->plans[i], dout + (j * p->Ms[i]), buf + (j * p->Ms[i]));	
+		for(j=0;j<p->Ns[i];j++) {
+			p->plans[i]->transform(p->plans[i], dout + (j * p->Ms[i]), buf + (j * p->Ms[i]));
 		}
-		ffts_scalar_transpose(buf, dout, p->Ms[i], p->Ns[i], p->transpose_buf);	
+		ffts_scalar_transpose(buf, dout, p->Ms[i], p->Ns[i], p->transpose_buf);
 	}
 }
 
@@ -131,7 +131,7 @@ void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *  in, void *  out) {
 	uint64_t *buf2;
 	uint64_t *dout = (uint64_t *)out;
 	size_t vol = 1;
-	
+
 	float *bufr = (float *)(p->buf);
 	float *doutr = (float *)out;
 
@@ -143,15 +143,15 @@ void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *  in, void *  out) {
 
 	buf2 = buf + vol;
 
-	ffts_scalar_transpose(din, buf, p->Ms[0], p->Ns[0], p->transpose_buf);	
+	ffts_scalar_transpose(din, buf, p->Ms[0], p->Ns[0], p->transpose_buf);
 
 	for(i=0;i<p->Ms[0];i++) {
-		p->plans[0]->transform(p->plans[0], buf + (i * p->Ns[0]), buf2 + (i * p->Ns[0]));	
+		p->plans[0]->transform(p->plans[0], buf + (i * p->Ns[0]), buf2 + (i * p->Ns[0]));
 	}
-	
-	ffts_scalar_transpose(buf2, buf, p->Ns[0], p->Ms[0], p->transpose_buf);	
-	for(j=0;j<p->Ms[1];j++) { 
-  	p->plans[1]->transform(p->plans[1], buf + (j * (p->Ms[0])), &doutr[j * p->Ns[1]]);	
+
+	ffts_scalar_transpose(buf2, buf, p->Ns[0], p->Ms[0], p->transpose_buf);
+	for(j=0;j<p->Ms[1];j++) {
+  	p->plans[1]->transform(p->plans[1], buf + (j * (p->Ms[0])), &doutr[j * p->Ns[1]]);
   }
 }
 
@@ -173,9 +173,9 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 	int i;
 	for(i=0;i<rank;i++) {
 		p->Ns[i] = Ns[i];
-		vol *= Ns[i];	
+		vol *= Ns[i];
 	}
-	
+
 	//There is probably a prettier way of doing this, but it works..
 	if(sign < 0) {
 		bufsize = 2 * vol;
@@ -188,7 +188,7 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 
 	for(i=0;i<rank;i++) {
 		p->Ms[i] = vol / p->Ns[i];
-		
+
 		p->plans[i] = NULL;
 		int k;
 
@@ -196,14 +196,14 @@ ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign) {
 			for(k=1;k<i;k++) {
 				if(p->Ms[k] == p->Ms[i]) p->plans[i] = p->plans[k];
 			}
-			if(!i)                p->plans[i] = ffts_init_1d_real(p->Ms[i], sign); 
-			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ms[i], sign); 
+			if(!i)                p->plans[i] = ffts_init_1d_real(p->Ms[i], sign);
+			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ms[i], sign);
 		}else{
   		for(k=0;k<i;k++) {
   			if(p->Ns[k] == p->Ns[i]) p->plans[i] = p->plans[k];
   		}
-			if(i==rank-1)         p->plans[i] = ffts_init_1d_real(p->Ns[i], sign); 
-			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ns[i], sign); 
+			if(i==rank-1)         p->plans[i] = ffts_init_1d_real(p->Ns[i], sign);
+			else if(!p->plans[i]) p->plans[i] = ffts_init_1d(p->Ns[i], sign);
 		}
 	}
 	if(sign < 0) {

@@ -1,10 +1,10 @@
 /*
- 
+
  This file is part of FFTS -- The Fastest Fourier Transform in the South
-  
+
  Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato 
- 
+ Copyright (c) 2012, The University of Waikato
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -111,10 +111,10 @@ void ffts_execute_1d_real(ffts_plan_t *p, const void *vin, void *vout) {
 
 #endif	
 	}
-	
+
 	out[N] = buf[0] - buf[1];
 	out[N+1] = 0.0f;
-	
+
 }
 
 void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout) {
@@ -124,12 +124,12 @@ void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout) {
 	float *A = p->A;
 	float *B = p->B;
 	size_t N = p->N;
-	
+
 	float *p_buf0 = in;
 	float *p_buf1 = in + N - 2;
-	
+
 	float *p_out = buf;
-	
+
 	size_t i;
 #ifdef __ARM_NEON__
 	for(i=0;i<N/2;i+=2) {
@@ -178,10 +178,10 @@ void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout) {
 		buf[2*i]   = in[2*i]*A[2*i] + in[2*i+1]*A[2*i+1] + in[N-2*i]*B[2*i] - in[N-2*i+1]*B[2*i+1];
 		buf[2*i+1] = in[2*i+1]*A[2*i] - in[2*i]*A[2*i+1] - in[N-2*i]*B[2*i+1] - in[N-2*i+1]*B[2*i];
 #endif
-}
-	
+	}
+
 	p->plans[0]->transform(p->plans[0], buf, out);
-	
+
 }
 
 ffts_plan_t *ffts_init_1d_real(size_t N, int sign) {
@@ -189,13 +189,13 @@ ffts_plan_t *ffts_init_1d_real(size_t N, int sign) {
 
 	if(sign < 0) p->transform = &ffts_execute_1d_real;
 	else         p->transform = &ffts_execute_1d_real_inv;
-	
+
 	p->destroy = &ffts_free_1d_real;
 	p->N = N;
 	p->rank = 1;
 	p->plans = malloc(sizeof(ffts_plan_t **) * 1);
 
-	p->plans[0] = ffts_init_1d(N/2, sign); 
+	p->plans[0] = ffts_init_1d(N/2, sign);
 
 	p->buf = valloc(sizeof(float) * 2 * ((N/2) + 1));
 
@@ -219,7 +219,7 @@ ffts_plan_t *ffts_init_1d_real(size_t N, int sign) {
 			p->B[2 * i + 1] = 1.0 * (1.0 * cos (2.0f * PI / (double) (N) * (double) i));
 		}
   }
-	
+
 	return p;
 }
 
