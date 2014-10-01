@@ -61,45 +61,46 @@ void ffts_execute_1d_real(ffts_plan_t *p, const void *vin, void *vout) {
 	size_t i;
 #ifdef __ARM_NEON__
 	for(i=0;i<N/2;i+=2) {
-	__asm__ __volatile__ ("vld1.32 {q8},  [%[pa], :128]!\n\t"
-												"vld1.32 {q9},  [%[pb], :128]!\n\t"
-												"vld1.32 {q10}, [%[buf0], :128]!\n\t"
-												"vld1.32 {q11}, [%[buf1], :64]\n\t"
-												"sub %[buf1], %[buf1], #16\n\t"
+	__asm__ __volatile__ (
+		"vld1.32 {q8},  [%[pa]]!\n\t"
+		"vld1.32 {q9},  [%[pb]]!\n\t"
+		"vld1.32 {q10}, [%[buf0]]!\n\t"
+		"vld1.32 {q11}, [%[buf1]]\n\t"
+		"sub %[buf1], %[buf1], #16\n\t"
 
-												"vdup.32 d26, d16[1]\n\t"
-												"vdup.32 d27, d17[1]\n\t"
-												"vdup.32 d24, d16[0]\n\t"
-												"vdup.32 d25, d17[0]\n\t"
-												
-												"vdup.32 d30, d23[1]\n\t"
-												"vdup.32 d31, d22[1]\n\t"
-												"vdup.32 d28, d23[0]\n\t"
-												"vdup.32 d29, d22[0]\n\t"
-												
-												"vmul.f32 q13, q13, q10\n\t"
-												"vmul.f32 q15, q15, q9\n\t"
-												"vmul.f32 q12, q12, q10\n\t"
-												"vmul.f32 q14, q14, q9\n\t"
-												"vrev64.f32 q13, q13\n\t"
-												"vrev64.f32 q15, q15\n\t"
+		"vdup.32 d26, d16[1]\n\t"
+		"vdup.32 d27, d17[1]\n\t"
+		"vdup.32 d24, d16[0]\n\t"
+		"vdup.32 d25, d17[0]\n\t"
 
-												"vtrn.32 d26, d27\n\t"
-												"vtrn.32 d30, d31\n\t"
-												"vneg.f32 d26, d26\n\t"
-												"vneg.f32 d31, d31\n\t"
-												"vtrn.32 d26, d27\n\t"
-												"vtrn.32 d30, d31\n\t"
-												
-												"vadd.f32 q12, q12, q14\n\t"
-												"vadd.f32 q13, q13, q15\n\t"
-												"vadd.f32 q12, q12, q13\n\t"
-												"vst1.32 {q12}, [%[pout], :128]!\n\t"
-												: [pa] "+r" (A), [pb] "+r" (B), [buf0] "+r" (p_buf0), [buf1] "+r" (p_buf1),
-													[pout] "+r" (p_out)
-												:
-												: "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
-												);
+		"vdup.32 d30, d23[1]\n\t"
+		"vdup.32 d31, d22[1]\n\t"
+		"vdup.32 d28, d23[0]\n\t"
+		"vdup.32 d29, d22[0]\n\t"
+
+		"vmul.f32 q13, q13, q10\n\t"
+		"vmul.f32 q15, q15, q9\n\t"
+		"vmul.f32 q12, q12, q10\n\t"
+		"vmul.f32 q14, q14, q9\n\t"
+		"vrev64.f32 q13, q13\n\t"
+		"vrev64.f32 q15, q15\n\t"
+
+		"vtrn.32 d26, d27\n\t"
+		"vtrn.32 d30, d31\n\t"
+		"vneg.f32 d26, d26\n\t"
+		"vneg.f32 d31, d31\n\t"
+		"vtrn.32 d26, d27\n\t"
+		"vtrn.32 d30, d31\n\t"
+
+		"vadd.f32 q12, q12, q14\n\t"
+		"vadd.f32 q13, q13, q15\n\t"
+		"vadd.f32 q12, q12, q13\n\t"
+		"vst1.32 {q12}, [%[pout]]!\n\t"
+		: [pa] "+r" (A), [pb] "+r" (B), [buf0] "+r" (p_buf0), [buf1] "+r" (p_buf1),
+		  [pout] "+r" (p_out)
+		:
+		: "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
+	);
 #else
 	for(i=0;i<N/2;i++) {
 		out[2*i]   = buf[2*i]*A[2*i] - buf[2*i+1]*A[2*i+1] + buf[N-2*i]*B[2*i] + buf[N-2*i+1]*B[2*i+1];
@@ -132,47 +133,46 @@ void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout) {
 	size_t i;
 #ifdef __ARM_NEON__
 	for(i=0;i<N/2;i+=2) {
-	__asm__ __volatile__ ("vld1.32 {q8},  [%[pa], :128]!\n\t"
-												"vld1.32 {q9},  [%[pb], :128]!\n\t"
-												"vld1.32 {q10}, [%[buf0], :128]!\n\t"
-												"vld1.32 {q11}, [%[buf1], :64]\n\t"
-												"sub %[buf1], %[buf1], #16\n\t"
+	__asm__ __volatile__ (
+		"vld1.32 {q8},  [%[pa]]!\n\t"
+		"vld1.32 {q9},  [%[pb]]!\n\t"
+		"vld1.32 {q10}, [%[buf0]]!\n\t"
+		"vld1.32 {q11}, [%[buf1]]\n\t"
+		"sub %[buf1], %[buf1], #16\n\t"
 
-												"vdup.32 d26, d16[1]\n\t"
-												"vdup.32 d27, d17[1]\n\t"
-												"vdup.32 d24, d16[0]\n\t"
-												"vdup.32 d25, d17[0]\n\t"
-												
-												"vdup.32 d30, d23[1]\n\t"
-												"vdup.32 d31, d22[1]\n\t"
-												"vdup.32 d28, d23[0]\n\t"
-												"vdup.32 d29, d22[0]\n\t"
-												
-												"vmul.f32 q13, q13, q10\n\t"
-												"vmul.f32 q15, q15, q9\n\t"
-												"vmul.f32 q12, q12, q10\n\t"
-												"vmul.f32 q14, q14, q9\n\t"
-												"vrev64.f32 q13, q13\n\t"
-												"vrev64.f32 q15, q15\n\t"
+		"vdup.32 d26, d16[1]\n\t"
+		"vdup.32 d27, d17[1]\n\t"
+		"vdup.32 d24, d16[0]\n\t"
+		"vdup.32 d25, d17[0]\n\t"
 
-												"vtrn.32 d26, d27\n\t"
-												"vtrn.32 d28, d29\n\t"
-												"vneg.f32 d27, d27\n\t"
-												"vneg.f32 d29, d29\n\t"
-												"vtrn.32 d26, d27\n\t"
-												"vtrn.32 d28, d29\n\t"
-												
-												"vadd.f32 q12, q12, q14\n\t"
-												"vsub.f32 q13, q13, q15\n\t"
-												"vadd.f32 q12, q12, q13\n\t"
-												"vst1.32 {q12}, [%[pout], :128]!\n\t"
-												: [pa] "+r" (A), [pb] "+r" (B), [buf0] "+r" (p_buf0), [buf1] "+r" (p_buf1),
-													[pout] "+r" (p_out)
-												:
-												: "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
-												);
+		"vdup.32 d30, d23[1]\n\t"
+		"vdup.32 d31, d22[1]\n\t"
+		"vdup.32 d28, d23[0]\n\t"
+		"vdup.32 d29, d22[0]\n\t"
 
+		"vmul.f32 q13, q13, q10\n\t"
+		"vmul.f32 q15, q15, q9\n\t"
+		"vmul.f32 q12, q12, q10\n\t"
+		"vmul.f32 q14, q14, q9\n\t"
+		"vrev64.f32 q13, q13\n\t"
+		"vrev64.f32 q15, q15\n\t"
 
+		"vtrn.32 d26, d27\n\t"
+		"vtrn.32 d28, d29\n\t"
+		"vneg.f32 d27, d27\n\t"
+		"vneg.f32 d29, d29\n\t"
+		"vtrn.32 d26, d27\n\t"
+		"vtrn.32 d28, d29\n\t"
+
+		"vadd.f32 q12, q12, q14\n\t"
+		"vsub.f32 q13, q13, q15\n\t"
+		"vadd.f32 q12, q12, q13\n\t"
+		"vst1.32 {q12}, [%[pout]]!\n\t"
+		: [pa] "+r" (A), [pb] "+r" (B), [buf0] "+r" (p_buf0), [buf1] "+r" (p_buf1),
+		  [pout] "+r" (p_out)
+		:
+		: "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
+    );
 #else
 	for(i=0;i<N/2;i++) {
 		buf[2*i]   = in[2*i]*A[2*i] + in[2*i+1]*A[2*i+1] + in[N-2*i]*B[2*i] - in[N-2*i+1]*B[2*i+1];
