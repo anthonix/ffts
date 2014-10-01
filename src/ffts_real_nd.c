@@ -60,15 +60,48 @@ void ffts_free_nd_real(ffts_plan_t *p) {
 	free(p);
 }
 
-void ffts_scalar_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf) {
+void ffts_scalar_transpose(uint64_t *src, uint64_t *dst, int w, int h, uint64_t *buf) {
+	int const bw = 1;
+	int const bh = 8;
+	int i = 0, j = 0;
+	for (; i <= h-bh; i += bh) {
+		for (j = 0; j <= w-bw; j += bw) {
+			uint64_t const * ib = &src[w*i + j];
+			uint64_t * ob = &dst[h*j + i];
 
-	size_t i,j;
-	for(i=0;i<w;i+=1) {
-		for(j=0;j<h;j+=1) {
-			out[i*h + j] = in[j*w + i];
+			uint64_t s_0_0 = ib[0*w+0];
+			uint64_t s_1_0 = ib[1*w+0];
+			uint64_t s_2_0 = ib[2*w+0];
+			uint64_t s_3_0 = ib[3*w+0];
+			uint64_t s_4_0 = ib[4*w+0];
+			uint64_t s_5_0 = ib[5*w+0];
+			uint64_t s_6_0 = ib[6*w+0];
+			uint64_t s_7_0 = ib[7*w+0];
+
+			ob[0*h+0] = s_0_0;
+			ob[0*h+1] = s_1_0;
+			ob[0*h+2] = s_2_0;
+			ob[0*h+3] = s_3_0;
+			ob[0*h+4] = s_4_0;
+			ob[0*h+5] = s_5_0;
+			ob[0*h+6] = s_6_0;
+			ob[0*h+7] = s_7_0;
 		}
 	}
-
+	if (i < h) {
+		for (int i1 = 0; i1 < w; i1++) {
+			for (int j = i; j < h; j++) {
+				dst[i1*h + j] = src[j*w + i1];
+			}
+		}
+	}
+	if (j < w) {
+		for (int i = j; i < w; i++) {
+			for (int j1 = 0; j1 < h; j1++) {
+				dst[i*h + j1] = src[j1*w + i];
+			}
+		}
+	}
 }
 
 void ffts_execute_nd_real(ffts_plan_t *p, const void *  in, void *  out) {
