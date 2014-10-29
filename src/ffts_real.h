@@ -1,10 +1,10 @@
 /*
- 
+
  This file is part of FFTS -- The Fastest Fourier Transform in the South
-  
+
  Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato 
- 
+ Copyright (c) 2012, The University of Waikato
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -31,24 +31,16 @@
 
 */
 
-#ifndef __FFTS_REAL_H__
-#define __FFTS_REAL_H__
+#ifndef FFTS_REAL_H
+#define FFTS_REAL_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdio.h>
+#if defined (_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
 
 #include "ffts.h"
-
-#ifdef HAVE_NEON 
-	#include <arm_neon.h>
-#endif
-#ifdef HAVE_SSE
-	#include <xmmintrin.h>
-#endif
+#include <stddef.h>
 
 ffts_plan_t *ffts_init_1d_real(size_t N, int sign);
 
-#endif
-
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+#endif /* FFTS_REAL_H */
