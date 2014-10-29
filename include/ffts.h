@@ -1,7 +1,7 @@
 /*
- 
+
  This file is part of FFTS.
-  
+
  Copyright (c) 2012, Anthony M. Blake
  All rights reserved.
 
@@ -29,19 +29,18 @@
 
 */
 
-#ifndef __FFTS_H__
-#define __FFTS_H__
+#ifndef FFTS_H
+#define FFTS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <stdint.h>
+#if defined (_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
+
 #include <stddef.h>
 
 #ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+extern "C" {
+#endif
 
 #define POSITIVE_SIGN 1
 #define NEGATIVE_SIGN -1
@@ -53,20 +52,20 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign);
 ffts_plan_t *ffts_init_2d(size_t N1, size_t N2, int sign);
 ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign);
 
-// For real transforms, sign == -1 implies a real-to-complex forwards tranform,
-// and sign == 1 implies a complex-to-real backwards transform
-// The output of a real-to-complex transform is N/2+1 complex numbers, where the
-// redundant outputs have been omitted.
+/* For real transforms, sign == -1 implies a real-to-complex forwards tranform,
+   and sign == 1 implies a complex-to-real backwards transform.
+   The output of a real-to-complex transform is N/2+1 complex numbers,
+   where the redundant outputs have been omitted.
+*/
 ffts_plan_t *ffts_init_1d_real(size_t N, int sign);
 ffts_plan_t *ffts_init_2d_real(size_t N1, size_t N2, int sign);
 ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign);
 
-void ffts_execute(ffts_plan_t * , const void *input, void *output);
-void ffts_free(ffts_plan_t *);
+void ffts_execute(ffts_plan_t *p, const void *input, void *output);
+void ffts_free(ffts_plan_t *p);
 
 #ifdef __cplusplus
-}  /* extern "C" */
-#endif /* __cplusplus */
-
+}
 #endif
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+
+#endif /* FFTS_H */
