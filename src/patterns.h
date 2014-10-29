@@ -1,10 +1,10 @@
 /*
- 
+
  This file is part of FFTS -- The Fastest Fourier Transform in the South
-  
+
  Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato 
- 
+ Copyright (c) 2012, The University of Waikato
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,16 @@
 
 */
 
+#ifndef FFTS_PATTERNS_H
+#define FFTS_PATTERNS_H
 
-#ifndef __PATTERNS_H__
-#define __PATTERNS_H__
-
-#include "ffts.h"
-
-void ffts_init_is(ffts_plan_t *p, int N, int leafN, int VL); 
-void ffts_init_offsets(ffts_plan_t *p, int N, int leafN); 
-//void ffts_init_tree(ffts_plan_t *p, int N, int leafN); 
-
+#if defined (_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
 #endif
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+
+#include <stddef.h>
+
+ptrdiff_t *ffts_init_is(int N, int leaf_N, int VL);
+ptrdiff_t *ffts_init_offsets(int N, int leaf_N);
+
+#endif /* FFTS_PATTERNS_H */
