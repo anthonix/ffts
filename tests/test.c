@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
             input[2*i + 1] = 0.0f;
         }
 
-        // input[2] = 1.0f;
+        /* input[2] = 1.0f; */
 
         p = ffts_init_1d(i, sign);
         if (!p) {
