@@ -111,7 +111,7 @@ ptrdiff_t *ffts_init_is(int N, int leaf_N, int VL)
 {
     int i, i0, i1, i2;
     int stride = (int) (log(N/leaf_N) / log(2));
-    ptrdiff_t *is, *p;
+    ptrdiff_t *is, *pis;
 
     is = malloc(N / VL * sizeof(*is));
     if (!is) {
@@ -124,18 +124,18 @@ ptrdiff_t *ffts_init_is(int N, int leaf_N, int VL)
         i1++;
     }
 
-    p = is;
+    pis = is;
     for (i = 0; i < i0; i++) {
-        ffts_hardcodedleaf_is_rec(&p, N, leaf_N, i, 0, stride, 1, VL);
+        ffts_hardcodedleaf_is_rec(&pis, N, leaf_N, i, 0, stride, 1, VL);
     }
 
     for (i = i0; i < i0 + i1; i++) {
-        ffts_hardcodedleaf_is_rec(&p, N, leaf_N / 2, i, 0, stride+1, 1, VL);
-        ffts_hardcodedleaf_is_rec(&p, N, leaf_N / 2, i - (1 << stride), 0, stride + 1, 1, VL);
+        ffts_hardcodedleaf_is_rec(&pis, N, leaf_N / 2, i, 0, stride + 1, 1, VL);
+        ffts_hardcodedleaf_is_rec(&pis, N, leaf_N / 2, i - (1 << stride), 0, stride + 1, 1, VL);
     }
 
     for (i = 0 - i2; i < 0; i++) {
-        ffts_hardcodedleaf_is_rec(&p, N, leaf_N, i, 0, stride, 1, VL);
+        ffts_hardcodedleaf_is_rec(&pis, N, leaf_N, i, 0, stride, 1, VL);
     }
 
     return is;
