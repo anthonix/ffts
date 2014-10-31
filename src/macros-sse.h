@@ -1,10 +1,10 @@
 /*
- 
+
  This file is part of FFTS -- The Fastest Fourier Transform in the South
-  
+
  Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato 
- 
+ Copyright (c) 2012, The University of Waikato
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
 
 */
 
-#ifndef __SSE_FLOAT_H__
-#define __SSE_FLOAT_H__
+#ifndef FFTS_MACROS_SSE_H
+#define FFTS_MACROS_SSE_H
 
 #include <xmmintrin.h>
 
@@ -63,23 +63,27 @@ typedef __m128 V;
 #define FFTS_MALLOC(d,a) (_mm_malloc(d,a))
 #define FFTS_FREE(d) (_mm_free(d))
 
-__INLINE V IMULI(int inv, V a) {
-	if(inv) return VSWAPPAIRS(VXOR(a, VLIT4(0.0f, -0.0f, 0.0f, -0.0f)));
-	else    return VSWAPPAIRS(VXOR(a, VLIT4(-0.0f, 0.0f, -0.0f, 0.0f)));
+static FFTS_ALWAYS_INLINE V IMULI(int inv, V a)
+{
+    if (inv) {
+        return VSWAPPAIRS(VXOR(a, VLIT4(0.0f, -0.0f, 0.0f, -0.0f)));
+    } else {
+        return VSWAPPAIRS(VXOR(a, VLIT4(-0.0f, 0.0f, -0.0f, 0.0f)));
+    }
 }
 
-
-__INLINE V IMUL(V d, V re, V im) {
-  re = VMUL(re, d);                   
-  im = VMUL(im, VSWAPPAIRS(d));
-  return VSUB(re, im);  
+static FFTS_ALWAYS_INLINE V IMUL(V d, V re, V im)
+{
+    re = VMUL(re, d);
+    im = VMUL(im, VSWAPPAIRS(d));
+    return VSUB(re, im);
 }
 
-__INLINE V IMULJ(V d, V re, V im) {
-  re = VMUL(re, d);                   
-  im = VMUL(im, VSWAPPAIRS(d));
-  return VADD(re, im);  
+static FFTS_ALWAYS_INLINE V IMULJ(V d, V re, V im)
+{
+    re = VMUL(re, d);
+    im = VMUL(im, VSWAPPAIRS(d));
+    return VADD(re, im);
 }
 
-#endif
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+#endif /* FFTS_MACROS_SSE_H */
