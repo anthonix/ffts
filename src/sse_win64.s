@@ -491,20 +491,20 @@ x4:
         addps     %xmm2, %xmm4                                 #34.3
         movaps    %xmm6, %xmm5                                 #34.3
         subps     %xmm4, %xmm6                                 #34.3
-        addps     %xmm4, %xmm5                                 #34.3        
-        movaps    32(%r8), %xmm8                               #34.3        
+        addps     %xmm4, %xmm5                                 #34.3
+        movaps    32(%r8), %xmm8                               #34.3
         xorps     %xmm3, %xmm6                                 #34.3
-        shufps    $177, %xmm6, %xmm6                           #34.3        
+        shufps    $177, %xmm6, %xmm6                           #34.3
         movaps    %xmm8, %xmm10                                #34.3
-        movaps    112(%r8), %xmm12                             #34.3        
+        movaps    112(%r8), %xmm12                             #34.3
         subps     %xmm5, %xmm9                                 #34.3
         addps     %xmm5, %xmm7                                 #34.3
         addps     %xmm6, %xmm10                                #34.3
-        subps     %xmm6, %xmm8                                 #34.3        
+        subps     %xmm6, %xmm8                                 #34.3
         movaps    %xmm7, (%r8)                                 #34.3
         movaps    %xmm8, 32(%r8)                               #34.3
         movaps    %xmm9, 64(%r8)                               #34.3
-        movaps    %xmm10, 96(%r8)                              #34.3        
+        movaps    %xmm10, 96(%r8)                              #34.3
         movaps    32(%rdi), %xmm14    #const                   #34.3
         movaps    80(%r8), %xmm11                              #34.3
         movaps    %xmm14, %xmm0                                #34.3
@@ -516,7 +516,7 @@ x4:
         mulps     %xmm13, %xmm11                               #34.3
         mulps     %xmm12, %xmm13                               #34.3
         subps     %xmm11, %xmm0                                #34.3
-        addps     %xmm13, %xmm14                               #34.3        
+        addps     %xmm13, %xmm14                               #34.3
         movaps    %xmm0, %xmm15                                #34.3
         subps     %xmm14, %xmm0                                #34.3
         addps     %xmm14, %xmm15                               #34.3

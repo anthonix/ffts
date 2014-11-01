@@ -31,7 +31,6 @@
 
 */
 
-
 #ifndef FFTS_CODEGEN_SSE_H
 #define FFTS_CODEGEN_SSE_H
 
@@ -63,19 +62,21 @@ extern const uint32_t sse_leaf_oe_offsets[8];
 #define ECX 1
 #define EDX 2
 #define EBX 3
+#define ESP 4
+#define EBP 5
 #define ESI 6
 #define EDI 7
-#define EBP 5
 
 #define RAX 0
 #define RCX 1
 #define RDX 2
 #define RBX 3
+#define RSP 4
+#define RBP 5
 #define RSI 6
 #define RDI 7
-#define RBP 5
-#define R8 8
-#define R9 9
+#define R8  8
+#define R9  9
 #define R10 10
 #define R11 11
 #define R12 12
@@ -177,6 +178,29 @@ void ADDI(uint8_t **p, uint8_t dst, int32_t imm)
     }
 
     *(*p)++ = 0xc0 | (dst & 0x7);
+
+    if (imm > 127 || imm <= -128) {
+        IMM32(p, imm);
+    } else {
+        IMM8(p, imm);
+    }
+}
+
+void SUBI(uint8_t **p, uint8_t dst, int32_t imm)
+{
+    if (dst >= 8) {
+        *(*p)++ = 0x49;
+    } else {
+        *(*p)++ = 0x48;
+    }
+
+    if (imm > 127 || imm <= -128) {
+        *(*p)++ = 0x81;
+    } else {
+        *(*p)++ = 0x83;
+    }
+
+    *(*p)++ = 0xe8 | (dst & 0x7);
 
     if (imm > 127 || imm <= -128) {
         IMM32(p, imm);

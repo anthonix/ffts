@@ -31,15 +31,16 @@ option(ENABLE_SHARED
   "Enable building a shared library." OFF
 )
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -pipe -Wall")
 add_definitions(-DFFTS_CMAKE_GENERATED)
-
-include(CheckIncludeFile)
-include(CheckLibraryExists)
 
 if(MSVC)
   add_definitions(-D_USE_MATH_DEFINES)
 else()
+  include(CheckIncludeFile)
+  include(CheckLibraryExists)
+
+  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -pipe -Wall")
+  
   # some systems need libm for some of the math functions to work
   check_library_exists(m pow "" HAVE_LIBM)
   if(HAVE_LIBM)
@@ -69,6 +70,9 @@ set(FFTS_SOURCES
 )
 
 if(ENABLE_SSE)
+  add_definitions(-DHAVE_SSE)
+  add_definitions(-D__x86_64__)
+
   list(APPEND FFTS_SOURCES
     src/macros-sse.h
   )
@@ -95,11 +99,9 @@ if(ENABLE_SSE)
     list(APPEND FFTS_SOURCES
       src/sse.s
     )
+  else()
+    add_definitions(-msse2)
   endif(MSVC)
-
-  add_definitions(-D_USE_MATH_DEFINES)
-  add_definitions(-D__x86_64__)
-  add_definitions(-DHAVE_SSE -msse2)
 endif()
 
 if(ENABLE_NEON)
@@ -142,6 +144,12 @@ else()
     src/codegen.c
     src/codegen.h
   )
+  
+  if(ENABLE_SSE)
+    list(APPEND FFTS_SOURCES
+      src/codegen_sse.h
+    )
+  endif(ENABLE_SSE)
 endif()
 
 add_library(ffts_static
