@@ -386,103 +386,19 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     *fp++ = 0x24;
     *fp++ = 0x18;
 
-    /* reserve space for XMM6-XMM15 registers*/
-
-    /* sub rsp, 168 */
+    /* reserve space to save XMM6-XMM15 registers */
 	SUBI(&fp, RSP, 168);
 
-    /* movdqa [rsp], xmm6 */
-    *fp++ = 0x66;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0x34;
-    *fp++ = 0x24;
-
-	/* movdqa [rsp + 16], xmm7 */
-    *fp++ = 0x66;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0x7C;
-    *fp++ = 0x24;
-    *fp++ = 0x10;
-
-	/* movdqa [rsp + 32], xmm8 */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0x44;
-    *fp++ = 0x24;
-    *fp++ = 0x20;
-
-	/* movdqa [rsp + 48], xmm9 */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0x4C;
-    *fp++ = 0x24;
-    *fp++ = 0x30;
-
-	/* movdqa [rsp + 64], xmm10 */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0x54;
-    *fp++ = 0x24;
-    *fp++ = 0x40;
-
-	/* movdqa [rsp + 80], xmm11 */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0x5C;
-    *fp++ = 0x24;
-    *fp++ = 0x50;
-
-	/* movdqa [rsp + 96], xmm12 */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0x64;
-    *fp++ = 0x24;
-    *fp++ = 0x60;
-
-	/* movdqa [rsp + 112], xmm13 */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0x6C;
-    *fp++ = 0x24;
-    *fp++ = 0x70;
-
-	/* movdqa [rsp + 128], xmm14 */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0xB4;
-    *fp++ = 0x24;
-    *fp++ = 0x80;
-	*fp++ = 0x00;
-	*fp++ = 0x00;
-	*fp++ = 0x00;
-
-	/* movdqa [rsp + 144], xmm15 */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x7F;
-    *fp++ = 0xBC;
-    *fp++ = 0x24;
-    *fp++ = 0x90;
-	*fp++ = 0x00;
-	*fp++ = 0x00;
-	*fp++ = 0x00;
+	MOVDQA3(&fp, RSP,   0,  XMM6);
+	MOVDQA3(&fp, RSP,  16,  XMM7);
+	MOVDQA3(&fp, RSP,  32,  XMM8);
+	MOVDQA3(&fp, RSP,  48,  XMM9);
+	MOVDQA3(&fp, RSP,  64, XMM10);
+	MOVDQA3(&fp, RSP,  80, XMM11);
+	MOVDQA3(&fp, RSP,  96, XMM12);
+	MOVDQA3(&fp, RSP, 112, XMM13);
+	MOVDQA3(&fp, RSP, 128, XMM14);
+	MOVDQA3(&fp, RSP, 144, XMM15);
 #else
     PUSH(&fp, RBP);
     PUSH(&fp, RBX);
@@ -1022,104 +938,23 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     count++;
 #else
 
-    /* restore nonvolatile registers */
 #ifdef _M_AMD64
+    /* restore nonvolatile registers */
+	MOVDQA3(&fp, XMM6,  RSP,   0);
+	MOVDQA3(&fp, XMM7,  RSP,  16);
+	MOVDQA3(&fp, XMM8,  RSP,  32);
+	MOVDQA3(&fp, XMM9,  RSP,  48);
+	MOVDQA3(&fp, XMM10, RSP,  64);
+	MOVDQA3(&fp, XMM11, RSP,  80);
+	MOVDQA3(&fp, XMM12, RSP,  96);
+	MOVDQA3(&fp, XMM13, RSP, 112);
+	MOVDQA3(&fp, XMM14, RSP, 128);
+	MOVDQA3(&fp, XMM15, RSP, 144);
 
-    /* movdqa xmm6, [rsp] */
-    *fp++ = 0x66;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0x34;
-    *fp++ = 0x24;
-
-	/* movdqa xmm7, [rsp + 16] */
-    *fp++ = 0x66;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0x7C;
-    *fp++ = 0x24;
-    *fp++ = 0x10;
-
-	/* movdqa xmm8, [rsp + 32] */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0x44;
-    *fp++ = 0x24;
-    *fp++ = 0x20;
-
-	/* movdqa xmm9, [rsp + 48] */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0x4C;
-    *fp++ = 0x24;
-    *fp++ = 0x30;
-
-	/* movdqa xmm10, [rsp + 64] */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0x54;
-    *fp++ = 0x24;
-    *fp++ = 0x40;
-
-	/* movdqa xmm11, [rsp + 80] */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0x5C;
-    *fp++ = 0x24;
-    *fp++ = 0x50;
-
-	/* movdqa xmm12, [rsp + 96] */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0x64;
-    *fp++ = 0x24;
-    *fp++ = 0x60;
-
-	/* movdqa xmm13 , [rsp + 112] */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0x6C;
-    *fp++ = 0x24;
-    *fp++ = 0x70;
-
-	/* movdqa xmm14, [rsp + 128] */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0xB4;
-    *fp++ = 0x24;
-    *fp++ = 0x80;
-	*fp++ = 0x00;
-	*fp++ = 0x00;
-	*fp++ = 0x00;
-
-	/* movdqa xmm15, [rsp + 144] */
-    *fp++ = 0x66;	
-	*fp++ = 0x44;
-    *fp++ = 0x0F;
-    *fp++ = 0x6F;
-    *fp++ = 0xBC;
-    *fp++ = 0x24;
-    *fp++ = 0x90;
-	*fp++ = 0x00;
-	*fp++ = 0x00;
-	*fp++ = 0x00;
-
-	/* add rsp, 168 */
+	/* restore stack */
 	ADDI(&fp, RSP, 168);
+
+    /* restore the last 3 registers from the shadow space */
 
 	/* mov rbx, [rsp + 8] */
     *fp++ = 0x48;
