@@ -155,7 +155,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
     /* assign loop counter register */
     loop_count = 4 * p->i0;
-#ifdef _M_AMD64
+#ifdef _M_X64
     MOVI(&fp, EBX, loop_count);
 #else
     MOVI(&fp, ECX, loop_count);
@@ -210,7 +210,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     fp += len;
 
     /* align loop/jump destination */
-#ifdef _M_AMD64
+#ifdef _M_X64
     ffts_align_mem16(&fp, 8);
 #else
     ffts_align_mem16(&fp, 9);
@@ -233,7 +233,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             loop_count += 4 * p->i1;
 
             /* align loop/jump destination */
-#ifdef _M_AMD64
+#ifdef _M_X64
             MOVI(&fp, EBX, loop_count);
             ffts_align_mem16(&fp, 3);
 #else
@@ -286,7 +286,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             loop_count += 4 * p->i1;
 
             /* align loop/jump destination */
-#ifdef _M_AMD64
+#ifdef _M_X64
             MOVI(&fp, EBX, loop_count);
             ffts_align_mem16(&fp, 3);
 #else
@@ -313,7 +313,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         loop_count += 4 * p->i1;
 
         /* align loop/jump destination */
-#ifdef _M_AMD64
+#ifdef _M_X64
         MOVI(&fp, EBX, loop_count);
         ffts_align_mem16(&fp, 8);
 #else
@@ -337,12 +337,13 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     memcpy(fp, x_init, len);
     fp += len;
 
+	/* generate subtransform calls */
     count = 2;
     while (pps[0]) {
         size_t ws_is;
 
         if (!pN) {
-#ifdef _M_AMD64
+#ifdef _M_X64
             MOVI(&fp, EBX, pps[0]);
 #else
             MOVI(&fp, ECX, pps[0] / 4);
@@ -350,7 +351,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         } else {
             int offset = (4 * pps[1]) - pAddr;
             if (offset) {
-#ifdef _M_AMD64
+#ifdef _M_X64
                 ADDI(&fp, R8, offset);
 #else
                 ADDI(&fp, RDX, offset);
@@ -360,7 +361,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             if (pps[0] > leaf_N && pps[0] - pN) {
                 int factor = ffts_ctzl(pps[0]) - ffts_ctzl(pN);
 
-#ifdef _M_AMD64
+#ifdef _M_X64
                 SHIFT(&fp, EBX, factor);
 #else
                 SHIFT(&fp, ECX, factor);
@@ -372,7 +373,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         if (ws_is != pLUT) {
             int offset = (int) (ws_is - pLUT);
 
-#ifdef _M_AMD64
+#ifdef _M_X64
             ADDI(&fp, RDI, offset);
 #else
             ADDI(&fp, R8, offset);

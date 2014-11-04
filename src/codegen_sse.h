@@ -458,7 +458,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 	x_8_addr = *fp;
 
     /* align loop/jump destination */
-#ifdef _M_AMD64
+#ifdef _M_X64
     ffts_align_mem16(fp, 6);
 #else
     ffts_align_mem16(fp, 5);
@@ -482,7 +482,7 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 	start = *fp;
 
     /* save nonvolatile registers */
-#ifdef _M_AMD64
+#ifdef _M_X64
     /* use the shadow space to save first 3 registers */
 
     /* mov [rsp + 8], rbx */
@@ -535,7 +535,7 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 
 static FFTS_INLINE void generate_epilogue(insns_t **fp)
 {
-#ifdef _M_AMD64
+#ifdef _M_X64
     /* restore nonvolatile registers */
 	MOVDQA3(fp, XMM6,  RSP,   0);
 	MOVDQA3(fp, XMM7,  RSP,  16);

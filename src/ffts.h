@@ -187,7 +187,7 @@ static FFTS_INLINE void ffts_aligned_free(void *p)
 #define ffts_ctzl __builtin_ctzl
 #elif defined(_MSC_VER)
 #include <intrin.h>
-#ifdef _M_AMD64
+#ifdef _M_X64
 #pragma intrinsic(_BitScanForward64)
 static __inline unsigned long ffts_ctzl(size_t N)
 {
