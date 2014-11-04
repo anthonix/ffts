@@ -35,6 +35,12 @@
 #include "macros.h"
 #include "ffts.h"
 
+#ifdef __arm__
+typedef uint32_t insns_t;
+#else
+typedef uint8_t insns_t;
+#endif
+
 #ifdef HAVE_NEON
 #include "codegen_arm.h"
 #include "neon.h"
@@ -56,14 +62,6 @@
 #ifdef __ANDROID__
 #include <unistd.h>
 #endif
-
-#ifdef __arm__
-typedef uint32_t insns_t;
-#else
-typedef uint8_t insns_t;
-#endif
-
-#define P(x) (*(*p)++ = x)
 
 static int ffts_tree_count(int N, int leaf_N, int offset)
 {
@@ -98,91 +96,6 @@ static void ffts_elaborate_tree(size_t **p, int N, int leaf_N, int offset)
     (*p)[1] = 2 * offset;
 
     (*p) += 2;
-}
-
-static void ffts_insert_nops(uint8_t **p, uint32_t count)
-{
-    if (count >= 9) {
-        P(0x66);
-        P(0x0F);
-        P(0x1F);
-        P(0x84);
-        P(0x00);
-        P(0x00);
-        P(0x00);
-        P(0x00);
-        P(0x00);
-
-        if (count > 9) {
-            ffts_insert_nops(p, count - 9);
-        }
-    } else {
-        switch(count) {
-        case 0:
-            break;
-        case 2:
-            P(0x66);
-        /* fall through */
-        case 1:
-            P(0x90);
-            break;
-        case 3:
-            P(0x0F);
-            P(0x1F);
-            P(0x00);
-            break;
-        case 4:
-            P(0x0F);
-            P(0x1F);
-            P(0x40);
-            P(0x00);
-            break;
-        case 5:
-            P(0x0F);
-            P(0x1F);
-            P(0x44);
-            P(0x00);
-            P(0x00);
-            break;
-        case 6:
-            P(0x66);
-            P(0x0F);
-            P(0x1F);
-            P(0x44);
-            P(0x00);
-            P(0x00);
-            break;
-        case 7:
-            P(0x0F);
-            P(0x1F);
-            P(0x80);
-            P(0x00);
-            P(0x00);
-            P(0x00);
-            P(0x00);
-            break;
-        case 8:
-        default:
-            P(0x0F);
-            P(0x1F);
-            P(0x84);
-            P(0x00);
-            P(0x00);
-            P(0x00);
-            P(0x00);
-            P(0x00);
-            break;
-        }
-    }
-}
-
-static void ffts_align_mem16(uint8_t **p, uint32_t offset)
-{
-#ifdef __x86_64__
-    int r = (16 - (offset & 0xf)) - ((uintptr_t)(*p) & 0xf);
-    r = (16 + r) & 0xf;
-    ffts_insert_nops(p, r);
-#endif
 }
 
 transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
@@ -231,187 +144,17 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
     fp = (insns_t*) p->transform_base;
 
-#ifdef __arm__
-#ifdef HAVE_NEON
-    memcpy(fp, neon_x8, neon_x8_t - neon_x8);
-    /*
-    * Changes adds to subtracts and  vice versa to allow the computation
-    * of both the IFFT and FFT
-    */
-    if(sign < 0) {
-        fp[31] ^= 0x00200000;
-        fp[32] ^= 0x00200000;
-        fp[33] ^= 0x00200000;
-        fp[34] ^= 0x00200000;
-        fp[65] ^= 0x00200000;
-        fp[66] ^= 0x00200000;
-        fp[70] ^= 0x00200000;
-        fp[74] ^= 0x00200000;
-        fp[97] ^= 0x00200000;
-        fp[98] ^= 0x00200000;
-        fp[102] ^= 0x00200000;
-        fp[104] ^= 0x00200000;
-    }
-    fp += (neon_x8_t - neon_x8) / 4;
-#else
-    memcpy(fp, vfp_x8, vfp_end - vfp_x8);
-    if(sign > 0) {
-        fp[65] ^= 0x00000040;
-        fp[66] ^= 0x00000040;
-        fp[68] ^= 0x00000040;
-        fp[70] ^= 0x00000040;
-        fp[103] ^= 0x00000040;
-        fp[104] ^= 0x00000040;
-        fp[105] ^= 0x00000040;
-        fp[108] ^= 0x00000040;
-        fp[113] ^= 0x00000040;
-        fp[114] ^= 0x00000040;
-        fp[117] ^= 0x00000040;
-        fp[118] ^= 0x00000040;
-    }
-    fp += (vfp_end - vfp_x8) / 4;
-#endif
-#else
-    /* align call destination */
-    ffts_align_mem16(&fp, 0);
-    x_8_addr = fp;
-
-    /* align loop/jump destination */
-#ifdef _M_AMD64
-    ffts_align_mem16(&fp, 6);
-#else
-    ffts_align_mem16(&fp, 5);
-#endif
-
-    /* copy function */
-    assert((char*) x8_soft_end > (char*) x8_soft);
-    len = (char*) x8_soft_end - (char*) x8_soft;
-    memcpy(fp, x8_soft, (size_t) len);
-    fp += len;
-#endif
-    //uint32_t *x_8_t_addr = fp;
-    //memcpy(fp, neon_x8_t, neon_end - neon_x8_t);
-    //fp += (neon_end - neon_x8_t) / 4;
+	/* generate base cases */
+	x_4_addr = generate_size4_base_case(&fp, sign);
+	x_8_addr = generate_size8_base_case(&fp, sign);
 
 #ifdef __arm__
-#ifdef HAVE_NEON
-    memcpy(fp, neon_x4, neon_x8 - neon_x4);
-    if(sign < 0) {
-        fp[26] ^= 0x00200000;
-        fp[28] ^= 0x00200000;
-        fp[31] ^= 0x00200000;
-        fp[32] ^= 0x00200000;
-    }
-    fp += (neon_x8 - neon_x4) / 4;
+	start = generate_prologue(&fp, p);
 #else
-    memcpy(fp, vfp_x4, vfp_x8 - vfp_x4);
-    if(sign > 0) {
-        fp[36] ^= 0x00000040;
-        fp[38] ^= 0x00000040;
-        fp[43] ^= 0x00000040;
-        fp[44] ^= 0x00000040;
-    }
-    fp += (vfp_x8 - vfp_x4) / 4;
-#endif
-#else
-    /* align call destination */
-    ffts_align_mem16(&fp, 0);
-    x_4_addr = fp;
-
-    /* copy function */
-    assert((char*) x8_soft > (char*) x4);
-    len = (char*) x8_soft - (char*) x4;
-    memcpy(fp, x4, (size_t) len);
-    fp += len;
-#endif
-
-#ifdef __arm__
-    start = fp;
-
-    *fp = PUSH_LR();
-    fp++;
-    *fp = 0xed2d8b10;
-    fp++;
-
-    ADDI(&fp, 3, 1, 0);
-    ADDI(&fp, 7, 1, N);
-    ADDI(&fp, 5, 1, 2*N);
-    ADDI(&fp, 10, 7, 2*N);
-    ADDI(&fp, 4, 5, 2*N);
-    ADDI(&fp, 8, 10, 2*N);
-    ADDI(&fp, 6, 4, 2*N);
-    ADDI(&fp, 9, 8, 2*N);
-
-    *fp = LDRI(12, 0, ((uint32_t)&p->offsets) - ((uint32_t)p));
-    fp++; // load offsets into r12
-    //  *fp++ = LDRI(1, 0, 4); // load ws into r1
-    ADDI(&fp, 1, 0, 0);
-
-    ADDI(&fp, 0, 2, 0), // mov out into r0
-         *fp = LDRI(2, 1, ((uint32_t)&p->ee_ws) - ((uint32_t)p));
-    fp++;
-
-#ifdef HAVE_NEON
-    MOVI(&fp, 11, p->i0);
-#else
-    MOVI(&fp, 11, p->i0);
-#endif
-#else
-    /* align call destination */
-    ffts_align_mem16(&fp, 0);
-    start = fp;
-
-    /* save nonvolatile registers */
-#ifdef _M_AMD64
-    /* use the shadow space to save first 3 registers */
-
-    /* mov [rsp + 8], rbx */
-    *fp++ = 0x48;
-    *fp++ = 0x89;
-    *fp++ = 0x5C;
-    *fp++ = 0x24;
-    *fp++ = 0x08;
-
-    /* mov [rsp + 16], rsi */
-    *fp++ = 0x48;
-    *fp++ = 0x89;
-    *fp++ = 0x74;
-    *fp++ = 0x24;
-    *fp++ = 0x10;
-
-    /* mov [rsp + 24], rdi */
-    *fp++ = 0x48;
-    *fp++ = 0x89;
-    *fp++ = 0x7C;
-    *fp++ = 0x24;
-    *fp++ = 0x18;
-
-    /* reserve space to save XMM6-XMM15 registers */
-	SUBI(&fp, RSP, 168);
-
-	MOVDQA3(&fp, RSP,   0,  XMM6);
-	MOVDQA3(&fp, RSP,  16,  XMM7);
-	MOVDQA3(&fp, RSP,  32,  XMM8);
-	MOVDQA3(&fp, RSP,  48,  XMM9);
-	MOVDQA3(&fp, RSP,  64, XMM10);
-	MOVDQA3(&fp, RSP,  80, XMM11);
-	MOVDQA3(&fp, RSP,  96, XMM12);
-	MOVDQA3(&fp, RSP, 112, XMM13);
-	MOVDQA3(&fp, RSP, 128, XMM14);
-	MOVDQA3(&fp, RSP, 144, XMM15);
-#else
-    PUSH(&fp, RBP);
-    PUSH(&fp, RBX);
-    PUSH(&fp, R10);
-    PUSH(&fp, R11);
-    PUSH(&fp, R12);
-    PUSH(&fp, R13);
-    PUSH(&fp, R14);
-    PUSH(&fp, R15);
-#endif
+	start = generate_prologue(&fp, p);
 
     /* assign loop counter register */
-    loop_count = p->i0 * 4;
+    loop_count = 4 * p->i0;
 #ifdef _M_AMD64
     MOVI(&fp, EBX, loop_count);
 #else
@@ -937,66 +680,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     *fp++ = POP_LR();
     count++;
 #else
-
-#ifdef _M_AMD64
-    /* restore nonvolatile registers */
-	MOVDQA3(&fp, XMM6,  RSP,   0);
-	MOVDQA3(&fp, XMM7,  RSP,  16);
-	MOVDQA3(&fp, XMM8,  RSP,  32);
-	MOVDQA3(&fp, XMM9,  RSP,  48);
-	MOVDQA3(&fp, XMM10, RSP,  64);
-	MOVDQA3(&fp, XMM11, RSP,  80);
-	MOVDQA3(&fp, XMM12, RSP,  96);
-	MOVDQA3(&fp, XMM13, RSP, 112);
-	MOVDQA3(&fp, XMM14, RSP, 128);
-	MOVDQA3(&fp, XMM15, RSP, 144);
-
-	/* restore stack */
-	ADDI(&fp, RSP, 168);
-
-    /* restore the last 3 registers from the shadow space */
-
-	/* mov rbx, [rsp + 8] */
-    *fp++ = 0x48;
-    *fp++ = 0x8B;
-    *fp++ = 0x5C;
-    *fp++ = 0x24;
-    *fp++ = 0x08;
-
-    /* mov rsi, [rsp + 16] */
-    *fp++ = 0x48;
-    *fp++ = 0x8B;
-    *fp++ = 0x74;
-    *fp++ = 0x24;
-    *fp++ = 0x10;
-
-    /* mov rdi, [rsp + 24] */
-    *fp++ = 0x48;
-    *fp++ = 0x8B;
-    *fp++ = 0x7C;
-    *fp++ = 0x24;
-    *fp++ = 0x18;
-#else
-    POP(&fp, R15);
-    POP(&fp, R14);
-    POP(&fp, R13);
-    POP(&fp, R12);
-    POP(&fp, R11);
-    POP(&fp, R10);
-    POP(&fp, RBX);
-    POP(&fp, RBP);
-#endif
-
-    RET(&fp);
-
-    //uint8_t *pp = func;
-    //int counter = 0;
-    //do{
-    //	printf("%02x ", *pp);
-    //	if(counter++ % 16 == 15) printf("\n");
-    //} while(++pp < fp);
-
-    //printf("\n");
+	generate_epilogue(&fp);
 #endif
 
     //	*fp++ = B(14); count++;

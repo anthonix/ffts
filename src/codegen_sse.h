@@ -105,6 +105,8 @@ extern const uint32_t sse_leaf_oe_offsets[8];
 #define XMM14 (XMM_REG | 0xe)
 #define XMM15 (XMM_REG | 0xf)
 
+#define P(x) (*(*p)++ = x)
+
 static void IMM8(uint8_t **p, int32_t imm)
 {
     *(*p)++ = (imm & 0xff);
@@ -343,6 +345,246 @@ static void SHIFT(uint8_t **p, uint8_t reg, int shift)
         *(*p)++ = 0xe8 | (reg & 7);
         *(*p)++ = ((-shift) & 0xff);
     }
+}
+
+static FFTS_INLINE void ffts_insert_nops(uint8_t **p, uint32_t count)
+{
+    if (count >= 9) {
+        P(0x66);
+        P(0x0F);
+        P(0x1F);
+        P(0x84);
+        P(0x00);
+        P(0x00);
+        P(0x00);
+        P(0x00);
+        P(0x00);
+
+        if (count > 9) {
+            ffts_insert_nops(p, count - 9);
+        }
+    } else {
+        switch(count) {
+        case 0:
+            break;
+        case 2:
+            P(0x66);
+        /* fall through */
+        case 1:
+            P(0x90);
+            break;
+        case 3:
+            P(0x0F);
+            P(0x1F);
+            P(0x00);
+            break;
+        case 4:
+            P(0x0F);
+            P(0x1F);
+            P(0x40);
+            P(0x00);
+            break;
+        case 5:
+            P(0x0F);
+            P(0x1F);
+            P(0x44);
+            P(0x00);
+            P(0x00);
+            break;
+        case 6:
+            P(0x66);
+            P(0x0F);
+            P(0x1F);
+            P(0x44);
+            P(0x00);
+            P(0x00);
+            break;
+        case 7:
+            P(0x0F);
+            P(0x1F);
+            P(0x80);
+            P(0x00);
+            P(0x00);
+            P(0x00);
+            P(0x00);
+            break;
+        case 8:
+        default:
+            P(0x0F);
+            P(0x1F);
+            P(0x84);
+            P(0x00);
+            P(0x00);
+            P(0x00);
+            P(0x00);
+            P(0x00);
+            break;
+        }
+    }
+}
+
+static FFTS_INLINE void ffts_align_mem16(uint8_t **p, uint32_t offset)
+{
+    int r = (16 - (offset & 0xf)) - ((uintptr_t)(*p) & 0xf);
+    r = (16 + r) & 0xf;
+    ffts_insert_nops(p, r);
+}
+
+static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
+{
+	insns_t *x_4_addr;
+	size_t len;
+
+	/* align call destination */
+	ffts_align_mem16(fp, 0);
+	x_4_addr = *fp;
+
+	/* copy function */
+    assert((char*) x8_soft > (char*) x4);
+    len = (char*) x8_soft - (char*) x4;
+	memcpy(*fp, x4, len);
+    *fp += len;
+
+	return x_4_addr;
+}
+
+static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
+{
+	insns_t *x_8_addr;
+	size_t len;
+
+	/* align call destination */
+	ffts_align_mem16(fp, 0);
+	x_8_addr = *fp;
+
+    /* align loop/jump destination */
+#ifdef _M_AMD64
+    ffts_align_mem16(fp, 6);
+#else
+    ffts_align_mem16(fp, 5);
+#endif
+
+	/* copy function */
+    assert((char*) x8_soft_end > (char*) x8_soft);
+    len = (char*) x8_soft_end - (char*) x8_soft;
+	memcpy(*fp, x8_soft, len);
+	*fp += len;
+
+	return x_8_addr;
+}
+
+static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
+{
+	insns_t	*start;
+
+	/* align call destination */
+	ffts_align_mem16(fp, 0);
+	start = *fp;
+
+    /* save nonvolatile registers */
+#ifdef _M_AMD64
+    /* use the shadow space to save first 3 registers */
+
+    /* mov [rsp + 8], rbx */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x89;
+    *(*fp)++ = 0x5C;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x08;
+
+    /* mov [rsp + 16], rsi */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x89;
+    *(*fp)++ = 0x74;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x10;
+
+    /* mov [rsp + 24], rdi */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x89;
+    *(*fp)++ = 0x7C;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x18;
+
+    /* reserve space to save XMM6-XMM15 registers */
+	SUBI(fp, RSP, 168);
+
+	MOVDQA3(fp, RSP,   0,  XMM6);
+	MOVDQA3(fp, RSP,  16,  XMM7);
+	MOVDQA3(fp, RSP,  32,  XMM8);
+	MOVDQA3(fp, RSP,  48,  XMM9);
+	MOVDQA3(fp, RSP,  64, XMM10);
+	MOVDQA3(fp, RSP,  80, XMM11);
+	MOVDQA3(fp, RSP,  96, XMM12);
+	MOVDQA3(fp, RSP, 112, XMM13);
+	MOVDQA3(fp, RSP, 128, XMM14);
+	MOVDQA3(fp, RSP, 144, XMM15);
+#else
+    PUSH(fp, RBP);
+    PUSH(fp, RBX);
+    PUSH(fp, R10);
+    PUSH(fp, R11);
+    PUSH(fp, R12);
+    PUSH(fp, R13);
+    PUSH(fp, R14);
+    PUSH(fp, R15);
+#endif
+
+	return start;
+}
+
+static FFTS_INLINE void generate_epilogue(insns_t **fp)
+{
+#ifdef _M_AMD64
+    /* restore nonvolatile registers */
+	MOVDQA3(fp, XMM6,  RSP,   0);
+	MOVDQA3(fp, XMM7,  RSP,  16);
+	MOVDQA3(fp, XMM8,  RSP,  32);
+	MOVDQA3(fp, XMM9,  RSP,  48);
+	MOVDQA3(fp, XMM10, RSP,  64);
+	MOVDQA3(fp, XMM11, RSP,  80);
+	MOVDQA3(fp, XMM12, RSP,  96);
+	MOVDQA3(fp, XMM13, RSP, 112);
+	MOVDQA3(fp, XMM14, RSP, 128);
+	MOVDQA3(fp, XMM15, RSP, 144);
+
+	/* restore stack */
+	ADDI(fp, RSP, 168);
+
+    /* restore the last 3 registers from the shadow space */
+
+	/* mov rbx, [rsp + 8] */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x8B;
+    *(*fp)++ = 0x5C;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x08;
+
+    /* mov rsi, [rsp + 16] */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x8B;
+    *(*fp)++ = 0x74;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x10;
+
+    /* mov rdi, [rsp + 24] */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x8B;
+    *(*fp)++ = 0x7C;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x18;
+#else
+    POP(fp, R15);
+    POP(fp, R14);
+    POP(fp, R13);
+    POP(fp, R12);
+    POP(fp, R11);
+    POP(fp, R10);
+    POP(fp, RBX);
+    POP(fp, RBP);
+#endif
+
+    RET(fp);
 }
 
 #endif /* FFTS_CODEGEN_SSE_H */
