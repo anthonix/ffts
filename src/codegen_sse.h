@@ -130,6 +130,15 @@ static void IMM32(uint8_t **p, int32_t imm)
     }
 }
 
+static void IMM64(uint8_t **p, int64_t imm)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        *(*p)++ = (imm & (0xff << (8 * i))) >> (8 * i);
+    }
+}
+
 static void IMM32_NI(uint8_t *p, int32_t imm)
 {
     int i;
@@ -151,14 +160,29 @@ static int32_t READ_IMM32(uint8_t *p)
     return rval;
 }
 
-static void MOVI(uint8_t **p, uint8_t dst, uint32_t imm)
+static void MOVI(uint8_t **p, uint8_t dst, uint64_t imm)
 {
-    if (dst >= 8) {
-        *(*p)++ = 0x41;
+    if (dst >= 8 || imm > UINT32_MAX) {
+		uint8_t val = 0x40;
+		
+		if (dst >= 8) {
+			val |= 1;
+		}
+
+		if (imm > UINT32_MAX) {
+			val |= 8;
+		}
+
+        *(*p)++ = val;
     }
 
     *(*p)++ = 0xb8 | (dst & 0x7);
-    IMM32(p, imm);
+	
+	if (imm > UINT32_MAX) {
+		IMM64(p, imm);
+	} else {
+		IMM32(p, imm);
+	}
 }
 
 static void ADDRMODE(uint8_t **p, uint8_t reg, uint8_t rm, int32_t disp)
@@ -172,6 +196,78 @@ static void ADDRMODE(uint8_t **p, uint8_t reg, uint8_t rm, int32_t disp)
         *(*p)++ = 0x80 | (rm & 7) | ((reg & 7) << 3);
         IMM32(p, disp);
     }
+}
+
+static FFTS_INLINE void MOVAPS(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
+{
+	uint8_t r1 = (reg1 & 7);
+	uint8_t r2 = (reg2 & 7);
+	uint8_t	r;
+
+	if ((reg1 & 8) || (reg2 & 8)) {
+		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+	}
+
+	*(*p)++ = 0x0F;
+
+	if (is_store) {
+		*(*p)++ = 0x29;
+	} else {
+		*(*p)++ = 0x28;
+	}
+
+	r = r1 | (r2 << 3);
+
+ 	if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
+		assert(disp == 0);
+		*(*p)++ = 0xC0 | r;
+	} else {
+		assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
+
+		if (disp == 0 && r1 != 5) {
+			*(*p)++ = r;
+
+			if (r1 == 4) {
+				*(*p)++ = 0x24;
+			}
+		} else {
+			if (disp <= 127 && disp >= -128) {
+				*(*p)++ = 0x40 | r;
+
+				if (r1 == 4) {
+					*(*p)++ = 0x24;
+				}
+
+				IMM8(p, disp);
+			} else {
+				*(*p)++ = 0x80 | r;
+
+				if (r1 == 4) {
+					*(*p)++ = 0x24;
+				}
+
+				IMM32(p, disp);
+			}
+		}
+	}
+}
+
+static FFTS_INLINE void MOVAPS2(uint8_t **p, uint8_t reg1, uint8_t reg2)
+{
+	if (reg1 & XMM_REG) {
+		MOVAPS(p, reg2, reg1, 0, 0);
+	} else {
+		MOVAPS(p, reg1, reg2, 0, 1);
+	}
+}
+
+static FFTS_INLINE void MOVAPS3(uint8_t **p, uint8_t reg1, int32_t op2, int32_t op3)
+{
+	if (reg1 & XMM_REG) {
+		MOVAPS(p, (uint8_t) op2, reg1, op3, 0);
+	} else {
+		MOVAPS(p, reg1, (uint8_t) op3, op2, 1);
+	}
 }
 
 static FFTS_INLINE void MOVDQA(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
@@ -347,6 +443,58 @@ static void SHIFT(uint8_t **p, uint8_t reg, int shift)
     }
 }
 
+static FFTS_INLINE void MOV(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
+{
+	uint8_t r1 = (reg1 & 7);
+	uint8_t r2 = (reg2 & 7);
+
+	if ((reg1 & 8) || (reg2 & 8)) {
+		*(*p)++ = 0x49;
+	} else {
+		*(*p)++ = 0x48;
+	}
+
+	if (is_store) {
+		*(*p)++ = 0x89;
+	} else {
+		*(*p)++ = 0x8B;
+	}
+
+	 if (disp == 0) {
+        *(*p)++ = r2 | (r1 << 3);
+
+		if (r2 == 4) {
+			*(*p)++ = 0x24;
+		}
+    } else if (disp <= 127 && disp >= -128) {
+        *(*p)++ = 0x40 | r2 | (r1 << 3);
+
+		if (r2 == 4) {
+			*(*p)++ = 0x24;
+		}
+
+		IMM8(p, disp);
+    } else {
+        *(*p)++ = 0x80 | r2 | (r1 << 3) | (r1 << 11);
+
+		if (r2 == 4) {
+			*(*p)++ = 0x24;
+		}
+
+		IMM32(p, disp);
+    }
+}
+
+static FFTS_INLINE void XOR2(uint8_t **p, uint8_t reg1, uint8_t reg2)
+{
+	if ((reg1 & 8) || (reg2 & 8)) {
+		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+	}
+
+	*(*p)++ = 0x31;
+	*(*p)++ = 0xC0 | (reg2 & 7) | ((reg1 & 7) << 3);
+}
+
 static FFTS_INLINE void ffts_insert_nops(uint8_t **p, uint32_t count)
 {
     if (count >= 9) {
@@ -484,31 +632,14 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
     /* save nonvolatile registers */
 #ifdef _M_X64
     /* use the shadow space to save first 3 registers */
+    MOV(fp, RBX, RSP,  8, 1);
+	MOV(fp, RSI, RSP, 16, 1);
+	MOV(fp, RDI, RSP, 24, 1);
 
-    /* mov [rsp + 8], rbx */
-    *(*fp)++ = 0x48;
-    *(*fp)++ = 0x89;
-    *(*fp)++ = 0x5C;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x08;
-
-    /* mov [rsp + 16], rsi */
-    *(*fp)++ = 0x48;
-    *(*fp)++ = 0x89;
-    *(*fp)++ = 0x74;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x10;
-
-    /* mov [rsp + 24], rdi */
-    *(*fp)++ = 0x48;
-    *(*fp)++ = 0x89;
-    *(*fp)++ = 0x7C;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x18;
-
-    /* reserve space to save XMM6-XMM15 registers */
+    /* reserve space.. */
 	SUBI(fp, RSP, 168);
 
+	/* to save XMM6-XMM15 registers */
 	MOVDQA3(fp, RSP,   0,  XMM6);
 	MOVDQA3(fp, RSP,  16,  XMM7);
 	MOVDQA3(fp, RSP,  32,  XMM8);
@@ -552,27 +683,9 @@ static FFTS_INLINE void generate_epilogue(insns_t **fp)
 	ADDI(fp, RSP, 168);
 
     /* restore the last 3 registers from the shadow space */
-
-	/* mov rbx, [rsp + 8] */
-    *(*fp)++ = 0x48;
-    *(*fp)++ = 0x8B;
-    *(*fp)++ = 0x5C;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x08;
-
-    /* mov rsi, [rsp + 16] */
-    *(*fp)++ = 0x48;
-    *(*fp)++ = 0x8B;
-    *(*fp)++ = 0x74;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x10;
-
-    /* mov rdi, [rsp + 24] */
-    *(*fp)++ = 0x48;
-    *(*fp)++ = 0x8B;
-    *(*fp)++ = 0x7C;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x18;
+	MOV(fp, RBX, RSP,  8, 0);
+	MOV(fp, RSI, RSP, 16, 0);
+	MOV(fp, RDI, RSP, 24, 0);
 #else
     POP(fp, R15);
     POP(fp, R14);

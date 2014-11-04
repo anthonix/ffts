@@ -53,13 +53,13 @@ _leaf_ee_init:
 leaf_ee_init:
 #endif
 
+# rax is loop counter (init to 0)
 # rcx is a pointer to the ffts_plan
-# eax is loop counter (init to 0)
-# rbx is loop max count
 # rdx is 'in' base pointer
-# r8  is 'out' base pointer
-# rdi is offsets pointer
+# rbx is loop max count
 # rsi is constants pointer
+# rdi is offsets pointer
+# r8  is 'out' base pointer
 # scratch: rax r10 r11
 
         xorl %eax, %eax

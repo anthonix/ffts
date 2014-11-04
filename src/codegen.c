@@ -203,16 +203,27 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 #else
     //fprintf(stderr, "Body start address = %016p\n", start);
 
+#ifdef _M_X64
+	/* generate function */
+
+	/* clear */
+	XOR2(&fp, EAX, EAX);
+	
+	/* set "pointer" to offsets */
+	MOV(&fp, RDI, RCX, 0, 0);
+
+	/* set "pointer" to constants */
+	MOV(&fp, RSI, RCX, 0xE0, 0);
+
+	/* align loop/jump destination */
+    ffts_align_mem16(&fp, 8);
+#else
     /* copy function */
     assert((char*) leaf_ee > (char*) leaf_ee_init);
     len = (char*) leaf_ee - (char*) leaf_ee_init;
     memcpy(fp, leaf_ee_init, (size_t) len);
     fp += len;
 
-    /* align loop/jump destination */
-#ifdef _M_X64
-    ffts_align_mem16(&fp, 8);
-#else
     ffts_align_mem16(&fp, 9);
 #endif
 
@@ -332,10 +343,19 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         fp += len;
     }
 
+#ifdef _M_X64
+	/* generate function */
+	MOVAPS2(&fp, XMM3, RSI);
+
+	/* set "pointer" to twiddle factors */
+	MOV(&fp, RDI, RCX, 0x20, 0);
+#else
+	/* copy function */
 	assert((char*) x4 > (char*) x_init);
     len = (char*) x4 - (char*) x_init;
     memcpy(fp, x_init, len);
     fp += len;
+#endif
 
 	/* generate subtransform calls */
     count = 2;
