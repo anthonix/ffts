@@ -107,6 +107,52 @@ extern const uint32_t sse_leaf_oe_offsets[8];
 
 #define P(x) (*(*p)++ = x)
 
+/* forward declarations */
+static void IMM8(uint8_t **p, int32_t imm);
+static void IMM32(uint8_t **p, int32_t imm);
+
+static void ADDI(uint8_t **p, uint8_t dst, int32_t imm)
+{
+    if (dst >= 8) {
+        *(*p)++ = 0x49;
+    } else {
+        *(*p)++ = 0x48;
+    }
+
+    if (imm > 127 || imm <= -128) {
+        *(*p)++ = 0x81;
+    } else {
+        *(*p)++ = 0x83;
+    }
+
+    *(*p)++ = 0xc0 | (dst & 0x7);
+
+    if (imm > 127 || imm <= -128) {
+        IMM32(p, imm);
+    } else {
+        IMM8(p, imm);
+    }
+}
+
+static void ADDRMODE(uint8_t **p, uint8_t reg, uint8_t rm, int32_t disp)
+{
+    if (disp == 0) {
+        *(*p)++ = (rm & 7) | ((reg & 7) << 3);
+    } else if (disp <= 127 || disp >= -128) {
+        *(*p)++ = 0x40 | (rm & 7) | ((reg & 7) << 3);
+        IMM8(p, disp);
+    } else {
+        *(*p)++ = 0x80 | (rm & 7) | ((reg & 7) << 3);
+        IMM32(p, disp);
+    }
+}
+
+static void CALL(uint8_t **p, uint8_t *func)
+{
+    *(*p)++ = 0xe8;
+    IMM32(p, func - *p - 4);
+}
+
 static void IMM8(uint8_t **p, int32_t imm)
 {
     *(*p)++ = (imm & 0xff);
@@ -148,53 +194,52 @@ static void IMM32_NI(uint8_t *p, int32_t imm)
     }
 }
 
-static int32_t READ_IMM32(uint8_t *p)
+static void LEA(uint8_t **p, uint8_t dst, uint8_t base, int32_t disp)
 {
-    int32_t rval = 0;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-        rval |= *(p+i) << (8 * i);
-    }
-
-    return rval;
+    *(*p)++ = 0x48 | ((base & 0x8) >> 3) | ((dst & 0x8) >> 1);
+    *(*p)++ = 0x8d;
+    ADDRMODE(p, dst, base, disp);
 }
 
-static void MOVI(uint8_t **p, uint8_t dst, uint64_t imm)
+static FFTS_INLINE void MOV(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
 {
-    if (dst >= 8 || imm > UINT32_MAX) {
-		uint8_t val = 0x40;
-		
-		if (dst >= 8) {
-			val |= 1;
-		}
+	uint8_t r1 = (reg1 & 7);
+	uint8_t r2 = (reg2 & 7);
 
-		if (imm > UINT32_MAX) {
-			val |= 8;
-		}
-
-        *(*p)++ = val;
-    }
-
-    *(*p)++ = 0xb8 | (dst & 0x7);
-	
-	if (imm > UINT32_MAX) {
-		IMM64(p, imm);
+	if ((reg1 & 8) || (reg2 & 8)) {
+		*(*p)++ = 0x49;
 	} else {
-		IMM32(p, imm);
+		*(*p)++ = 0x48;
 	}
-}
 
-static void ADDRMODE(uint8_t **p, uint8_t reg, uint8_t rm, int32_t disp)
-{
-    if (disp == 0) {
-        *(*p)++ = (rm & 7) | ((reg & 7) << 3);
-    } else if (disp <= 127 || disp >= -128) {
-        *(*p)++ = 0x40 | (rm & 7) | ((reg & 7) << 3);
-        IMM8(p, disp);
+	if (is_store) {
+		*(*p)++ = 0x89;
+	} else {
+		*(*p)++ = 0x8B;
+	}
+
+	 if (disp == 0) {
+        *(*p)++ = r2 | (r1 << 3);
+
+		if (r2 == 4) {
+			*(*p)++ = 0x24;
+		}
+    } else if (disp <= 127 && disp >= -128) {
+        *(*p)++ = 0x40 | r2 | (r1 << 3);
+
+		if (r2 == 4) {
+			*(*p)++ = 0x24;
+		}
+
+		IMM8(p, disp);
     } else {
-        *(*p)++ = 0x80 | (rm & 7) | ((reg & 7) << 3);
-        IMM32(p, disp);
+        *(*p)++ = 0x80 | r2 | (r1 << 3) | (r1 << 11);
+
+		if (r2 == 4) {
+			*(*p)++ = 0x24;
+		}
+
+		IMM32(p, disp);
     }
 }
 
@@ -204,12 +249,15 @@ static FFTS_INLINE void MOVAPS(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t 
 	uint8_t r2 = (reg2 & 7);
 	uint8_t	r;
 
+	/* REX prefix */
 	if ((reg1 & 8) || (reg2 & 8)) {
 		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
 	}
 
+	/* esacape opcode */
 	*(*p)++ = 0x0F;
 
+	/* opcode */
 	if (is_store) {
 		*(*p)++ = 0x29;
 	} else {
@@ -276,14 +324,18 @@ static FFTS_INLINE void MOVDQA(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t 
 	uint8_t r2 = (reg2 & 7);
 	uint8_t	r;
 
+	/* mandatory prefix */
 	*(*p)++ = 0x66;
 
+	/* REX prefix */
 	if ((reg1 & 8) || (reg2 & 8)) {
 		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
 	}
 
+	/* esacape opcode */
 	*(*p)++ = 0x0F;
 
+	/* opcode */
 	if (is_store) {
 		*(*p)++ = 0x7F;
 	} else {
@@ -344,11 +396,132 @@ static FFTS_INLINE void MOVDQA3(uint8_t **p, uint8_t reg1, int32_t op2, int32_t 
 	}
 }
 
-static void LEA(uint8_t **p, uint8_t dst, uint8_t base, int32_t disp)
+static void MOVI(uint8_t **p, uint8_t dst, uint64_t imm)
 {
-    *(*p)++ = 0x48 | ((base & 0x8) >> 3) | ((dst & 0x8) >> 1);
-    *(*p)++ = 0x8d;
-    ADDRMODE(p, dst, base, disp);
+	/* REX prefix */
+    if (dst >= 8 || imm > UINT32_MAX) {
+		uint8_t val = 0x40;
+		
+		if (dst >= 8) {
+			val |= 1;
+		}
+
+		if (imm > UINT32_MAX) {
+			val |= 8;
+		}
+
+        *(*p)++ = val;
+    }
+
+	/* opcode */
+    *(*p)++ = 0xb8 | (dst & 0x7);
+	
+	if (imm > UINT32_MAX) {
+		IMM64(p, imm);
+	} else {
+		IMM32(p, imm);
+	}
+}
+
+static FFTS_INLINE void MULPS(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
+{
+	uint8_t r1 = (reg1 & 7);
+	uint8_t r2 = (reg2 & 7);
+	uint8_t	r;
+
+	/* REX prefix */
+	if ((reg1 & 8) || (reg2 & 8)) {
+		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+	}
+
+	/* esacape opcode */
+	*(*p)++ = 0x0F;
+	
+	/* opcode */
+	*(*p)++ = 0x59;
+	
+	r = r1 | (r2 << 3);
+
+ 	if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
+		assert(disp == 0);
+		*(*p)++ = 0xC0 | r;
+	} else {
+		assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
+
+		if (disp == 0 && r1 != 5) {
+			*(*p)++ = r;
+
+			if (r1 == 4) {
+				*(*p)++ = 0x24;
+			}
+		} else {
+			if (disp <= 127 && disp >= -128) {
+				*(*p)++ = 0x40 | r;
+
+				if (r1 == 4) {
+					*(*p)++ = 0x24;
+				}
+
+				IMM8(p, disp);
+			} else {
+				*(*p)++ = 0x80 | r;
+
+				if (r1 == 4) {
+					*(*p)++ = 0x24;
+				}
+
+				IMM32(p, disp);
+			}
+		}
+	}
+}
+
+static FFTS_INLINE void MULPS2(uint8_t **p, uint8_t reg1, uint8_t reg2)
+{
+	if (reg1 & XMM_REG) {
+		MULPS(p, reg2, reg1, 0, 0);
+	} else {
+		MULPS(p, reg1, reg2, 0, 1);
+	}
+}
+
+static FFTS_INLINE void MULPS3(uint8_t **p, uint8_t reg1, int32_t op2, int32_t op3)
+{
+	if (reg1 & XMM_REG) {
+		MULPS(p, (uint8_t) op2, reg1, op3, 0);
+	} else {
+		MULPS(p, reg1, (uint8_t) op3, op2, 1);
+	}
+}
+
+static void POP(uint8_t **p, uint8_t reg)
+{
+    if (reg >= 8) {
+        *(*p)++ = 0x41;
+    }
+
+    *(*p)++ = 0x58 | (reg & 7);
+}
+
+static void PUSH(uint8_t **p, uint8_t reg)
+{
+    if (reg >= 8) {
+        *(*p)++ = 0x41;
+    }
+
+    *(*p)++ = 0x50 | (reg & 7);
+}
+
+static int32_t READ_IMM32(uint8_t *p)
+{
+    int32_t rval = 0;
+    int i;
+
+    for (i = 0; i < 4; i++) {
+        rval |= *(p+i) << (8 * i);
+    }
+
+    return rval;
 }
 
 static void RET(uint8_t **p)
@@ -356,26 +529,20 @@ static void RET(uint8_t **p)
     *(*p)++ = 0xc3;
 }
 
-static void ADDI(uint8_t **p, uint8_t dst, int32_t imm)
+static void SHIFT(uint8_t **p, uint8_t reg, int shift)
 {
-    if (dst >= 8) {
+    if (reg >= 8) {
         *(*p)++ = 0x49;
-    } else {
-        *(*p)++ = 0x48;
     }
 
-    if (imm > 127 || imm <= -128) {
-        *(*p)++ = 0x81;
-    } else {
-        *(*p)++ = 0x83;
-    }
 
-    *(*p)++ = 0xc0 | (dst & 0x7);
-
-    if (imm > 127 || imm <= -128) {
-        IMM32(p, imm);
+    *(*p)++ = 0xc1;
+    if (shift > 0) {
+        *(*p)++ = 0xe0 | (reg & 7);
+        *(*p)++ = (shift & 0xff);
     } else {
-        IMM8(p, imm);
+        *(*p)++ = 0xe8 | (reg & 7);
+        *(*p)++ = ((-shift) & 0xff);
     }
 }
 
@@ -399,89 +566,6 @@ static void SUBI(uint8_t **p, uint8_t dst, int32_t imm)
         IMM32(p, imm);
     } else {
         IMM8(p, imm);
-    }
-}
-
-static void CALL(uint8_t **p, uint8_t *func)
-{
-    *(*p)++ = 0xe8;
-    IMM32(p, func - *p - 4);
-}
-
-static void PUSH(uint8_t **p, uint8_t reg)
-{
-    if (reg >= 8) {
-        *(*p)++ = 0x41;
-    }
-
-    *(*p)++ = 0x50 | (reg & 7);
-}
-
-static void POP(uint8_t **p, uint8_t reg)
-{
-    if (reg >= 8) {
-        *(*p)++ = 0x41;
-    }
-
-    *(*p)++ = 0x58 | (reg & 7);
-}
-
-static void SHIFT(uint8_t **p, uint8_t reg, int shift)
-{
-    if (reg >= 8) {
-        *(*p)++ = 0x49;
-    }
-
-
-    *(*p)++ = 0xc1;
-    if (shift > 0) {
-        *(*p)++ = 0xe0 | (reg & 7);
-        *(*p)++ = (shift & 0xff);
-    } else {
-        *(*p)++ = 0xe8 | (reg & 7);
-        *(*p)++ = ((-shift) & 0xff);
-    }
-}
-
-static FFTS_INLINE void MOV(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
-{
-	uint8_t r1 = (reg1 & 7);
-	uint8_t r2 = (reg2 & 7);
-
-	if ((reg1 & 8) || (reg2 & 8)) {
-		*(*p)++ = 0x49;
-	} else {
-		*(*p)++ = 0x48;
-	}
-
-	if (is_store) {
-		*(*p)++ = 0x89;
-	} else {
-		*(*p)++ = 0x8B;
-	}
-
-	 if (disp == 0) {
-        *(*p)++ = r2 | (r1 << 3);
-
-		if (r2 == 4) {
-			*(*p)++ = 0x24;
-		}
-    } else if (disp <= 127 && disp >= -128) {
-        *(*p)++ = 0x40 | r2 | (r1 << 3);
-
-		if (r2 == 4) {
-			*(*p)++ = 0x24;
-		}
-
-		IMM8(p, disp);
-    } else {
-        *(*p)++ = 0x80 | r2 | (r1 << 3) | (r1 << 11);
-
-		if (r2 == 4) {
-			*(*p)++ = 0x24;
-		}
-
-		IMM32(p, disp);
     }
 }
 
