@@ -144,21 +144,21 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
     fp = (insns_t*) p->transform_base;
 
-	/* generate base cases */
-	x_4_addr = generate_size4_base_case(&fp, sign);
-	x_8_addr = generate_size8_base_case(&fp, sign);
+    /* generate base cases */
+    x_4_addr = generate_size4_base_case(&fp, sign);
+    x_8_addr = generate_size8_base_case(&fp, sign);
 
 #ifdef __arm__
-	start = generate_prologue(&fp, p);
+    start = generate_prologue(&fp, p);
 #else
-	start = generate_prologue(&fp, p);
+    start = generate_prologue(&fp, p);
 
     /* assign loop counter register */
     loop_count = 4 * p->i0;
 #ifdef _M_X64
-    MOVI(&fp, EBX, loop_count);
+    MOV_I(&fp, EBX, loop_count);
 #else
-    MOVI(&fp, ECX, loop_count);
+    MOV_I(&fp, ECX, loop_count);
 #endif
 #endif
 
@@ -204,18 +204,18 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     //fprintf(stderr, "Body start address = %016p\n", start);
 
 #ifdef _M_X64
-	/* generate function */
+    /* generate function */
 
-	/* clear */
-	XOR2(&fp, EAX, EAX);
-	
-	/* set "pointer" to offsets */
-	MOV(&fp, RDI, RCX, 0, 0);
+    /* clear */
+    XOR2(&fp, EAX, EAX);
 
-	/* set "pointer" to constants */
-	MOV(&fp, RSI, RCX, 0xE0, 0);
+    /* set "pointer" to offsets */
+    MOV_D(&fp, RDI, RCX, 0, 0);
 
-	/* align loop/jump destination */
+    /* set "pointer" to constants */
+    MOV_D(&fp, RSI, RCX, 0xE0, 0);
+
+    /* align loop/jump destination */
     ffts_align_mem16(&fp, 8);
 #else
     /* copy function */
@@ -245,10 +245,10 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
             /* align loop/jump destination */
 #ifdef _M_X64
-            MOVI(&fp, EBX, loop_count);
+            MOV_I(&fp, EBX, loop_count);
             ffts_align_mem16(&fp, 3);
 #else
-            MOVI(&fp, ECX, loop_count);
+            MOV_I(&fp, ECX, loop_count);
             ffts_align_mem16(&fp, 4);
 #endif
 
@@ -298,10 +298,10 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
             /* align loop/jump destination */
 #ifdef _M_X64
-            MOVI(&fp, EBX, loop_count);
+            MOV_I(&fp, EBX, loop_count);
             ffts_align_mem16(&fp, 3);
 #else
-            MOVI(&fp, ECX, loop_count);
+            MOV_I(&fp, ECX, loop_count);
             ffts_align_mem16(&fp, 4);
 #endif
 
@@ -325,10 +325,10 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
         /* align loop/jump destination */
 #ifdef _M_X64
-        MOVI(&fp, EBX, loop_count);
+        MOV_I(&fp, EBX, loop_count);
         ffts_align_mem16(&fp, 8);
 #else
-        MOVI(&fp, ECX, loop_count);
+        MOV_I(&fp, ECX, loop_count);
         ffts_align_mem16(&fp, 9);
 #endif
 
@@ -343,38 +343,26 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         fp += len;
     }
 
-#ifdef _M_X64
-	/* generate function */
-	MOVAPS2(&fp, XMM3, RSI);
+    generate_transform_init(&fp);
 
-	/* set "pointer" to twiddle factors */
-	MOV(&fp, RDI, RCX, 0x20, 0);
-#else
-	/* copy function */
-	assert((char*) x4 > (char*) x_init);
-    len = (char*) x4 - (char*) x_init;
-    memcpy(fp, x_init, len);
-    fp += len;
-#endif
-
-	/* generate subtransform calls */
+    /* generate subtransform calls */
     count = 2;
     while (pps[0]) {
         size_t ws_is;
 
         if (!pN) {
 #ifdef _M_X64
-            MOVI(&fp, EBX, pps[0]);
+            MOV_I(&fp, EBX, pps[0]);
 #else
-            MOVI(&fp, ECX, pps[0] / 4);
+            MOV_I(&fp, ECX, pps[0] / 4);
 #endif
         } else {
             int offset = (4 * pps[1]) - pAddr;
             if (offset) {
 #ifdef _M_X64
-                ADDI(&fp, R8, offset);
+                ADD_I(&fp, R8, offset);
 #else
-                ADDI(&fp, RDX, offset);
+                ADD_I(&fp, RDX, offset);
 #endif
             }
 
@@ -394,9 +382,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             int offset = (int) (ws_is - pLUT);
 
 #ifdef _M_X64
-            ADDI(&fp, RDI, offset);
+            ADD_I(&fp, RDI, offset);
 #else
-            ADDI(&fp, R8, offset);
+            ADD_I(&fp, R8, offset);
 #endif
         }
 
@@ -701,7 +689,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     *fp++ = POP_LR();
     count++;
 #else
-	generate_epilogue(&fp);
+    generate_epilogue(&fp);
 #endif
 
     //	*fp++ = B(14); count++;

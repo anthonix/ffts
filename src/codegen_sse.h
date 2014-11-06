@@ -35,6 +35,7 @@
 #define FFTS_CODEGEN_SSE_H
 
 #include <assert.h>
+#include <string.h>
 
 void neon_x4(float *, size_t, float *);
 void neon_x8(float *, size_t, float *);
@@ -90,8 +91,8 @@ extern const uint32_t sse_leaf_oe_offsets[8];
 
 #define XMM0  (XMM_REG | 0x0)
 #define XMM1  (XMM_REG | 0x1)
-#define XMM2  (XMM_REG | 0x2) 
-#define XMM3  (XMM_REG | 0x3) 
+#define XMM2  (XMM_REG | 0x2)
+#define XMM3  (XMM_REG | 0x3)
 #define XMM4  (XMM_REG | 0x4)
 #define XMM5  (XMM_REG | 0x5)
 #define XMM6  (XMM_REG | 0x6)
@@ -111,7 +112,26 @@ extern const uint32_t sse_leaf_oe_offsets[8];
 static void IMM8(uint8_t **p, int32_t imm);
 static void IMM32(uint8_t **p, int32_t imm);
 
-static void ADDI(uint8_t **p, uint8_t dst, int32_t imm)
+static FFTS_INLINE void ADDPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
+{
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
+
+    /* REX prefix */
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+    }
+
+    /* esacape opcode */
+    *(*p)++ = 0x0F;
+
+    /* opcode */
+    *(*p)++ = 0x58;
+    *(*p)++ = 0xC0 | r1 | (r2 << 3);
+}
+
+/* Immediate */
+static void ADD_I(uint8_t **p, uint8_t dst, int32_t imm)
 {
     if (dst >= 8) {
         *(*p)++ = 0x49;
@@ -201,297 +221,268 @@ static void LEA(uint8_t **p, uint8_t dst, uint8_t base, int32_t disp)
     ADDRMODE(p, dst, base, disp);
 }
 
-static FFTS_INLINE void MOV(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
-{
-	uint8_t r1 = (reg1 & 7);
-	uint8_t r2 = (reg2 & 7);
-
-	if ((reg1 & 8) || (reg2 & 8)) {
-		*(*p)++ = 0x49;
-	} else {
-		*(*p)++ = 0x48;
-	}
-
-	if (is_store) {
-		*(*p)++ = 0x89;
-	} else {
-		*(*p)++ = 0x8B;
-	}
-
-	 if (disp == 0) {
-        *(*p)++ = r2 | (r1 << 3);
-
-		if (r2 == 4) {
-			*(*p)++ = 0x24;
-		}
-    } else if (disp <= 127 && disp >= -128) {
-        *(*p)++ = 0x40 | r2 | (r1 << 3);
-
-		if (r2 == 4) {
-			*(*p)++ = 0x24;
-		}
-
-		IMM8(p, disp);
-    } else {
-        *(*p)++ = 0x80 | r2 | (r1 << 3) | (r1 << 11);
-
-		if (r2 == 4) {
-			*(*p)++ = 0x24;
-		}
-
-		IMM32(p, disp);
-    }
-}
-
 static FFTS_INLINE void MOVAPS(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
 {
-	uint8_t r1 = (reg1 & 7);
-	uint8_t r2 = (reg2 & 7);
-	uint8_t	r;
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
+    uint8_t	r;
 
-	/* REX prefix */
-	if ((reg1 & 8) || (reg2 & 8)) {
-		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
-	}
+    /* REX prefix */
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+    }
 
-	/* esacape opcode */
-	*(*p)++ = 0x0F;
+    /* esacape opcode */
+    *(*p)++ = 0x0F;
 
-	/* opcode */
-	if (is_store) {
-		*(*p)++ = 0x29;
-	} else {
-		*(*p)++ = 0x28;
-	}
+    /* opcode */
+    if (is_store) {
+        *(*p)++ = 0x29;
+    } else {
+        *(*p)++ = 0x28;
+    }
 
-	r = r1 | (r2 << 3);
+    r = r1 | (r2 << 3);
 
- 	if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
-		assert(disp == 0);
-		*(*p)++ = 0xC0 | r;
-	} else {
-		assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
+    if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
+        assert(disp == 0);
+        *(*p)++ = 0xC0 | r;
+    } else {
+        assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
 
-		if (disp == 0 && r1 != 5) {
-			*(*p)++ = r;
+        if (disp == 0 && r1 != 5) {
+            *(*p)++ = r;
 
-			if (r1 == 4) {
-				*(*p)++ = 0x24;
-			}
-		} else {
-			if (disp <= 127 && disp >= -128) {
-				*(*p)++ = 0x40 | r;
+            if (r1 == 4) {
+                *(*p)++ = 0x24;
+            }
+        } else {
+            if (disp <= 127 && disp >= -128) {
+                *(*p)++ = 0x40 | r;
 
-				if (r1 == 4) {
-					*(*p)++ = 0x24;
-				}
+                if (r1 == 4) {
+                    *(*p)++ = 0x24;
+                }
 
-				IMM8(p, disp);
-			} else {
-				*(*p)++ = 0x80 | r;
+                IMM8(p, disp);
+            } else {
+                *(*p)++ = 0x80 | r;
 
-				if (r1 == 4) {
-					*(*p)++ = 0x24;
-				}
+                if (r1 == 4) {
+                    *(*p)++ = 0x24;
+                }
 
-				IMM32(p, disp);
-			}
-		}
-	}
+                IMM32(p, disp);
+            }
+        }
+    }
 }
 
 static FFTS_INLINE void MOVAPS2(uint8_t **p, uint8_t reg1, uint8_t reg2)
 {
-	if (reg1 & XMM_REG) {
-		MOVAPS(p, reg2, reg1, 0, 0);
-	} else {
-		MOVAPS(p, reg1, reg2, 0, 1);
-	}
+    if (reg1 & XMM_REG) {
+        MOVAPS(p, reg2, reg1, 0, 0);
+    } else {
+        MOVAPS(p, reg1, reg2, 0, 1);
+    }
 }
 
 static FFTS_INLINE void MOVAPS3(uint8_t **p, uint8_t reg1, int32_t op2, int32_t op3)
 {
-	if (reg1 & XMM_REG) {
-		MOVAPS(p, (uint8_t) op2, reg1, op3, 0);
-	} else {
-		MOVAPS(p, reg1, (uint8_t) op3, op2, 1);
-	}
+    if (reg1 & XMM_REG) {
+        MOVAPS(p, (uint8_t) op2, reg1, op3, 0);
+    } else {
+        MOVAPS(p, reg1, (uint8_t) op3, op2, 1);
+    }
 }
 
 static FFTS_INLINE void MOVDQA(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
 {
-	uint8_t r1 = (reg1 & 7);
-	uint8_t r2 = (reg2 & 7);
-	uint8_t	r;
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
+    uint8_t	r;
 
-	/* mandatory prefix */
-	*(*p)++ = 0x66;
+    /* mandatory prefix */
+    *(*p)++ = 0x66;
 
-	/* REX prefix */
-	if ((reg1 & 8) || (reg2 & 8)) {
-		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
-	}
+    /* REX prefix */
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+    }
 
-	/* esacape opcode */
-	*(*p)++ = 0x0F;
+    /* esacape opcode */
+    *(*p)++ = 0x0F;
 
-	/* opcode */
-	if (is_store) {
-		*(*p)++ = 0x7F;
-	} else {
-		*(*p)++ = 0x6F;
-	}
+    /* opcode */
+    if (is_store) {
+        *(*p)++ = 0x7F;
+    } else {
+        *(*p)++ = 0x6F;
+    }
 
-	r = r1 | (r2 << 3);
+    r = r1 | (r2 << 3);
 
- 	if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
-		assert(disp == 0);
-		*(*p)++ = 0xC0 | r;
-	} else {
-		assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
+    if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
+        assert(disp == 0);
+        *(*p)++ = 0xC0 | r;
+    } else {
+        assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
 
-		if (disp == 0 && r1 != 5) {
-			*(*p)++ = r;
+        if (disp == 0 && r1 != 5) {
+            *(*p)++ = r;
 
-			if (r1 == 4) {
-				*(*p)++ = 0x24;
-			}
-		} else {
-			if (disp <= 127 && disp >= -128) {
-				*(*p)++ = 0x40 | r;
+            if (r1 == 4) {
+                *(*p)++ = 0x24;
+            }
+        } else {
+            if (disp <= 127 && disp >= -128) {
+                *(*p)++ = 0x40 | r;
 
-				if (r1 == 4) {
-					*(*p)++ = 0x24;
-				}
+                if (r1 == 4) {
+                    *(*p)++ = 0x24;
+                }
 
-				IMM8(p, disp);
-			} else {
-				*(*p)++ = 0x80 | r;
+                IMM8(p, disp);
+            } else {
+                *(*p)++ = 0x80 | r;
 
-				if (r1 == 4) {
-					*(*p)++ = 0x24;
-				}
+                if (r1 == 4) {
+                    *(*p)++ = 0x24;
+                }
 
-				IMM32(p, disp);
-			}
-		}
-	}
+                IMM32(p, disp);
+            }
+        }
+    }
 }
 
 static FFTS_INLINE void MOVDQA2(uint8_t **p, uint8_t reg1, uint8_t reg2)
 {
-	if (reg1 & XMM_REG) {
-		MOVDQA(p, reg2, reg1, 0, 0);
-	} else {
-		MOVDQA(p, reg1, reg2, 0, 1);
-	}
+    if (reg1 & XMM_REG) {
+        MOVDQA(p, reg2, reg1, 0, 0);
+    } else {
+        MOVDQA(p, reg1, reg2, 0, 1);
+    }
 }
 
 static FFTS_INLINE void MOVDQA3(uint8_t **p, uint8_t reg1, int32_t op2, int32_t op3)
 {
-	if (reg1 & XMM_REG) {
-		MOVDQA(p, (uint8_t) op2, reg1, op3, 0);
-	} else {
-		MOVDQA(p, reg1, (uint8_t) op3, op2, 1);
-	}
+    if (reg1 & XMM_REG) {
+        MOVDQA(p, (uint8_t) op2, reg1, op3, 0);
+    } else {
+        MOVDQA(p, reg1, (uint8_t) op3, op2, 1);
+    }
 }
 
-static void MOVI(uint8_t **p, uint8_t dst, uint64_t imm)
+static FFTS_INLINE void MOV_D(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
 {
-	/* REX prefix */
-    if (dst >= 8 || imm > UINT32_MAX) {
-		uint8_t val = 0x40;
-		
-		if (dst >= 8) {
-			val |= 1;
-		}
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
 
-		if (imm > UINT32_MAX) {
-			val |= 8;
-		}
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x49;
+    } else {
+        *(*p)++ = 0x48;
+    }
+
+    if (is_store) {
+        *(*p)++ = 0x89;
+    } else {
+        *(*p)++ = 0x8B;
+    }
+
+    if (disp == 0) {
+        *(*p)++ = r2 | (r1 << 3);
+
+        if (r2 == 4) {
+            *(*p)++ = 0x24;
+        }
+    } else if (disp <= 127 && disp >= -128) {
+        *(*p)++ = 0x40 | r2 | (r1 << 3);
+
+        if (r2 == 4) {
+            *(*p)++ = 0x24;
+        }
+
+        IMM8(p, disp);
+    } else {
+        *(*p)++ = 0x80 | r2 | (r1 << 3) | (r1 << 11);
+
+        if (r2 == 4) {
+            *(*p)++ = 0x24;
+        }
+
+        IMM32(p, disp);
+    }
+}
+
+static void MOV_I(uint8_t **p, uint8_t dst, uint64_t imm)
+{
+    /* REX prefix */
+    if (dst >= 8 || imm > UINT32_MAX) {
+        uint8_t val = 0x40;
+
+        if (dst >= 8) {
+            val |= 1;
+        }
+
+        if (imm > UINT32_MAX) {
+            val |= 8;
+        }
 
         *(*p)++ = val;
     }
 
-	/* opcode */
+    /* opcode */
     *(*p)++ = 0xb8 | (dst & 0x7);
-	
-	if (imm > UINT32_MAX) {
-		IMM64(p, imm);
-	} else {
-		IMM32(p, imm);
-	}
+
+    if (imm > UINT32_MAX) {
+        IMM64(p, imm);
+    } else {
+        IMM32(p, imm);
+    }
 }
 
-static FFTS_INLINE void MULPS(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
+static FFTS_INLINE void MOV_R(uint8_t **p, uint8_t reg1, uint8_t reg2, int is_store)
 {
-	uint8_t r1 = (reg1 & 7);
-	uint8_t r2 = (reg2 & 7);
-	uint8_t	r;
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
 
-	/* REX prefix */
-	if ((reg1 & 8) || (reg2 & 8)) {
-		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
-	}
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x48 | ((reg2 & 8) >> 3) | ((reg1 & 8) >> 1);
+    } else {
+        *(*p)++ = 0x48;
+    }
 
-	/* esacape opcode */
-	*(*p)++ = 0x0F;
-	
-	/* opcode */
-	*(*p)++ = 0x59;
-	
-	r = r1 | (r2 << 3);
+    if (is_store) {
+        *(*p)++ = 0x89;
+    } else {
+        *(*p)++ = 0x8B;
+    }
 
- 	if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
-		assert(disp == 0);
-		*(*p)++ = 0xC0 | r;
-	} else {
-		assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
+    *(*p)++ = 0xC0 | r2 | (r1 << 3);
 
-		if (disp == 0 && r1 != 5) {
-			*(*p)++ = r;
-
-			if (r1 == 4) {
-				*(*p)++ = 0x24;
-			}
-		} else {
-			if (disp <= 127 && disp >= -128) {
-				*(*p)++ = 0x40 | r;
-
-				if (r1 == 4) {
-					*(*p)++ = 0x24;
-				}
-
-				IMM8(p, disp);
-			} else {
-				*(*p)++ = 0x80 | r;
-
-				if (r1 == 4) {
-					*(*p)++ = 0x24;
-				}
-
-				IMM32(p, disp);
-			}
-		}
-	}
+    if (r2 == 4) {
+        *(*p)++ = 0x24;
+    }
 }
 
-static FFTS_INLINE void MULPS2(uint8_t **p, uint8_t reg1, uint8_t reg2)
+static FFTS_INLINE void MULPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
 {
-	if (reg1 & XMM_REG) {
-		MULPS(p, reg2, reg1, 0, 0);
-	} else {
-		MULPS(p, reg1, reg2, 0, 1);
-	}
-}
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
 
-static FFTS_INLINE void MULPS3(uint8_t **p, uint8_t reg1, int32_t op2, int32_t op3)
-{
-	if (reg1 & XMM_REG) {
-		MULPS(p, (uint8_t) op2, reg1, op3, 0);
-	} else {
-		MULPS(p, reg1, (uint8_t) op3, op2, 1);
-	}
+    /* REX prefix */
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+    }
+
+    /* esacape opcode */
+    *(*p)++ = 0x0F;
+
+    /* opcode */
+    *(*p)++ = 0x59;
+    *(*p)++ = 0xC0 | r1 | (r2 << 3);
 }
 
 static void POP(uint8_t **p, uint8_t reg)
@@ -546,7 +537,48 @@ static void SHIFT(uint8_t **p, uint8_t reg, int shift)
     }
 }
 
-static void SUBI(uint8_t **p, uint8_t dst, int32_t imm)
+static FFTS_INLINE void SHUFPS(uint8_t **p, uint8_t reg2, uint8_t reg1, const int select)
+{
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
+    uint8_t	r;
+
+    /* REX prefix */
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+    }
+
+    /* esacape opcode */
+    *(*p)++ = 0x0F;
+
+    /* opcode */
+    *(*p)++ = 0xC6;
+
+    r = r1 | (r2 << 3);
+
+    *(*p)++ = 0xC0 | r;
+    *(*p)++ = (select & 0xFF);
+}
+
+static FFTS_INLINE void SUBPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
+{
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
+
+    /* REX prefix */
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+    }
+
+    /* esacape opcode */
+    *(*p)++ = 0x0F;
+
+    /* opcode */
+    *(*p)++ = 0x5C;
+    *(*p)++ = 0xC0 | r1 | (r2 << 3);
+}
+
+static void SUB_I(uint8_t **p, uint8_t dst, int32_t imm)
 {
     if (dst >= 8) {
         *(*p)++ = 0x49;
@@ -571,12 +603,34 @@ static void SUBI(uint8_t **p, uint8_t dst, int32_t imm)
 
 static FFTS_INLINE void XOR2(uint8_t **p, uint8_t reg1, uint8_t reg2)
 {
-	if ((reg1 & 8) || (reg2 & 8)) {
-		*(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
-	}
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
 
-	*(*p)++ = 0x31;
-	*(*p)++ = 0xC0 | (reg2 & 7) | ((reg1 & 7) << 3);
+    /* REX prefix */
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+    }
+
+    *(*p)++ = 0x31;
+    *(*p)++ = 0xC0 | r2 | (r1 << 3);
+}
+
+static FFTS_INLINE void XORPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
+{
+    uint8_t r1 = (reg1 & 7);
+    uint8_t r2 = (reg2 & 7);
+
+    /* REX prefix */
+    if ((reg1 & 8) || (reg2 & 8)) {
+        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
+    }
+
+    /* esacape opcode */
+    *(*p)++ = 0x0F;
+
+    /* opcode */
+    *(*p)++ = 0x57;
+    *(*p)++ = 0xC0 | r1 | (r2 << 3);
 }
 
 static FFTS_INLINE void ffts_insert_nops(uint8_t **p, uint32_t count)
@@ -662,114 +716,28 @@ static FFTS_INLINE void ffts_align_mem16(uint8_t **p, uint32_t offset)
     ffts_insert_nops(p, r);
 }
 
-static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
-{
-	insns_t *x_4_addr;
-	size_t len;
-
-	/* align call destination */
-	ffts_align_mem16(fp, 0);
-	x_4_addr = *fp;
-
-	/* copy function */
-    assert((char*) x8_soft > (char*) x4);
-    len = (char*) x8_soft - (char*) x4;
-	memcpy(*fp, x4, len);
-    *fp += len;
-
-	return x_4_addr;
-}
-
-static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
-{
-	insns_t *x_8_addr;
-	size_t len;
-
-	/* align call destination */
-	ffts_align_mem16(fp, 0);
-	x_8_addr = *fp;
-
-    /* align loop/jump destination */
-#ifdef _M_X64
-    ffts_align_mem16(fp, 6);
-#else
-    ffts_align_mem16(fp, 5);
-#endif
-
-	/* copy function */
-    assert((char*) x8_soft_end > (char*) x8_soft);
-    len = (char*) x8_soft_end - (char*) x8_soft;
-	memcpy(*fp, x8_soft, len);
-	*fp += len;
-
-	return x_8_addr;
-}
-
-static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
-{
-	insns_t	*start;
-
-	/* align call destination */
-	ffts_align_mem16(fp, 0);
-	start = *fp;
-
-    /* save nonvolatile registers */
-#ifdef _M_X64
-    /* use the shadow space to save first 3 registers */
-    MOV(fp, RBX, RSP,  8, 1);
-	MOV(fp, RSI, RSP, 16, 1);
-	MOV(fp, RDI, RSP, 24, 1);
-
-    /* reserve space.. */
-	SUBI(fp, RSP, 168);
-
-	/* to save XMM6-XMM15 registers */
-	MOVDQA3(fp, RSP,   0,  XMM6);
-	MOVDQA3(fp, RSP,  16,  XMM7);
-	MOVDQA3(fp, RSP,  32,  XMM8);
-	MOVDQA3(fp, RSP,  48,  XMM9);
-	MOVDQA3(fp, RSP,  64, XMM10);
-	MOVDQA3(fp, RSP,  80, XMM11);
-	MOVDQA3(fp, RSP,  96, XMM12);
-	MOVDQA3(fp, RSP, 112, XMM13);
-	MOVDQA3(fp, RSP, 128, XMM14);
-	MOVDQA3(fp, RSP, 144, XMM15);
-#else
-    PUSH(fp, RBP);
-    PUSH(fp, RBX);
-    PUSH(fp, R10);
-    PUSH(fp, R11);
-    PUSH(fp, R12);
-    PUSH(fp, R13);
-    PUSH(fp, R14);
-    PUSH(fp, R15);
-#endif
-
-	return start;
-}
-
 static FFTS_INLINE void generate_epilogue(insns_t **fp)
 {
 #ifdef _M_X64
     /* restore nonvolatile registers */
-	MOVDQA3(fp, XMM6,  RSP,   0);
-	MOVDQA3(fp, XMM7,  RSP,  16);
-	MOVDQA3(fp, XMM8,  RSP,  32);
-	MOVDQA3(fp, XMM9,  RSP,  48);
-	MOVDQA3(fp, XMM10, RSP,  64);
-	MOVDQA3(fp, XMM11, RSP,  80);
-	MOVDQA3(fp, XMM12, RSP,  96);
-	MOVDQA3(fp, XMM13, RSP, 112);
-	MOVDQA3(fp, XMM14, RSP, 128);
-	MOVDQA3(fp, XMM15, RSP, 144);
+    MOVDQA3(fp, XMM6,  RSP,   0);
+    MOVDQA3(fp, XMM7,  RSP,  16);
+    MOVDQA3(fp, XMM8,  RSP,  32);
+    MOVDQA3(fp, XMM9,  RSP,  48);
+    MOVDQA3(fp, XMM10, RSP,  64);
+    MOVDQA3(fp, XMM11, RSP,  80);
+    MOVDQA3(fp, XMM12, RSP,  96);
+    MOVDQA3(fp, XMM13, RSP, 112);
+    MOVDQA3(fp, XMM14, RSP, 128);
+    MOVDQA3(fp, XMM15, RSP, 144);
 
-	/* restore stack */
-	ADDI(fp, RSP, 168);
+    /* restore stack */
+    ADD_I(fp, RSP, 168);
 
     /* restore the last 3 registers from the shadow space */
-	MOV(fp, RBX, RSP,  8, 0);
-	MOV(fp, RSI, RSP, 16, 0);
-	MOV(fp, RDI, RSP, 24, 0);
+    MOV_D(fp, RBX, RSP,  8, 0);
+    MOV_D(fp, RSI, RSP, 16, 0);
+    MOV_D(fp, RDI, RSP, 24, 0);
 #else
     POP(fp, R15);
     POP(fp, R14);
@@ -782,6 +750,467 @@ static FFTS_INLINE void generate_epilogue(insns_t **fp)
 #endif
 
     RET(fp);
+}
+
+static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
+{
+    insns_t	*start;
+
+    /* align call destination */
+    ffts_align_mem16(fp, 0);
+    start = *fp;
+
+    /* save nonvolatile registers */
+#ifdef _M_X64
+    /* use the shadow space to save first 3 registers */
+    MOV_D(fp, RBX, RSP,  8, 1);
+    MOV_D(fp, RSI, RSP, 16, 1);
+    MOV_D(fp, RDI, RSP, 24, 1);
+
+    /* reserve space.. */
+    SUB_I(fp, RSP, 168);
+
+    /* to save XMM6-XMM15 registers */
+    MOVDQA3(fp, RSP,   0,  XMM6);
+    MOVDQA3(fp, RSP,  16,  XMM7);
+    MOVDQA3(fp, RSP,  32,  XMM8);
+    MOVDQA3(fp, RSP,  48,  XMM9);
+    MOVDQA3(fp, RSP,  64, XMM10);
+    MOVDQA3(fp, RSP,  80, XMM11);
+    MOVDQA3(fp, RSP,  96, XMM12);
+    MOVDQA3(fp, RSP, 112, XMM13);
+    MOVDQA3(fp, RSP, 128, XMM14);
+    MOVDQA3(fp, RSP, 144, XMM15);
+#else
+    PUSH(fp, RBP);
+    PUSH(fp, RBX);
+    PUSH(fp, R10);
+    PUSH(fp, R11);
+    PUSH(fp, R12);
+    PUSH(fp, R13);
+    PUSH(fp, R14);
+    PUSH(fp, R15);
+#endif
+
+    return start;
+}
+
+static FFTS_INLINE void generate_transform_init(insns_t **fp)
+{
+#ifdef _M_X64
+    /* generate function */
+    MOVAPS2(fp, XMM3, RSI);
+
+    /* set "pointer" to twiddle factors */
+    MOV_D(fp, RDI, RCX, 0x20, 0);
+#else
+    size_t len;
+
+    /* copy function */
+    assert((char*) x4 > (char*) x_init);
+    len = (char*) x4 - (char*) x_init;
+    memcpy(*fp, x_init, len);
+    *fp += len;
+#endif
+}
+
+static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
+{
+    insns_t *x_4_addr;
+    size_t len;
+
+    /* align call destination */
+    ffts_align_mem16(fp, 0);
+    x_4_addr = *fp;
+
+    /* copy function */
+    assert((char*) x8_soft > (char*) x4);
+    len = (char*) x8_soft - (char*) x4;
+    memcpy(*fp, x4, len);
+    *fp += len;
+
+    return x_4_addr;
+}
+
+static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
+{
+    insns_t *x_8_addr;
+#ifdef _M_X64
+    insns_t *x8_soft_loop;
+#else
+    size_t len;
+#endif
+
+    /* align call destination */
+    ffts_align_mem16(fp, 0);
+    x_8_addr = *fp;
+
+    /* align loop/jump destination */
+#ifdef _M_X64
+    ffts_align_mem16(fp, 6);
+#else
+    ffts_align_mem16(fp, 5);
+#endif
+
+#ifdef _M_X64
+    /* input */
+    MOV_R(fp, RDI, RAX, 1);
+
+    /* output */
+    MOV_R(fp, R8, RCX, 1);
+
+    /* lea rdx, [r8 + rbx] */
+    /* loop stop (output + output_stride) */
+    *(*fp)++ = 0x49;
+    *(*fp)++ = 0x8D;
+    *(*fp)++ = 0x14;
+    *(*fp)++ = 0x18;
+
+    /* lea rsi, [rbx + rbx*2] */
+    /* 3 * output_stride */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x8D;
+    *(*fp)++ = 0x34;
+    *(*fp)++ = 0x5B;
+
+    /* lea r10, [rbx + rbx*4] */
+    /* 5 * output_stride */
+    *(*fp)++ = 0x4C;
+    *(*fp)++ = 0x8D;
+    *(*fp)++ = 0x14;
+    *(*fp)++ = 0x9B;
+
+    /* lea r11, [rsi + rbx*4] */
+    /* 7 * output_stride */
+    *(*fp)++ = 0x4C;
+    *(*fp)++ = 0x8D;
+    *(*fp)++ = 0x1C;
+    *(*fp)++ = 0x9E;
+
+    x8_soft_loop = *fp;
+    assert(!(((uintptr_t) x8_soft_loop) & 0xF));
+
+    /* movaps xmm9, [rax] */
+    /* input + 0 * input_stride */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x08;
+
+    /* movaps xmm6, [rcx + rbx*2] */
+    /* output + 2 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x34;
+    *(*fp)++ = 0x59;
+
+    /* movaps xmm11, xmm9 */
+    *(*fp)++ = 0x45;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xD9;
+
+    /* movaps xmm7, [rcx + rsi] */
+    /* output + 3 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x3C;
+    *(*fp)++ = 0x31;
+
+    /* movaps xmm8, [rax + 0x10] */
+    /* input + 1 * input_stride */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x40;
+    *(*fp)++ = 0x10;
+
+    MULPS(fp, XMM11, XMM6);
+    MULPS(fp, XMM9, XMM7);
+    SHUFPS(fp, XMM6, XMM6, 0xB1);
+    MULPS(fp, XMM6, XMM8);
+    SHUFPS(fp, XMM7, XMM7, 0xB1);
+    SUBPS(fp, XMM11, XMM6);
+    MULPS(fp, XMM8, XMM7);
+
+    /* movaps xmm10, xmm11 */
+    *(*fp)++ = 0x45;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xD3;
+
+    ADDPS(fp, XMM9, XMM8);
+
+    /* movaps xmm15, [rax + 0x20]  */
+    /* input + 2 * input_stride */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x78;
+    *(*fp)++ = 0x20;
+
+    ADDPS(fp, XMM10, XMM9);
+    SUBPS(fp, XMM11, XMM9);
+
+    /* movaps xmm5, [rcx] */
+    /* output + 0 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x29;
+
+    /* movaps xmm6,xmm15 */
+    *(*fp)++ = 0x41;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xF7;
+
+    /* movaps xmm12, [rcx + rbx*4]  */
+    /* output + 4 * output_stride */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x99;
+
+    /* movaps xmm2, xmm5 */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xD5;
+
+    /* movaps xmm13, [rcx + rsi*2] */
+    /* output + 6 * output_stride */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x2C;
+    *(*fp)++ = 0x71;
+
+    XORPS(fp, XMM11, XMM3);
+
+    /* movaps xmm14, [rax + 0x30] */
+    /* input + 3 * input_stride */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x70;
+    *(*fp)++ = 0x30;
+
+    SUBPS(fp, XMM2, XMM10);
+    MULPS(fp, XMM6, XMM12);
+    ADDPS(fp, XMM5, XMM10);
+    MULPS(fp, XMM15, XMM13);
+
+    /* movaps xmm10, [rax + 0x40] */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x50;
+    *(*fp)++ = 0x40;
+
+    /* movaps xmm0, xmm5 */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xC5;
+
+    SHUFPS(fp, XMM12, XMM12, 0xB1);
+    SHUFPS(fp, XMM13, XMM13, 0xB1);
+    MULPS(fp, XMM12, XMM14);
+    MULPS(fp, XMM14, XMM13);
+    SUBPS(fp, XMM6, XMM12);
+    ADDPS(fp, XMM15, XMM14);
+
+    /* movaps xmm7, [rcx + r10] */
+    *(*fp)++ = 0x42;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x3C;
+    *(*fp)++ = 0x11;
+
+    /* movaps xmm13, xmm10 */
+    *(*fp)++ = 0x45;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xEA;
+
+    /* movaps xmm8, [rcx + r11] */
+    *(*fp)++ = 0x46;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x04;
+    *(*fp)++ = 0x19;
+
+    /* movaps xmm12, xmm6 */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xE6;
+
+    /* movaps xmm9, [rax + 0x50] */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x50;
+
+    /* input + 6 * input_stride */
+    ADD_I(fp, RAX, 0x60);
+
+    MULPS(fp, XMM13, XMM7);
+    SUBPS(fp, XMM6, XMM15);
+    ADDPS(fp, XMM12, XMM15);
+    MULPS(fp, XMM10, XMM8);
+    SUBPS(fp, XMM0, XMM12);
+    ADDPS(fp, XMM5, XMM12);
+    SHUFPS(fp, XMM7, XMM7, 0xB1);
+    XORPS(fp, XMM6, XMM3);
+    SHUFPS(fp, XMM8, XMM8, 0xB1);
+
+    /* movaps xmm12, xmm2 */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xE2;
+
+    MULPS(fp, XMM7, XMM9);
+    MULPS(fp, XMM9, XMM8);
+    SUBPS(fp, XMM13, XMM7);
+    ADDPS(fp, XMM10, XMM9);
+
+    /* movaps xmm4, [rcx + rbx] */
+    /* output + 1 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x19;
+
+    SHUFPS(fp, XMM11, XMM11, 0xB1);
+
+    /* movaps xmm1, xmm4 */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xCC;
+
+    SHUFPS(fp, XMM6, XMM6, 0xB1);
+    ADDPS(fp, XMM1, XMM11);
+    SUBPS(fp, XMM4, XMM11);
+    ADDPS(fp, XMM12, XMM6);
+    SUBPS(fp, XMM2, XMM6);
+
+    /* movaps xmm11, xmm13 */
+    *(*fp)++ = 0x45;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xDD;
+
+    /* movaps xmm14, xmm4 */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xF4;
+
+    /* movaps xmm6, xmm1 */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x28;
+    *(*fp)++ = 0xF1;
+
+    SUBPS(fp, XMM13, XMM10);
+    ADDPS(fp, XMM11, XMM10);
+    XORPS(fp, XMM13, XMM3);
+    ADDPS(fp, XMM4, XMM11);
+    SUBPS(fp, XMM14, XMM11);
+    SHUFPS(fp, XMM13, XMM13, 0xB1);
+
+    /* movaps [rcx], xmm5 */
+    /* output + 0 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x29;
+    *(*fp)++ = 0x29;
+
+    /* movaps [rcx + rbx], xmm4 */
+    /* output + 1 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x29;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x19;
+
+    /* movaps [rcx + rbx*2], xmm2 */
+    /* output + 2 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x29;
+    *(*fp)++ = 0x14;
+    *(*fp)++ = 0x59;
+
+    SUBPS(fp, XMM1, XMM13);
+    ADDPS(fp, XMM6, XMM13);
+
+    /* movaps [rcx + rsi], xmm1 */
+    /* output + 3 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x29;
+    *(*fp)++ = 0x0C;
+    *(*fp)++ = 0x31;
+
+    /* movaps [rcx + rbx*4], xmm0 */
+    /* output + 4 * output_stride */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x29;
+    *(*fp)++ = 0x04;
+    *(*fp)++ = 0x99;
+
+    /* movaps [rcx + r10], xmm14 */
+    /* output + 5 * output_stride */
+    *(*fp)++ = 0x46;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x29;
+    *(*fp)++ = 0x34;
+    *(*fp)++ = 0x11;
+
+    /* movaps [rcx + rsi*2], xmm12 */
+    /* output + 6 * output_stride */
+    *(*fp)++ = 0x44;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x29;
+    *(*fp)++ = 0x24;
+    *(*fp)++ = 0x71;
+
+    /* movaps [rcx + r11], xmm6 */
+    /* output + 7 * output_stride */
+    *(*fp)++ = 0x42;
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x29;
+    *(*fp)++ = 0x34;
+    *(*fp)++ = 0x19;
+
+    /* add rcx, 0x10 */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x83;
+    *(*fp)++ = 0xC1;
+    *(*fp)++ = 0x10;
+
+    /* cmp rcx, rdx */
+    *(*fp)++ = 0x48;
+    *(*fp)++ = 0x39;
+    *(*fp)++ = 0xD1;
+
+    /* jne [x8_soft_loop] */
+    *(*fp)++ = 0x0F;
+    *(*fp)++ = 0x85;
+    *(*fp)++ = 0x9E;
+    *(*fp)++ = 0xFE;
+    *(*fp)++ = 0xFF;
+    *(*fp)++ = 0xFF;
+
+    /* ret */
+    RET(fp);
+#else
+    /* copy function */
+    assert((char*) x8_soft_end >= (char*) x8_soft);
+    len = (char*) x8_soft_end - (char*) x8_soft;
+    memcpy(*fp, x8_soft, len);
+    *fp += len;
+#endif
+
+    return x_8_addr;
 }
 
 #endif /* FFTS_CODEGEN_SSE_H */
