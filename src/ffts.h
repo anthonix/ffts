@@ -46,6 +46,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define FFTS_PREFIX ffts
+
+#ifndef FFTS_CAT_PREFIX2
+#define FFTS_CAT_PREFIX2(a,b) a ## b
+#endif
+
+#ifndef FFTS_CAT_PREFIX
+#define FFTS_CAT_PREFIX(a,b) FFTS_CAT_PREFIX2(a ## _, b)
+#endif
+
+/* prevent symbol name clashes */
+#ifdef FFTS_PREFIX
+#define FUNC_TO_REWRITE FFTS_CAT_PREFIX(FFTS_PREFIX, FUNC_TO_REWRITE)
+#endif
+
 #ifdef __ANDROID__
 #include <android/log.h>
 #define LOG(s) __android_log_print(ANDROID_LOG_ERROR, "FFTS", s)
