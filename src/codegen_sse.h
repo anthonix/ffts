@@ -106,30 +106,6 @@ static FFTS_INLINE void ADDPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
     *(*p)++ = 0xC0 | r1 | (r2 << 3);
 }
 
-/* Immediate */
-static void ADD_I(uint8_t **p, uint8_t dst, int32_t imm)
-{
-    if (dst >= 8) {
-        *(*p)++ = 0x49;
-    } else {
-        *(*p)++ = 0x48;
-    }
-
-    if (imm > 127 || imm <= -128) {
-        *(*p)++ = 0x81;
-    } else {
-        *(*p)++ = 0x83;
-    }
-
-    *(*p)++ = 0xc0 | (dst & 0x7);
-
-    if (imm > 127 || imm <= -128) {
-        IMM32(p, imm);
-    } else {
-        IMM8(p, imm);
-    }
-}
-
 static void ADDRMODE(uint8_t **p, uint8_t reg, uint8_t rm, int32_t disp)
 {
     if (disp == 0) {
@@ -549,29 +525,6 @@ static FFTS_INLINE void SUBPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
     *(*p)++ = 0xC0 | r1 | (r2 << 3);
 }
 
-static void SUB_I(uint8_t **p, uint8_t dst, int32_t imm)
-{
-    if (dst >= 8) {
-        *(*p)++ = 0x49;
-    } else {
-        *(*p)++ = 0x48;
-    }
-
-    if (imm > 127 || imm <= -128) {
-        *(*p)++ = 0x81;
-    } else {
-        *(*p)++ = 0x83;
-    }
-
-    *(*p)++ = 0xe8 | (dst & 0x7);
-
-    if (imm > 127 || imm <= -128) {
-        IMM32(p, imm);
-    } else {
-        IMM8(p, imm);
-    }
-}
-
 static FFTS_INLINE void XOR2(uint8_t **p, uint8_t reg1, uint8_t reg2)
 {
     uint8_t r1 = (reg1 & 7);
@@ -703,7 +656,7 @@ static FFTS_INLINE void generate_epilogue(insns_t **fp)
     MOVDQA3(fp, XMM15, X64_RSP, 144);
 
     /* restore stack */
-    ADD_I(fp, X64_RSP, 168);
+	x64_alu_reg_imm_size_body(*fp, X86_ADD, X64_RSP, 168, 8);
 
     /* restore the last 3 registers from the shadow space */
     MOV_D(fp, X64_RBX, X64_RSP,  8, 0);
@@ -739,7 +692,7 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
     MOV_D(fp, X64_RDI, X64_RSP, 24, 1);
 
     /* reserve space.. */
-    SUB_I(fp, X64_RSP, 168);
+	x64_alu_reg_imm_size_body(*fp, X86_SUB, X64_RSP, 168, 8);
 
     /* to save XMM6-XMM15 registers */
     MOVDQA3(fp, X64_RSP,   0,  XMM6);
@@ -1024,7 +977,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
     *(*fp)++ = 0x50;
 
     /* input + 6 * input_stride */
-    ADD_I(fp, X64_RAX, 0x60);
+	x64_alu_reg_imm_size_body(*fp, X86_ADD, X64_RAX, 0x60, 8);
 
     MULPS(fp, XMM13, XMM7);
     SUBPS(fp, XMM6, XMM15);

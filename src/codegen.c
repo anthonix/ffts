@@ -360,9 +360,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             int offset = (4 * pps[1]) - pAddr;
             if (offset) {
 #ifdef _M_X64
-                ADD_I(&fp, X64_R8, offset);
+				x64_alu_reg_imm_size_body(fp, X86_ADD, X64_R8, offset, 8);
 #else
-                ADD_I(&fp, X64_RDX, offset);
+				x64_alu_reg_imm_size_body(fp, X86_ADD, X64_RDX, offset, 8);
 #endif
             }
 
@@ -382,9 +382,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             int offset = (int) (ws_is - pLUT);
 
 #ifdef _M_X64
-            ADD_I(&fp, X64_RDI, offset);
+			x64_alu_reg_imm_size_body(fp, X86_ADD, X64_RDI, offset, 8);
 #else
-            ADD_I(&fp, X64_R8, offset);
+			x64_alu_reg_imm_size_body(fp, X86_ADD, X64_R8, offset, 8);
 #endif
         }
 
