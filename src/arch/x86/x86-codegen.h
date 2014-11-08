@@ -490,12 +490,7 @@ typedef union {
 #define x86_movsl(inst) do { *(inst)++ =(unsigned char)0xa5; } while (0)
 #define x86_movsd(inst) x86_movsl((inst))
 
-#if defined(__default_codegen__)
-#define x86_prefix(inst,p) \
-	do { \
-		*(inst)++ =(unsigned char) (p); \
-	} while (0)
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 #if defined(TARGET_X86)
 /* kNaClAlignment - 1 is the max value we can pass into x86_codegen_pre. */
 /* This keeps us from having to call x86_codegen_pre with specific       */
@@ -517,6 +512,11 @@ typedef union {
 
 #endif /* TARGET_AMD64 */
 
+#else
+#define x86_prefix(inst,p) \
+	do { \
+		*(inst)++ =(unsigned char) (p); \
+	} while (0)
 #endif /* __native_client_codegen__ */
 
 #define x86_rdtsc(inst) \
