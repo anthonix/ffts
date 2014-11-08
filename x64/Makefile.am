@@ -1,2 +1,2 @@
-EXTRA_DIST =  amd64-codegen.h
+EXTRA_DIST =  x64-codegen.h
 
