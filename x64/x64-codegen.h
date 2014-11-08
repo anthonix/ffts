@@ -16,7 +16,7 @@
 #ifndef X64_H
 #define X64_H
 
-#include <glib.h>
+#include <stdint.h>
 
 typedef enum {
 	X64_RAX = 0,
@@ -74,13 +74,13 @@ typedef enum
 
 #elif defined(__native_client_codegen__)
 
-#define x64_codegen_pre(inst) guint8* _codegen_start = (inst); x64_nacl_instruction_pre();
+#define x64_codegen_pre(inst) uint8_t* _codegen_start = (inst); x64_nacl_instruction_pre();
 #define x64_codegen_post(inst) (x64_nacl_instruction_post(&_codegen_start, &(inst)), _codegen_start);
 
 /* Because of rex prefixes, etc, call sequences are not constant size.  */
 /* These pre- and post-sequence hooks remedy this by aligning the call  */
 /* sequence after we emit it, since we will know the exact size then.   */
-#define x64_call_sequence_pre(inst) guint8* _code_start = (inst);
+#define x64_call_sequence_pre(inst) uint8_t* _code_start = (inst);
 #define x64_call_sequence_post(inst) \
   (mono_nacl_align_call(&_code_start, &(inst)), _code_start);
 
@@ -160,7 +160,7 @@ typedef enum
 #endif
 
 typedef union {
-	guint64 val;
+	uint64_t val;
 	unsigned char b [8];
 } x64_imm_buf;
 
@@ -182,12 +182,12 @@ typedef union {
 #define x64_sib_index(sib) (((sib) >> 3) & 0x7)
 #define x64_sib_base(sib) ((sib) & 0x7)
 
-#define x64_is_imm32(val) ((gint64)val >= -((gint64)1<<31) && (gint64)val <= (((gint64)1<<31)-1))
+#define x64_is_imm32(val) ((int64_t)val >= -((int64_t)1<<31) && (int64_t)val <= (((int64_t)1<<31)-1))
 
 #define x86_imm_emit64(inst,imm)     \
 	do {	\
 			x64_imm_buf imb; 	\
-			imb.val = (guint64) (imm);	\
+			imb.val = (uint64_t) (imm);	\
 			*(inst)++ = imb.b [0];	\
 			*(inst)++ = imb.b [1];	\
 			*(inst)++ = imb.b [2];	\
@@ -493,15 +493,15 @@ typedef union {
 		x64_emit_rex(inst, (size), 0, 0, (reg)); \
 		*(inst)++ = (unsigned char)0xb8 + ((reg) & 0x7);	\
 		if ((size) == 8) \
-			x86_imm_emit64 ((inst), (guint64)(imm));	\
+			x86_imm_emit64 ((inst), (uint64_t)(imm));	\
 		else \
-			x86_imm_emit32 ((inst), (int)(guint64)(imm));	\
+			x86_imm_emit32 ((inst), (int)(uint64_t)(imm));	\
 		x64_codegen_post(inst); \
 	} while (0)
 
 #define x64_mov_reg_imm(inst,reg,imm)	\
 	do {	\
-		int _x64_width_temp = ((guint64)(imm) == (guint64)(int)(guint64)(imm)); \
+		int _x64_width_temp = ((uint64_t)(imm) == (uint64_t)(int)(uint64_t)(imm)); \
 		x64_codegen_pre(inst); \
 		x64_mov_reg_imm_size ((inst), (reg), (imm), (_x64_width_temp ? 4 : 8)); \
 		x64_codegen_post(inst); \
@@ -813,11 +813,11 @@ typedef union {
 #define x64_jump_membase_size(inst,basereg,disp,size) do { x64_emit_rex ((inst),0,0,0,(basereg)); *(inst)++ = (unsigned char)0xff; x64_membase_emit ((inst), 4, (basereg), (disp)); } while (0)
     
 #define x64_jump_code_size(inst,target,size) do { \
-	if (x64_is_imm32 ((gint64)(target) - (gint64)(inst))) {		\
+	if (x64_is_imm32 ((int64_t)(target) - (int64_t)(inst))) {		\
 		x86_jump_code((inst),(target));									\
 	} else {															\
 	    x64_jump_membase ((inst), X64_RIP, 0);							\
-		*(guint64*)(inst) = (guint64)(target);							\
+		*(uint64_t*)(inst) = (uint64_t)(target);							\
 		(inst) += 8; \
 	} \
 } while (0)
@@ -902,9 +902,9 @@ typedef union {
   do {                                                                    \
     /* x86_jump_code used twice in case of */                             \
     /* relocation by x64_codegen_post    */                             \
-    guint8* jump_start;                                                   \
+    uint8_t* jump_start;                                                   \
     x64_codegen_pre(inst);                                              \
-    assert(x64_is_imm32 ((gint64)(target) - (gint64)(inst)));           \
+    assert(x64_is_imm32 ((int64_t)(target) - (int64_t)(inst)));           \
     x86_jump_code((inst),(target));                                       \
     inst = x64_codegen_post(inst);                                      \
     jump_start = (inst);                                                  \
@@ -1563,7 +1563,7 @@ typedef union {
 	do { \
 		/* x64_branch_size_body used twice in     */ \
 		/* case of relocation by x64_codegen_post */ \
-		guint8* branch_start; \
+		uint8_t* branch_start; \
 		x64_codegen_pre(inst); \
 		x64_branch_size_body((inst),(cond),(target),(is_signed),(size)); \
 		inst = x64_codegen_post(inst); \
@@ -1603,8 +1603,8 @@ typedef union {
 #define x64_call_code_size(inst,target,size)          \
   do {                                                  \
     x64_codegen_pre((inst));                          \
-    guint8* adjusted_start;                             \
-    guint8* call_start;                                 \
+    uint8_t* adjusted_start;                             \
+    uint8_t* call_start;                                 \
     x64_call_sequence_pre((inst));                    \
     x86_call_code((inst),(target));                     \
     adjusted_start = x64_call_sequence_post((inst));  \
