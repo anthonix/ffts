@@ -34,6 +34,8 @@
 #ifndef FFTS_CODEGEN_SSE_H
 #define FFTS_CODEGEN_SSE_H
 
+#include "arch/x64/x64-codegen.h"
+
 #include <assert.h>
 #include <string.h>
 
@@ -60,32 +62,6 @@ extern const uint32_t sse_leaf_ee_offsets[8];
 extern const uint32_t sse_leaf_oo_offsets[8];
 extern const uint32_t sse_leaf_eo_offsets[8];
 extern const uint32_t sse_leaf_oe_offsets[8];
-
-#define EAX 0
-#define ECX 1
-#define EDX 2
-#define EBX 3
-#define ESP 4
-#define EBP 5
-#define ESI 6
-#define EDI 7
-
-#define RAX 0
-#define RCX 1
-#define RDX 2
-#define RBX 3
-#define RSP 4
-#define RBP 5
-#define RSI 6
-#define RDI 7
-#define R8  8
-#define R9  9
-#define R10 10
-#define R11 11
-#define R12 12
-#define R13 13
-#define R14 14
-#define R15 15
 
 #define XMM_REG 0x40
 
@@ -122,7 +98,7 @@ static FFTS_INLINE void ADDPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
         *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
     }
 
-    /* esacape opcode */
+    /* escape opcode */
     *(*p)++ = 0x0F;
 
     /* opcode */
@@ -515,11 +491,6 @@ static int32_t READ_IMM32(uint8_t *p)
     return rval;
 }
 
-static void RET(uint8_t **p)
-{
-    *(*p)++ = 0xc3;
-}
-
 static void SHIFT(uint8_t **p, uint8_t reg, int shift)
 {
     if (reg >= 8) {
@@ -720,36 +691,36 @@ static FFTS_INLINE void generate_epilogue(insns_t **fp)
 {
 #ifdef _M_X64
     /* restore nonvolatile registers */
-    MOVDQA3(fp, XMM6,  RSP,   0);
-    MOVDQA3(fp, XMM7,  RSP,  16);
-    MOVDQA3(fp, XMM8,  RSP,  32);
-    MOVDQA3(fp, XMM9,  RSP,  48);
-    MOVDQA3(fp, XMM10, RSP,  64);
-    MOVDQA3(fp, XMM11, RSP,  80);
-    MOVDQA3(fp, XMM12, RSP,  96);
-    MOVDQA3(fp, XMM13, RSP, 112);
-    MOVDQA3(fp, XMM14, RSP, 128);
-    MOVDQA3(fp, XMM15, RSP, 144);
+    MOVDQA3(fp, XMM6,  X64_RSP,   0);
+    MOVDQA3(fp, XMM7,  X64_RSP,  16);
+    MOVDQA3(fp, XMM8,  X64_RSP,  32);
+    MOVDQA3(fp, XMM9,  X64_RSP,  48);
+    MOVDQA3(fp, XMM10, X64_RSP,  64);
+    MOVDQA3(fp, XMM11, X64_RSP,  80);
+    MOVDQA3(fp, XMM12, X64_RSP,  96);
+    MOVDQA3(fp, XMM13, X64_RSP, 112);
+    MOVDQA3(fp, XMM14, X64_RSP, 128);
+    MOVDQA3(fp, XMM15, X64_RSP, 144);
 
     /* restore stack */
-    ADD_I(fp, RSP, 168);
+    ADD_I(fp, X64_RSP, 168);
 
     /* restore the last 3 registers from the shadow space */
-    MOV_D(fp, RBX, RSP,  8, 0);
-    MOV_D(fp, RSI, RSP, 16, 0);
-    MOV_D(fp, RDI, RSP, 24, 0);
+    MOV_D(fp, X64_RBX, X64_RSP,  8, 0);
+    MOV_D(fp, X64_RSI, X64_RSP, 16, 0);
+    MOV_D(fp, X64_RDI, X64_RSP, 24, 0);
 #else
-    POP(fp, R15);
-    POP(fp, R14);
-    POP(fp, R13);
-    POP(fp, R12);
-    POP(fp, R11);
-    POP(fp, R10);
-    POP(fp, RBX);
-    POP(fp, RBP);
+    POP(fp, X64_R15);
+    POP(fp, X64_R14);
+    POP(fp, X64_R13);
+    POP(fp, X64_R12);
+    POP(fp, X64_R11);
+    POP(fp, X64_R10);
+    POP(fp, X64_RBX);
+    POP(fp, X64_RBP);
 #endif
 
-    RET(fp);
+    x64_ret(*fp);
 }
 
 static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
@@ -763,33 +734,33 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
     /* save nonvolatile registers */
 #ifdef _M_X64
     /* use the shadow space to save first 3 registers */
-    MOV_D(fp, RBX, RSP,  8, 1);
-    MOV_D(fp, RSI, RSP, 16, 1);
-    MOV_D(fp, RDI, RSP, 24, 1);
+    MOV_D(fp, X64_RBX, X64_RSP,  8, 1);
+    MOV_D(fp, X64_RSI, X64_RSP, 16, 1);
+    MOV_D(fp, X64_RDI, X64_RSP, 24, 1);
 
     /* reserve space.. */
-    SUB_I(fp, RSP, 168);
+    SUB_I(fp, X64_RSP, 168);
 
     /* to save XMM6-XMM15 registers */
-    MOVDQA3(fp, RSP,   0,  XMM6);
-    MOVDQA3(fp, RSP,  16,  XMM7);
-    MOVDQA3(fp, RSP,  32,  XMM8);
-    MOVDQA3(fp, RSP,  48,  XMM9);
-    MOVDQA3(fp, RSP,  64, XMM10);
-    MOVDQA3(fp, RSP,  80, XMM11);
-    MOVDQA3(fp, RSP,  96, XMM12);
-    MOVDQA3(fp, RSP, 112, XMM13);
-    MOVDQA3(fp, RSP, 128, XMM14);
-    MOVDQA3(fp, RSP, 144, XMM15);
+    MOVDQA3(fp, X64_RSP,   0,  XMM6);
+    MOVDQA3(fp, X64_RSP,  16,  XMM7);
+    MOVDQA3(fp, X64_RSP,  32,  XMM8);
+    MOVDQA3(fp, X64_RSP,  48,  XMM9);
+    MOVDQA3(fp, X64_RSP,  64, XMM10);
+    MOVDQA3(fp, X64_RSP,  80, XMM11);
+    MOVDQA3(fp, X64_RSP,  96, XMM12);
+    MOVDQA3(fp, X64_RSP, 112, XMM13);
+    MOVDQA3(fp, X64_RSP, 128, XMM14);
+    MOVDQA3(fp, X64_RSP, 144, XMM15);
 #else
-    PUSH(fp, RBP);
-    PUSH(fp, RBX);
-    PUSH(fp, R10);
-    PUSH(fp, R11);
-    PUSH(fp, R12);
-    PUSH(fp, R13);
-    PUSH(fp, R14);
-    PUSH(fp, R15);
+    PUSH(fp, X64_RBP);
+    PUSH(fp, X64_RBX);
+    PUSH(fp, X64_R10);
+    PUSH(fp, X64_R11);
+    PUSH(fp, X64_R12);
+    PUSH(fp, X64_R13);
+    PUSH(fp, X64_R14);
+    PUSH(fp, X64_R15);
 #endif
 
     return start;
@@ -799,10 +770,10 @@ static FFTS_INLINE void generate_transform_init(insns_t **fp)
 {
 #ifdef _M_X64
     /* generate function */
-    MOVAPS2(fp, XMM3, RSI);
+    MOVAPS2(fp, XMM3, X64_RSI);
 
     /* set "pointer" to twiddle factors */
-    MOV_D(fp, RDI, RCX, 0x20, 0);
+    MOV_D(fp, X64_RDI, X64_RCX, 0x20, 0);
 #else
     size_t len;
 
@@ -854,10 +825,10 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 
 #ifdef _M_X64
     /* input */
-    MOV_R(fp, RDI, RAX, 1);
+    MOV_R(fp, X64_RDI, X64_RAX, 1);
 
     /* output */
-    MOV_R(fp, R8, RCX, 1);
+    MOV_R(fp, X64_R8, X64_RCX, 1);
 
     /* lea rdx, [r8 + rbx] */
     /* loop stop (output + output_stride) */
@@ -1053,7 +1024,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
     *(*fp)++ = 0x50;
 
     /* input + 6 * input_stride */
-    ADD_I(fp, RAX, 0x60);
+    ADD_I(fp, X64_RAX, 0x60);
 
     MULPS(fp, XMM13, XMM7);
     SUBPS(fp, XMM6, XMM15);
@@ -1201,7 +1172,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
     *(*fp)++ = 0xFF;
 
     /* ret */
-    RET(fp);
+    x64_ret(*fp);
 #else
     /* copy function */
     assert((char*) x8_soft_end >= (char*) x8_soft);
