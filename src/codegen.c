@@ -156,9 +156,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     /* assign loop counter register */
     loop_count = 4 * p->i0;
 #ifdef _M_X64
-    MOV_I(&fp, X86_EBX, loop_count);
+	x86_mov_reg_imm(fp, X86_EBX, loop_count);
 #else
-    MOV_I(&fp, X86_ECX, loop_count);
+	x86_mov_reg_imm(fp, X86_ECX, loop_count);
 #endif
 #endif
 
@@ -245,10 +245,10 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
             /* align loop/jump destination */
 #ifdef _M_X64
-            MOV_I(&fp, X86_EBX, loop_count);
+			x86_mov_reg_imm(fp, X86_EBX, loop_count);
             ffts_align_mem16(&fp, 3);
 #else
-            MOV_I(&fp, X86_ECX, loop_count);
+			x86_mov_reg_imm(fp, X86_ECX, loop_count);
             ffts_align_mem16(&fp, 4);
 #endif
 
@@ -298,10 +298,10 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
             /* align loop/jump destination */
 #ifdef _M_X64
-            MOV_I(&fp, X86_EBX, loop_count);
+			x86_mov_reg_imm(fp, X86_EBX, loop_count);
             ffts_align_mem16(&fp, 3);
 #else
-            MOV_I(&fp, X86_ECX, loop_count);
+			x86_mov_reg_imm(fp, X86_ECX, loop_count);
             ffts_align_mem16(&fp, 4);
 #endif
 
@@ -325,10 +325,10 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
         /* align loop/jump destination */
 #ifdef _M_X64
-        MOV_I(&fp, X86_EBX, loop_count);
+		x86_mov_reg_imm(fp, X86_EBX, loop_count);
         ffts_align_mem16(&fp, 8);
 #else
-        MOV_I(&fp, X86_ECX, loop_count);
+		x86_mov_reg_imm(fp, X86_ECX, loop_count);
         ffts_align_mem16(&fp, 9);
 #endif
 
@@ -352,9 +352,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
         if (!pN) {
 #ifdef _M_X64
-            MOV_I(&fp, X86_EBX, pps[0]);
+			x86_mov_reg_imm(fp, X86_EBX, pps[0]);
 #else
-            MOV_I(&fp, X86_ECX, pps[0] / 4);
+			x86_mov_reg_imm(fp, X86_ECX, pps[0] / 4);
 #endif
         } else {
             int offset = (4 * pps[1]) - pAddr;
@@ -370,9 +370,17 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
                 int factor = ffts_ctzl(pps[0]) - ffts_ctzl(pN);
 
 #ifdef _M_X64
-                SHIFT(&fp, X86_EBX, factor);
+				if (factor > 0) {
+					x86_shift_reg_imm(fp, X86_SHL, X86_EBX, factor);
+				} else {
+					x86_shift_reg_imm(fp, X86_SHR, X86_EBX, -factor);
+				}
 #else
-                SHIFT(&fp, X86_ECX, factor);
+				if (factor > 0) {
+					x86_shift_reg_imm(fp, X86_SHL, X86_ECX, factor);
+				} else {
+					x86_shift_reg_imm(fp, X86_SHR, X86_ECX, -factor);
+				}
 #endif
             }
         }
@@ -389,9 +397,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         }
 
         if (pps[0] == 2 * leaf_N) {
-            CALL(&fp, x_4_addr);
+			x64_call_imm(fp, (char*) x_4_addr - ((char*) fp + 4));
         } else {
-            CALL(&fp, x_8_addr);
+			x64_call_imm(fp, (char*) x_8_addr - ((char*) fp + 4));
         }
 
         pAddr = 4 * pps[1];

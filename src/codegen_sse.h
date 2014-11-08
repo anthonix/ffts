@@ -119,24 +119,9 @@ static void ADDRMODE(uint8_t **p, uint8_t reg, uint8_t rm, int32_t disp)
     }
 }
 
-static void CALL(uint8_t **p, uint8_t *func)
-{
-    *(*p)++ = 0xe8;
-    IMM32(p, func - *p - 4);
-}
-
 static void IMM8(uint8_t **p, int32_t imm)
 {
     *(*p)++ = (imm & 0xff);
-}
-
-static void IMM16(uint8_t **p, int32_t imm)
-{
-    int i;
-
-    for (i = 0; i < 2; i++) {
-        *(*p)++ = (imm & (0xff << (8 * i))) >> (8 * i);
-    }
 }
 
 static void IMM32(uint8_t **p, int32_t imm)
@@ -368,33 +353,6 @@ static FFTS_INLINE void MOV_D(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t d
     }
 }
 
-static void MOV_I(uint8_t **p, uint8_t dst, uint64_t imm)
-{
-    /* REX prefix */
-    if (dst >= 8 || imm > UINT32_MAX) {
-        uint8_t val = 0x40;
-
-        if (dst >= 8) {
-            val |= 1;
-        }
-
-        if (imm > UINT32_MAX) {
-            val |= 8;
-        }
-
-        *(*p)++ = val;
-    }
-
-    /* opcode */
-    *(*p)++ = 0xb8 | (dst & 0x7);
-
-    if (imm > UINT32_MAX) {
-        IMM64(p, imm);
-    } else {
-        IMM32(p, imm);
-    }
-}
-
 static FFTS_INLINE void MOV_R(uint8_t **p, uint8_t reg1, uint8_t reg2, int is_store)
 {
     uint8_t r1 = (reg1 & 7);
@@ -435,53 +393,6 @@ static FFTS_INLINE void MULPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
     /* opcode */
     *(*p)++ = 0x59;
     *(*p)++ = 0xC0 | r1 | (r2 << 3);
-}
-
-static void POP(uint8_t **p, uint8_t reg)
-{
-    if (reg >= 8) {
-        *(*p)++ = 0x41;
-    }
-
-    *(*p)++ = 0x58 | (reg & 7);
-}
-
-static void PUSH(uint8_t **p, uint8_t reg)
-{
-    if (reg >= 8) {
-        *(*p)++ = 0x41;
-    }
-
-    *(*p)++ = 0x50 | (reg & 7);
-}
-
-static int32_t READ_IMM32(uint8_t *p)
-{
-    int32_t rval = 0;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-        rval |= *(p+i) << (8 * i);
-    }
-
-    return rval;
-}
-
-static void SHIFT(uint8_t **p, uint8_t reg, int shift)
-{
-    if (reg >= 8) {
-        *(*p)++ = 0x49;
-    }
-
-
-    *(*p)++ = 0xc1;
-    if (shift > 0) {
-        *(*p)++ = 0xe0 | (reg & 7);
-        *(*p)++ = (shift & 0xff);
-    } else {
-        *(*p)++ = 0xe8 | (reg & 7);
-        *(*p)++ = ((-shift) & 0xff);
-    }
 }
 
 static FFTS_INLINE void SHUFPS(uint8_t **p, uint8_t reg2, uint8_t reg1, const int select)
@@ -662,15 +573,15 @@ static FFTS_INLINE void generate_epilogue(insns_t **fp)
     MOV_D(fp, X64_RBX, X64_RSP,  8, 0);
     MOV_D(fp, X64_RSI, X64_RSP, 16, 0);
     MOV_D(fp, X64_RDI, X64_RSP, 24, 0);
-#else
-    POP(fp, X64_R15);
-    POP(fp, X64_R14);
-    POP(fp, X64_R13);
-    POP(fp, X64_R12);
-    POP(fp, X64_R11);
-    POP(fp, X64_R10);
-    POP(fp, X64_RBX);
-    POP(fp, X64_RBP);
+#else	
+    x64_pop_reg(*fp, X64_R15);
+    x64_pop_reg(*fp, X64_R14);
+    x64_pop_reg(*fp, X64_R13);
+    x64_pop_reg(*fp, X64_R12);
+    x64_pop_reg(*fp, X64_R11);
+    x64_pop_reg(*fp, X64_R10);
+    x64_pop_reg(*fp, X64_RBX);
+    x64_pop_reg(*fp, X64_RBP);
 #endif
 
     x64_ret(*fp);
@@ -706,14 +617,14 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
     MOVDQA3(fp, X64_RSP, 128, XMM14);
     MOVDQA3(fp, X64_RSP, 144, XMM15);
 #else
-    PUSH(fp, X64_RBP);
-    PUSH(fp, X64_RBX);
-    PUSH(fp, X64_R10);
-    PUSH(fp, X64_R11);
-    PUSH(fp, X64_R12);
-    PUSH(fp, X64_R13);
-    PUSH(fp, X64_R14);
-    PUSH(fp, X64_R15);
+	x64_push_reg(*fp, X64_RBP);
+	x64_push_reg(*fp, X64_RBX);
+	x64_push_reg(*fp, X64_R10);
+	x64_push_reg(*fp, X64_R11);
+	x64_push_reg(*fp, X64_R12);
+	x64_push_reg(*fp, X64_R13);
+	x64_push_reg(*fp, X64_R14);
+	x64_push_reg(*fp, X64_R15);
 #endif
 
     return start;
