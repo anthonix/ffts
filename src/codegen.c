@@ -207,13 +207,13 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     /* generate function */
 
     /* clear */
-    XOR2(&fp, X86_EAX, X86_EAX);
+	x86_clear_reg(fp, X86_EAX);
 
     /* set "pointer" to offsets */
-    MOV_D(&fp, X64_RDI, X64_RCX, 0, 0);
+	x64_mov_reg_membase(fp, X64_RDI, X64_RCX, 0x0, 8);
 
     /* set "pointer" to constants */
-    MOV_D(&fp, X64_RSI, X64_RCX, 0xE0, 0);
+	x64_mov_reg_membase(fp, X64_RSI, X64_RCX, 0xE0, 8);
 
     /* align loop/jump destination */
     ffts_align_mem16(&fp, 8);
@@ -360,9 +360,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             int offset = (4 * pps[1]) - pAddr;
             if (offset) {
 #ifdef _M_X64
-				x64_alu_reg_imm_size_body(fp, X86_ADD, X64_R8, offset, 8);
+				x64_alu_reg_imm_size(fp, X86_ADD, X64_R8, offset, 8);
 #else
-				x64_alu_reg_imm_size_body(fp, X86_ADD, X64_RDX, offset, 8);
+				x64_alu_reg_imm_size(fp, X86_ADD, X64_RDX, offset, 8);
 #endif
             }
 
@@ -390,9 +390,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             int offset = (int) (ws_is - pLUT);
 
 #ifdef _M_X64
-			x64_alu_reg_imm_size_body(fp, X86_ADD, X64_RDI, offset, 8);
+			x64_alu_reg_imm_size(fp, X86_ADD, X64_RDI, offset, 8);
 #else
-			x64_alu_reg_imm_size_body(fp, X86_ADD, X64_R8, offset, 8);
+			x64_alu_reg_imm_size(fp, X86_ADD, X64_R8, offset, 8);
 #endif
         }
 
