@@ -16,8 +16,11 @@
 #ifndef X64_H
 #define X64_H
 
+#include "../x86/x86-codegen.h"
+
 #include <stdint.h>
 
+/* x86-64 general purpose registers */
 typedef enum {
 	X64_RAX = 0,
 	X64_RCX = 1,
@@ -39,6 +42,7 @@ typedef enum {
 	X64_NREG
 } X64_Reg_No;
 
+/* x86-64 XMM registers */
 typedef enum {
 	X64_XMM0 = 0,
 	X64_XMM1 = 1,
@@ -67,12 +71,7 @@ typedef enum
   X64_REX_W = 8  /* Opeartion is 64-bits instead of 32 (default) or 16 (with 0x66 prefix) */
 } X64_REX_Bits;
 
-#if defined(__default_codegen__)
-
-#define x64_codegen_pre(inst)
-#define x64_codegen_post(inst)
-
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 
 #define x64_codegen_pre(inst) uint8_t* _codegen_start = (inst); x64_nacl_instruction_pre();
 #define x64_codegen_post(inst) (x64_nacl_instruction_post(&_codegen_start, &(inst)), _codegen_start);
@@ -90,8 +89,12 @@ typedef enum
 #define x64_is_valid_nacl_base(reg) \
   ((reg) == X64_RIP || (reg) == X64_R15 || \
    (reg) == X64_RBP || (reg) == X64_RSP)
+#else
 
-#endif /*__native_client_codegen__*/
+#define x64_codegen_pre(inst)
+#define x64_codegen_post(inst)
+
+#endif /* __native_client_codegen__ */
 
 #ifdef TARGET_WIN32
 #define X64_ARG_REG1 X64_RCX
@@ -106,47 +109,38 @@ typedef enum
 #endif
 
 #ifdef TARGET_WIN32
-#define X64_CALLEE_REGS ((1<<X64_RAX) | (1<<X64_RCX) | (1<<X64_RDX) | (1<<X64_R8) | (1<<X64_R9) | (1<<X64_R10))
+#define X64_CALLEE_REGS ((1 << X64_RAX) | (1 << X64_RCX) | (1 << X64_RDX) | (1 << X64_R8) | (1 << X64_R9) | (1 << X64_R10))
 #define X64_IS_CALLEE_REG(reg)  (X64_CALLEE_REGS & (1 << (reg)))
 
-#define X64_ARGUMENT_REGS ((1<<X64_RDX) | (1<<X64_RCX) | (1<<X64_R8) | (1<<X64_R9))
+#define X64_ARGUMENT_REGS ((1 << X64_RDX) | (1 << X64_RCX) | (1 << X64_R8) | (1 << X64_R9))
 #define X64_IS_ARGUMENT_REG(reg) (X64_ARGUMENT_REGS & (1 << (reg)))
 
-#define X64_CALLEE_SAVED_REGS ((1<<X64_RDI) | (1<<X64_RSI) | (1<<X64_RBX) | (1<<X64_R12) | (1<<X64_R13) | (1<<X64_R14) | (1<<X64_R15) | (1<<X64_RBP))
+#define X64_CALLEE_SAVED_REGS ((1 << X64_RDI) | (1 << X64_RSI) | (1 << X64_RBX) | (1 << X64_R12) | (1 << X64_R13) | (1 << X64_R14) | (1 << X64_R15) | (1 << X64_RBP))
 #define X64_IS_CALLEE_SAVED_REG(reg) (X64_CALLEE_SAVED_REGS & (1 << (reg)))
 #elif defined(__native_client_codegen__)
 /* x64 Native Client code may not write R15 */
-#define X64_CALLEE_REGS ((1<<X64_RAX) | (1<<X64_RCX) | (1<<X64_RDX) | (1<<X64_RSI) | (1<<X64_RDI) | (1<<X64_R8) | (1<<X64_R9) | (1<<X64_R10))
+#define X64_CALLEE_REGS ((1 << X64_RAX) | (1 << X64_RCX) | (1 << X64_RDX) | (1 << X64_RSI) | (1 << X64_RDI) | (1 << X64_R8) | (1 << X64_R9) | (1 << X64_R10))
 #define X64_IS_CALLEE_REG(reg)  (X64_CALLEE_REGS & (1 << (reg)))
 
-#define X64_ARGUMENT_REGS ((1<<X64_RDI) | (1<<X64_RSI) | (1<<X64_RDX) | (1<<X64_RCX) | (1<<X64_R8) | (1<<X64_R9))
+#define X64_ARGUMENT_REGS ((1 << X64_RDI) | (1 << X64_RSI) | (1 << X64_RDX) | (1 << X64_RCX) | (1 << X64_R8) | (1 << X64_R9))
 #define X64_IS_ARGUMENT_REG(reg) (X64_ARGUMENT_REGS & (1 << (reg)))
 
-#define X64_CALLEE_SAVED_REGS ((1<<X64_RBX) | (1<<X64_R12) | (1<<X64_R13) | (1<<X64_R14) | (1<<X64_RBP))
+#define X64_CALLEE_SAVED_REGS ((1 << X64_RBX) | (1 << X64_R12) | (1 << X64_R13) | (1 << X64_R14) | (1 << X64_RBP))
 #define X64_IS_CALLEE_SAVED_REG(reg) (X64_CALLEE_SAVED_REGS & (1 << (reg)))
 #else
-#define X64_CALLEE_REGS ((1<<X64_RAX) | (1<<X64_RCX) | (1<<X64_RDX) | (1<<X64_RSI) | (1<<X64_RDI) | (1<<X64_R8) | (1<<X64_R9) | (1<<X64_R10))
+#define X64_CALLEE_REGS ((1 << X64_RAX) | (1 << X64_RCX) | (1 << X64_RDX) | (1 << X64_RSI) | (1 << X64_RDI) | (1 << X64_R8) | (1 << X64_R9) | (1 << X64_R10))
 #define X64_IS_CALLEE_REG(reg)  (X64_CALLEE_REGS & (1 << (reg)))
 
-#define X64_ARGUMENT_REGS ((1<<X64_RDI) | (1<<X64_RSI) | (1<<X64_RDX) | (1<<X64_RCX) | (1<<X64_R8) | (1<<X64_R9))
+#define X64_ARGUMENT_REGS ((1 << X64_RDI) | (1 << X64_RSI) | (1 << X64_RDX) | (1 << X64_RCX) | (1 << X64_R8) | (1 << X64_R9))
 #define X64_IS_ARGUMENT_REG(reg) (X64_ARGUMENT_REGS & (1 << (reg)))
 
-#define X64_CALLEE_SAVED_REGS ((1<<X64_RBX) | (1<<X64_R12) | (1<<X64_R13) | (1<<X64_R14) | (1<<X64_R15) | (1<<X64_RBP))
+#define X64_CALLEE_SAVED_REGS ((1 << X64_RBX) | (1 << X64_R12) | (1 << X64_R13) | (1 << X64_R14) | (1 << X64_R15) | (1 << X64_RBP))
 #define X64_IS_CALLEE_SAVED_REG(reg) (X64_CALLEE_SAVED_REGS & (1 << (reg)))
 #endif
 
 #define X64_REX(bits) ((unsigned char)(0x40 | (bits)))
-#if defined(__default_codegen__)
-#define x64_emit_rex(inst, width, reg_modrm, reg_index, reg_rm_base_opcode) do \
-	{ \
-		unsigned char _x64_rex_bits = \
-			(((width) > 4) ? X64_REX_W : 0) | \
-			(((reg_modrm) > 7) ? X64_REX_R : 0) | \
-			(((reg_index) > 7) ? X64_REX_X : 0) | \
-			(((reg_rm_base_opcode) > 7) ? X64_REX_B : 0); \
-		if ((_x64_rex_bits != 0) || (((width) == 1))) *(inst)++ = X64_REX(_x64_rex_bits); \
-	} while (0)
-#elif defined(__native_client_codegen__)
+
+#if defined(__native_client_codegen__)
 #define x64_emit_rex(inst, width, reg_modrm, reg_index, reg_rm_base_opcode) do \
 	{ \
 		unsigned char _x64_rex_bits = \
@@ -157,14 +151,22 @@ typedef enum
 		x64_nacl_tag_rex((inst)); \
 		if ((_x64_rex_bits != 0) || (((width) == 1))) *(inst)++ = X64_REX(_x64_rex_bits); \
 	} while (0)
-#endif
+#else
+#define x64_emit_rex(inst, width, reg_modrm, reg_index, reg_rm_base_opcode) do \
+	{ \
+		unsigned char _x64_rex_bits = \
+			(((width) > 4) ? X64_REX_W : 0) | \
+			(((reg_modrm) > 7) ? X64_REX_R : 0) | \
+			(((reg_index) > 7) ? X64_REX_X : 0) | \
+			(((reg_rm_base_opcode) > 7) ? X64_REX_B : 0); \
+		if ((_x64_rex_bits != 0) || (((width) == 1))) *(inst)++ = X64_REX(_x64_rex_bits); \
+	} while (0)
+#endif /* __native_client_codegen__ */
 
 typedef union {
 	uint64_t val;
-	unsigned char b [8];
+	unsigned char b[8];
 } x64_imm_buf;
-
-#include "../x86/x86-codegen.h"
 
 /* In 64 bit mode, all registers have a low byte subregister */
 #undef X86_IS_BYTE_REG
@@ -233,15 +235,7 @@ typedef union {
 		x86_reg_emit ((inst), (dreg), (reg));	\
 	} while (0)
 
-#if defined(__default_codegen__)
-
-#define x64_alu_reg_imm_size(inst,opc,reg,imm,size) \
-	x64_alu_reg_imm_size_body((inst), (opc), (reg), (imm), (size))
-
-#define x64_alu_reg_reg_size(inst,opc,dreg,reg,size) \
-		x64_alu_reg_reg_size_body((inst), (opc), (dreg), (reg), (size))
-
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 /* NaCl modules may not directly update RSP or RBP other than direct copies */
 /* between them. Instead the lower 4 bytes are updated and then added to R15 */
 #define x64_is_nacl_stack_reg(reg) (((reg) == X64_RSP) || ((reg) == X64_RBP))
@@ -275,6 +269,14 @@ typedef union {
 		} \
 		x64_codegen_post(inst);		\
 	} while (0)
+
+#else
+
+#define x64_alu_reg_imm_size(inst,opc,reg,imm,size) \
+	x64_alu_reg_imm_size_body((inst), (opc), (reg), (imm), (size))
+
+#define x64_alu_reg_reg_size(inst,opc,dreg,reg,size) \
+		x64_alu_reg_reg_size_body((inst), (opc), (dreg), (reg), (size))
 
 #endif /*__native_client_codegen__*/
 
@@ -370,16 +372,16 @@ typedef union {
 		x64_codegen_post(inst); \
 	} while (0)
 
-#if defined(__default_codegen__)
-#define x64_mov_reg_mem(inst,reg,mem,size)	\
-	do {    \
-		x64_mov_reg_mem_body((inst),(reg),(mem),(size)); \
-	} while (0)
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 /* We have to re-base memory reads because memory isn't zero based. */
 #define x64_mov_reg_mem(inst,reg,mem,size)	\
 	do {    \
 		x64_mov_reg_membase((inst),(reg),X64_R15,(mem),(size)); \
+	} while (0)
+#else
+#define x64_mov_reg_mem(inst,reg,mem,size)	\
+	do {    \
+		x64_mov_reg_mem_body((inst),(reg),(mem),(size)); \
 	} while (0)
 #endif /* __native_client_codegen__ */
 
@@ -402,16 +404,7 @@ typedef union {
 		x86_mov_reg_memindex((inst),((reg)&0x7),((basereg)&0x7),(disp),((indexreg)&0x7),(shift),(size) == 8 ? 4 : (size)); \
 	} while (0)
 
-#if defined(__default_codegen__)
-
-#define x64_mov_reg_memindex_size(inst,reg,basereg,disp,indexreg,shift,size) \
-	x64_mov_reg_memindex_size_body((inst),(reg),(basereg),(disp),(indexreg),(shift),(size))
-#define x64_mov_reg_membase(inst,reg,basereg,disp,size)	\
-	do {	\
-		x64_mov_reg_membase_body((inst), (reg), (basereg), (disp), (size)); \
-	} while (0)
-
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 
 #define x64_mov_reg_memindex_size(inst,reg,basereg,disp,indexreg,shift,size) \
 	do { \
@@ -439,6 +432,15 @@ typedef union {
 			x64_mov_reg_membase_body((inst), (reg), (basereg), (disp), (size)); \
 		} \
 		x64_codegen_post(inst); \
+	} while (0)
+
+#else
+
+#define x64_mov_reg_memindex_size(inst,reg,basereg,disp,indexreg,shift,size) \
+	x64_mov_reg_memindex_size_body((inst),(reg),(basereg),(disp),(indexreg),(shift),(size))
+#define x64_mov_reg_membase(inst,reg,basereg,disp,size)	\
+	do {	\
+		x64_mov_reg_membase_body((inst), (reg), (basereg), (disp), (size)); \
 	} while (0)
 
 #endif /*__native_client_codegen__*/
@@ -541,10 +543,7 @@ typedef union {
 		x64_membase_emit ((inst), (reg), (basereg), (disp));	\
 	} while (0)
 
-#if defined(__default_codegen__)
-#define x64_lea_membase(inst,reg,basereg,disp) \
-	x64_lea_membase_body((inst), (reg), (basereg), (disp))
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 /* NaCl modules may not write directly into RSP/RBP. Instead, use a */
 /*  32-bit LEA and add R15 to the effective address */
 #define x64_lea_membase(inst,reg,basereg,disp) \
@@ -562,6 +561,9 @@ typedef union {
 		} \
 		x64_codegen_post(inst); \
 	} while (0)
+#else
+#define x64_lea_membase(inst,reg,basereg,disp) \
+	x64_lea_membase_body((inst), (reg), (basereg), (disp))
 #endif /*__native_client_codegen__*/
 
 /* Instruction are implicitly 64-bits so don't generate REX for just the size. */
@@ -591,22 +593,7 @@ typedef union {
 		x64_codegen_post(inst);  \
 	} while (0)
 
-#if defined(__default_codegen__)
-
-#define x64_call_reg(inst,reg)	\
-	do {	\
-		x64_emit_rex(inst, 0, 0, 0, (reg)); \
-		*(inst)++ = (unsigned char)0xff;	\
-		x86_reg_emit ((inst), 2, ((reg) & 0x7));	\
-	} while (0)
-
-
-#define x64_ret(inst) do { *(inst)++ = (unsigned char)0xc3; } while (0)
-#define x64_leave(inst) do { *(inst)++ = (unsigned char)0xc9; } while (0)
-
-#define x64_pop_reg(inst,reg) x64_pop_reg_body((inst), (reg))
-
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 
 /* Size is ignored for Native Client jumps, we restrict jumping to 32-bits */
 #define x64_jump_reg_size(inst,reg,size)                                \
@@ -678,6 +665,21 @@ typedef union {
 		} \
 		x64_codegen_post(inst); \
 	} while (0)
+
+#else
+
+#define x64_call_reg(inst,reg)	\
+	do {	\
+		x64_emit_rex(inst, 0, 0, 0, (reg)); \
+		*(inst)++ = (unsigned char)0xff;	\
+		x86_reg_emit ((inst), 2, ((reg) & 0x7));	\
+	} while (0)
+
+
+#define x64_ret(inst) do { *(inst)++ = (unsigned char)0xc3; } while (0)
+#define x64_leave(inst) do { *(inst)++ = (unsigned char)0xc9; } while (0)
+
+#define x64_pop_reg(inst,reg) x64_pop_reg_body((inst), (reg))
 
 #endif /*__native_client_codegen__*/
 
@@ -796,33 +798,7 @@ typedef union {
 	x64_codegen_post(inst); \
 } while (0)
 
-#if defined (__default_codegen__)
-
-/* From the AMD64 Software Optimization Manual */
-#define x64_padding_size(inst,size) \
-    do { \
-	    switch ((size)) {								  \
-        case 1: *(inst)++ = 0x90; break;						  \
-        case 2: *(inst)++ = 0x66; *(inst)++ = 0x90; break;			  \
-        case 3: *(inst)++ = 0x66; *(inst)++ = 0x66; *(inst)++ = 0x90; break; \
-		default: x64_emit_rex ((inst),8,0,0,0); x86_padding ((inst), (size) - 1); \
-		}; \
-		} while (0)
-
-#define x64_call_membase_size(inst,basereg,disp,size) do { x64_emit_rex ((inst),0,0,0,(basereg)); *(inst)++ = (unsigned char)0xff; x64_membase_emit ((inst),2, (basereg),(disp)); } while (0)
-#define x64_jump_membase_size(inst,basereg,disp,size) do { x64_emit_rex ((inst),0,0,0,(basereg)); *(inst)++ = (unsigned char)0xff; x64_membase_emit ((inst), 4, (basereg), (disp)); } while (0)
-    
-#define x64_jump_code_size(inst,target,size) do { \
-	if (x64_is_imm32 ((int64_t)(target) - (int64_t)(inst))) {		\
-		x86_jump_code((inst),(target));									\
-	} else {															\
-	    x64_jump_membase ((inst), X64_RIP, 0);							\
-		*(uint64_t*)(inst) = (uint64_t)(target);							\
-		(inst) += 8; \
-	} \
-} while (0)
-
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 
 /* The 3-7 byte NOP sequences in x64_padding_size below are all illegal in */
 /* 64-bit Native Client because they load into rSP/rBP or use duplicate */
@@ -878,7 +854,6 @@ typedef union {
 		g_assert(code_start + (size) == (unsigned char *)(inst)); \
 	} while (0)
 
-
 /* Size is ignored for Native Client calls, we restrict jumping to 32-bits */
 #define x64_call_membase_size(inst,basereg,disp,size)                   \
   do {                                                                    \
@@ -910,6 +885,32 @@ typedef union {
     jump_start = (inst);                                                  \
     x86_jump_code((inst),(target));                                       \
     mono_x64_patch(jump_start, (target));                               \
+} while (0)
+
+#else
+
+/* From the AMD64 Software Optimization Manual */
+#define x64_padding_size(inst,size) \
+    do { \
+	    switch ((size)) {								  \
+        case 1: *(inst)++ = 0x90; break;						  \
+        case 2: *(inst)++ = 0x66; *(inst)++ = 0x90; break;			  \
+        case 3: *(inst)++ = 0x66; *(inst)++ = 0x66; *(inst)++ = 0x90; break; \
+		default: x64_emit_rex ((inst),8,0,0,0); x86_padding ((inst), (size) - 1); \
+		}; \
+		} while (0)
+
+#define x64_call_membase_size(inst,basereg,disp,size) do { x64_emit_rex ((inst),0,0,0,(basereg)); *(inst)++ = (unsigned char)0xff; x64_membase_emit ((inst),2, (basereg),(disp)); } while (0)
+#define x64_jump_membase_size(inst,basereg,disp,size) do { x64_emit_rex ((inst),0,0,0,(basereg)); *(inst)++ = (unsigned char)0xff; x64_membase_emit ((inst), 4, (basereg), (disp)); } while (0)
+    
+#define x64_jump_code_size(inst,target,size) do { \
+	if (x64_is_imm32 ((int64_t)(target) - (int64_t)(inst))) {		\
+		x86_jump_code((inst),(target));									\
+	} else {															\
+	    x64_jump_membase ((inst), X64_RIP, 0);							\
+		*(uint64_t*)(inst) = (uint64_t)(target);							\
+		(inst) += 8; \
+	} \
 } while (0)
 
 #endif /*__native_client_codegen__*/
@@ -1547,18 +1548,19 @@ typedef union {
 #define x64_loopne_size(inst,imm,size) do { x64_codegen_pre(inst); x64_emit_rex ((inst),(size),0,0,0); x86_loopne((inst),(imm)); x64_codegen_post(inst); } while (0)
 #define x64_jump32_size(inst,imm,size) do { x64_codegen_pre(inst); x64_emit_rex ((inst),(size),0,0,0); x86_jump32((inst),(imm)); x64_codegen_post(inst); } while (0)
 #define x64_jump8_size(inst,imm,size) do { x64_codegen_pre(inst); x64_emit_rex ((inst),(size),0,0,0); x86_jump8((inst),(imm)); x64_codegen_post(inst); } while (0)
+
 #if !defined( __native_client_codegen__ )
 /* Defined above for Native Client, so they can be used in other macros */
 #define x64_jump_reg_size(inst,reg,size) do { x64_emit_rex ((inst),0,0,0,(reg)); x86_jump_reg((inst),((reg)&0x7)); } while (0)
 #define x64_jump_mem_size(inst,mem,size) do { x64_emit_rex ((inst),(size),0,0,0); x86_jump_mem((inst),(mem)); } while (0)
 #endif
+
 #define x64_jump_disp_size(inst,disp,size) do { x64_codegen_pre(inst); x64_emit_rex ((inst),0,0,0,0); x86_jump_disp((inst),(disp)); x64_codegen_post(inst); } while (0)
 #define x64_branch8_size(inst,cond,imm,is_signed,size) do { x86_branch8((inst),(cond),(imm),(is_signed)); } while (0)
 #define x64_branch32_size(inst,cond,imm,is_signed,size) do { x86_branch32((inst),(cond),(imm),(is_signed)); } while (0)
 #define x64_branch_size_body(inst,cond,target,is_signed,size) do { x64_codegen_pre(inst); x64_emit_rex ((inst),(size),0,0,0); x86_branch((inst),(cond),(target),(is_signed)); x64_codegen_post(inst); } while (0)
-#if defined(__default_codegen__)
-#define x64_branch_size(inst,cond,target,is_signed,size) do { x64_branch_size_body((inst),(cond),(target),(is_signed),(size)); } while (0)
-#elif defined(__native_client_codegen__)
+
+#if defined(__native_client_codegen__)
 #define x64_branch_size(inst,cond,target,is_signed,size) \
 	do { \
 		/* x64_branch_size_body used twice in     */ \
@@ -1571,7 +1573,9 @@ typedef union {
 		x64_branch_size_body((inst),(cond),(target),(is_signed),(size)); \
 		mono_x64_patch(branch_start, (target)); \
 	} while (0)
-#endif
+#else
+#define x64_branch_size(inst,cond,target,is_signed,size) do { x64_branch_size_body((inst),(cond),(target),(is_signed),(size)); } while (0)
+#endif /* __native_client_codegen__ */
 
 #define x64_branch_disp_size(inst,cond,disp,is_signed,size) do { x64_codegen_pre(inst); x64_emit_rex ((inst),(size),0,0,0); x86_branch_disp((inst),(cond),(disp),(is_signed)); x64_codegen_post(inst); } while (0)
 #define x64_set_reg_size(inst,cond,reg,is_signed,size) do { x64_codegen_pre(inst); x64_emit_rex((inst),1,0,0,(reg)); x86_set_reg((inst),(cond),((reg)&0x7),(is_signed)); x64_codegen_post(inst); } while (0)
@@ -1580,12 +1584,7 @@ typedef union {
 //#define x64_call_reg_size(inst,reg,size) do { x64_codegen_pre(inst); x64_emit_rex ((inst),(size),0,0,(reg)); x86_call_reg((inst),((reg)&0x7)); x64_codegen_post(inst); } while (0)
 #define x64_call_mem_size(inst,mem,size) do { x64_codegen_pre(inst); x64_emit_rex ((inst),(size),0,0,0); x86_call_mem((inst),(mem)); x64_codegen_post(inst); } while (0)
 
-#if defined(__default_codegen__)
-
-#define x64_call_imm_size(inst,disp,size) do { x86_call_imm((inst),(disp)); } while (0)
-#define x64_call_code_size(inst,target,size) do { x86_call_code((inst),(target)); } while (0)
-
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 /* Size is ignored for Native Client calls, we restrict jumping to 32-bits */
 #define x64_call_imm_size(inst,disp,size)             \
   do {                                                  \
@@ -1613,6 +1612,11 @@ typedef union {
     x64_codegen_post((inst));                         \
     mono_x64_patch(call_start, (target));             \
   } while (0)
+
+#else
+
+#define x64_call_imm_size(inst,disp,size) do { x86_call_imm((inst),(disp)); } while (0)
+#define x64_call_code_size(inst,target,size) do { x86_call_code((inst),(target)); } while (0)
 
 #endif /*__native_client_codegen__*/
 

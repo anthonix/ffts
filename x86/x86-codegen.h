@@ -14,15 +14,16 @@
 
 #ifndef X86_H
 #define X86_H
+
 #include <assert.h>
 
 #ifdef __native_client_codegen__
 extern gint8 nacl_align_byte;
 #endif /* __native_client_codegen__ */
 
-
 #if defined( __native_client_codegen__ ) && defined( TARGET_X86 )
 #define x86_codegen_pre(inst_ptr_ptr, inst_len) do { mono_nacl_align_inst(inst_ptr_ptr, inst_len); } while (0)
+
 #define x86_call_sequence_pre_val(inst) guint8* _code_start = (inst);
 #define x86_call_sequence_post_val(inst) \
   (mono_nacl_align_call(&_code_start, &(inst)), _code_start);
@@ -30,6 +31,7 @@ extern gint8 nacl_align_byte;
 #define x86_call_sequence_post(inst) x86_call_sequence_post_val((inst))
 #else
 #define x86_codegen_pre(inst_ptr_ptr, inst_len) do {} while (0)
+
 /* Two variants are needed to avoid warnings */
 #define x86_call_sequence_pre_val(inst) guint8* _code_start = (inst);
 #define x86_call_sequence_post_val(inst) _code_start
@@ -37,10 +39,7 @@ extern gint8 nacl_align_byte;
 #define x86_call_sequence_post(inst)
 #endif  /* __native_client_codegen__ */
 
-
-/*
-// x86 register numbers
-*/
+/* x86 32bit register numbers */
 typedef enum {
 	X86_EAX = 0,
 	X86_ECX = 1,
@@ -65,9 +64,7 @@ typedef enum {
 	X86_XMM_NREG
 } X86_XMM_Reg_No;
 
-/*
-// opcodes for alu instructions
-*/
+/* opcodes for ALU instructions */
 typedef enum {
 	X86_ADD = 0,
 	X86_OR  = 1,
