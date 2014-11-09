@@ -209,6 +209,9 @@ typedef union {
 		x86_membase_emit ((inst),(reg)&0x7, (basereg)&0x7, (disp)); \
 } while (0)
 
+#define x64_memindex_emit(inst, reg, basereg, disp, indexreg, shift) \
+	x86_memindex_emit((inst), ((reg) & 0x7), ((basereg) & 0x7), (disp), ((indexreg) & 0x7), (shift))
+
 #define x64_alu_reg_imm_size_body(inst,opc,reg,imm,size) \
 	do {	\
 		if (x86_is_imm8((imm))) {	\
@@ -950,6 +953,16 @@ typedef union {
     x64_codegen_post(inst); \
 } while (0)
 
+#define emit_sse_memindex_reg_op2(inst, basereg, disp, indexreg, shift, reg, op1, op2) \
+	do { \
+	    x64_codegen_pre(inst); \
+		x64_emit_rex (inst, 0, (reg), (indexreg), (basereg)); \
+		*(inst)++ = (unsigned char)(op1); \
+		*(inst)++ = (unsigned char)(op2); \
+		x64_memindex_emit((inst), (reg), (basereg), (disp), (indexreg), (shift)); \
+		x64_codegen_post(inst); \
+	} while(0)
+
 #define emit_sse_reg_membase_op2(inst,dreg,basereg,disp,op1,op2) do { \
     x64_codegen_pre(inst); \
     x64_emit_rex ((inst), 0, (dreg), 0, (basereg) == X64_RIP ? 0 : (basereg)); \
@@ -958,6 +971,16 @@ typedef union {
     x64_membase_emit ((inst), (dreg), (basereg), (disp)); \
     x64_codegen_post(inst); \
 } while (0)
+
+#define emit_sse_reg_memindex_op2(inst, dreg, basereg, disp, indexreg, shift, op1, op2) \
+	do { \
+	    x64_codegen_pre(inst); \
+		x64_emit_rex (inst, 0, (dreg), (indexreg), (basereg) == X64_RIP ? 0 : (basereg)); \
+		*(inst)++ = (unsigned char)(op1); \
+		*(inst)++ = (unsigned char)(op2); \
+		x64_memindex_emit((inst), (dreg), (basereg), (disp), (indexreg), (shift)); \
+		x64_codegen_post(inst); \
+	} while(0)
 
 /* Three opcode SSE defines */
 
@@ -1391,15 +1414,26 @@ typedef union {
 
 #define x64_sse_movups_reg_membase(inst, dreg, basereg, disp) emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x10)
 
-#define x64_sse_movaps_membase_reg(inst, basereg, disp, reg) emit_sse_membase_reg_op2((inst), (basereg), (disp), (reg), 0x0f, 0x29)
+#define x64_sse_movaps_membase_reg(inst, basereg, disp, reg) \
+	emit_sse_membase_reg_op2((inst), (basereg), (disp), (reg), 0x0f, 0x29)
 
-#define x64_sse_movaps_reg_membase(inst, dreg, basereg, disp) emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x28)
+#define x64_sse_movaps_memindex_reg(inst, basereg, disp, indexreg, shift, reg) \
+	emit_sse_memindex_reg_op2((inst), (basereg), (disp), (indexreg), (shift), (reg), 0x0f, 0x29);
 
-#define x64_sse_movaps_reg_reg(inst, dreg, reg) emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x28)
+#define x64_sse_movaps_reg_membase(inst, dreg, basereg, disp) \
+	emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x28)
 
-#define x64_sse_movntps_reg_membase(inst, dreg, basereg, disp) emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x2b)
+#define x64_sse_movaps_reg_memindex(inst, dreg, basereg, disp, indexreg, shift) \
+	emit_sse_reg_memindex_op2((inst), (dreg), (basereg), (disp), (indexreg), (shift), 0x0f, 0x28);
 
-#define x64_sse_prefetch_reg_membase(inst, arg, basereg, disp) emit_sse_reg_membase_op2((inst), (arg), (basereg), (disp), 0x0f, 0x18)
+#define x64_sse_movaps_reg_reg(inst, dreg, reg) \
+	emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x28)
+
+#define x64_sse_movntps_reg_membase(inst, dreg, basereg, disp) \
+	emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x2b)
+
+#define x64_sse_prefetch_reg_membase(inst, arg, basereg, disp) \
+	emit_sse_reg_membase_op2((inst), (arg), (basereg), (disp), 0x0f, 0x18)
 
 #define x64_sse_movdqa_membase_reg(inst, basereg, disp, reg) \
 	emit_sse_membase_reg((inst), (basereg), (disp), (reg), 0x66, 0x0f, 0x7f)
