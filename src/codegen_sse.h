@@ -120,84 +120,6 @@ static void IMM32_NI(uint8_t *p, int32_t imm)
     }
 }
 
-static FFTS_INLINE void MOVDQA(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
-{
-    uint8_t r1 = (reg1 & 7);
-    uint8_t r2 = (reg2 & 7);
-    uint8_t	r;
-
-    /* mandatory prefix */
-    *(*p)++ = 0x66;
-
-    /* REX prefix */
-    if ((reg1 & 8) || (reg2 & 8)) {
-        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
-    }
-
-    /* esacape opcode */
-    *(*p)++ = 0x0F;
-
-    /* opcode */
-    if (is_store) {
-        *(*p)++ = 0x7F;
-    } else {
-        *(*p)++ = 0x6F;
-    }
-
-    r = r1 | (r2 << 3);
-
-    if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
-        assert(disp == 0);
-        *(*p)++ = 0xC0 | r;
-    } else {
-        assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
-
-        if (disp == 0 && r1 != 5) {
-            *(*p)++ = r;
-
-            if (r1 == 4) {
-                *(*p)++ = 0x24;
-            }
-        } else {
-            if (disp <= 127 && disp >= -128) {
-                *(*p)++ = 0x40 | r;
-
-                if (r1 == 4) {
-                    *(*p)++ = 0x24;
-                }
-
-                IMM8(p, disp);
-            } else {
-                *(*p)++ = 0x80 | r;
-
-                if (r1 == 4) {
-                    *(*p)++ = 0x24;
-                }
-
-                IMM32(p, disp);
-            }
-        }
-    }
-}
-
-static FFTS_INLINE void MOVDQA2(uint8_t **p, uint8_t reg1, uint8_t reg2)
-{
-    if (reg1 & XMM_REG) {
-        MOVDQA(p, reg2, reg1, 0, 0);
-    } else {
-        MOVDQA(p, reg1, reg2, 0, 1);
-    }
-}
-
-static FFTS_INLINE void MOVDQA3(uint8_t **p, uint8_t reg1, int32_t op2, int32_t op3)
-{
-    if (reg1 & XMM_REG) {
-        MOVDQA(p, (uint8_t) op2, reg1, op3, 0);
-    } else {
-        MOVDQA(p, reg1, (uint8_t) op3, op2, 1);
-    }
-}
-
 static FFTS_INLINE void MULPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
 {
     uint8_t r1 = (reg1 & 7);
@@ -326,16 +248,16 @@ static FFTS_INLINE void generate_epilogue(insns_t **fp)
 {
 #ifdef _M_X64
     /* restore nonvolatile registers */
-    MOVDQA3(fp, XMM6,  X64_RSP,   0);
-    MOVDQA3(fp, XMM7,  X64_RSP,  16);
-    MOVDQA3(fp, XMM8,  X64_RSP,  32);
-    MOVDQA3(fp, XMM9,  X64_RSP,  48);
-    MOVDQA3(fp, XMM10, X64_RSP,  64);
-    MOVDQA3(fp, XMM11, X64_RSP,  80);
-    MOVDQA3(fp, XMM12, X64_RSP,  96);
-    MOVDQA3(fp, XMM13, X64_RSP, 112);
-    MOVDQA3(fp, XMM14, X64_RSP, 128);
-    MOVDQA3(fp, XMM15, X64_RSP, 144);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM6,  X64_RSP,   0);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM7,  X64_RSP,  16);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM8,  X64_RSP,  32);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM9,  X64_RSP,  48);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM10, X64_RSP,  64);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM11, X64_RSP,  80);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM12, X64_RSP,  96);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM13, X64_RSP, 112);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM14, X64_RSP, 128);
+	x64_sse_movdqa_reg_membase(*fp, X64_XMM15, X64_RSP, 144);
 
     /* restore stack */
 	x64_alu_reg_imm_size(*fp, X86_ADD, X64_RSP, 168, 8);
@@ -377,16 +299,16 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 	x64_alu_reg_imm_size(*fp, X86_SUB, X64_RSP, 168, 8);
 
     /* to save XMM6-XMM15 registers */
-    MOVDQA3(fp, X64_RSP,   0,  XMM6);
-    MOVDQA3(fp, X64_RSP,  16,  XMM7);
-    MOVDQA3(fp, X64_RSP,  32,  XMM8);
-    MOVDQA3(fp, X64_RSP,  48,  XMM9);
-    MOVDQA3(fp, X64_RSP,  64, XMM10);
-    MOVDQA3(fp, X64_RSP,  80, XMM11);
-    MOVDQA3(fp, X64_RSP,  96, XMM12);
-    MOVDQA3(fp, X64_RSP, 112, XMM13);
-    MOVDQA3(fp, X64_RSP, 128, XMM14);
-    MOVDQA3(fp, X64_RSP, 144, XMM15);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  0,  X64_XMM6);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  16, X64_XMM7);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  32, X64_XMM8);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  48, X64_XMM9);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  64, X64_XMM10);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  80, X64_XMM11);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  96, X64_XMM12);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP, 112, X64_XMM13);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP, 128, X64_XMM14);
+	x64_sse_movdqa_membase_reg(*fp, X64_RSP, 144, X64_XMM15);
 #else
 	x64_push_reg(*fp, X64_RBP);
 	x64_push_reg(*fp, X64_RBX);
