@@ -331,40 +331,19 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
     x8_soft_loop = *fp;
     assert(!(((uintptr_t) x8_soft_loop) & 0xF));
 
-    /* movaps xmm9, [rax] */
-    /* input + 0 * input_stride */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x08;
+    /* load [input + 0 * input_stride] */
+	x64_sse_movaps_reg_membase(*fp, X64_XMM9, X64_RAX, 0);
 
-    /* movaps xmm6, [rcx + rbx*2] */
-    /* output + 2 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x34;
-    *(*fp)++ = 0x59;
+    /* load [output + 2 * output_stride] */
+	x64_sse_movaps_reg_memindex(*fp, X64_XMM6, X64_RCX, 0, X64_RBX, 1);
 
-    /* movaps xmm11, xmm9 */
-    *(*fp)++ = 0x45;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xD9;
+	x64_sse_movaps_reg_reg(*fp, X64_XMM11, X64_XMM9);
 
-    /* movaps xmm7, [rcx + rsi] */
-    /* output + 3 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x3C;
-    *(*fp)++ = 0x31;
+    /* load [output + 3 * output_stride] */
+	x64_sse_movaps_reg_memindex(*fp, X64_XMM7, X64_RCX, 0, X64_RSI, 0);
 
-    /* movaps xmm8, [rax + 0x10] */
-    /* input + 1 * input_stride */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x40;
-    *(*fp)++ = 0x10;
+    /* load [input + 1 * input_stride] */
+	x64_sse_movaps_reg_membase(*fp, X64_XMM8, X64_RAX, 16);
 
 	x64_sse_mulps_reg_reg(*fp, X64_XMM11, X64_XMM6);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM9, X64_XMM7);
@@ -373,86 +352,42 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM7, X64_XMM7, 0xB1);
 	x64_sse_subps_reg_reg(*fp, X64_XMM11, X64_XMM6);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM8, X64_XMM7);
-
-    /* movaps xmm10, xmm11 */
-    *(*fp)++ = 0x45;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xD3;
-
+	x64_sse_movaps_reg_reg(*fp, X64_XMM10, X64_XMM11);
 	x64_sse_addps_reg_reg(*fp, X64_XMM9, X64_XMM8);
 
-    /* movaps xmm15, [rax + 0x20]  */
-    /* input + 2 * input_stride */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x78;
-    *(*fp)++ = 0x20;
+    /* load [input + 2 * input_stride] */
+	x64_sse_movaps_reg_membase(*fp, X64_XMM15, X64_RAX, 32);
 
 	x64_sse_addps_reg_reg(*fp, X64_XMM10, X64_XMM9);
 	x64_sse_subps_reg_reg(*fp, X64_XMM11, X64_XMM9);
 
-    /* movaps xmm5, [rcx] */
-    /* output + 0 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x29;
+    /* load [output + 0 * output_stride] */
+	x64_sse_movaps_reg_membase(*fp, X64_XMM5, X64_RCX, 0);
 
-    /* movaps xmm6,xmm15 */
-    *(*fp)++ = 0x41;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xF7;
+	x64_sse_movaps_reg_reg(*fp, X64_XMM6, X64_XMM15);
 
-    /* movaps xmm12, [rcx + rbx*4]  */
-    /* output + 4 * output_stride */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x99;
+    /* load [output + 4 * output_stride] */
+	x64_sse_movaps_reg_memindex(*fp, X64_XMM12, X64_RCX, 0, X64_RBX, 2);
 
-    /* movaps xmm2, xmm5 */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xD5;
+	x64_sse_movaps_reg_reg(*fp, X64_XMM2, X64_XMM5);
 
-    /* movaps xmm13, [rcx + rsi*2] */
-    /* output + 6 * output_stride */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x2C;
-    *(*fp)++ = 0x71;
+    /* load [output + 6 * output_stride] */
+	x64_sse_movaps_reg_memindex(*fp, X64_XMM13, X64_RCX, 0, X64_RSI, 1);
 
 	x64_sse_xorps_reg_reg(*fp, X64_XMM11, X64_XMM3);
 
-    /* movaps xmm14, [rax + 0x30] */
-    /* input + 3 * input_stride */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x70;
-    *(*fp)++ = 0x30;
+    /* load [input + 3 * input_stride] */
+	x64_sse_movaps_reg_membase(*fp, X64_XMM14, X64_RAX, 48);
 
 	x64_sse_subps_reg_reg(*fp, X64_XMM2, X64_XMM10);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM6, X64_XMM12);
 	x64_sse_addps_reg_reg(*fp, X64_XMM5, X64_XMM10);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM15, X64_XMM13);
 
-    /* movaps xmm10, [rax + 0x40] */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x50;
-    *(*fp)++ = 0x40;
+    /* load [input + 4 * input_stride] */
+	x64_sse_movaps_reg_membase(*fp, X64_XMM10, X64_RAX, 64);
 
-    /* movaps xmm0, xmm5 */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xC5;
-
+	x64_sse_movaps_reg_reg(*fp, X64_XMM0, X64_XMM5);
 	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM12, X64_XMM12, 0xB1);
 	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM13, X64_XMM13, 0xB1);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM12, X64_XMM14);
@@ -460,40 +395,20 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 	x64_sse_subps_reg_reg(*fp, X64_XMM6, X64_XMM12);
 	x64_sse_addps_reg_reg(*fp, X64_XMM15, X64_XMM14);
 
-    /* movaps xmm7, [rcx + r10] */
-    *(*fp)++ = 0x42;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x3C;
-    *(*fp)++ = 0x11;
+	/* load [output + 5 * output_stride] */
+	x64_sse_movaps_reg_memindex(*fp, X64_XMM7, X64_RCX, 0, X64_R10, 0);
 
-    /* movaps xmm13, xmm10 */
-    *(*fp)++ = 0x45;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xEA;
+	x64_sse_movaps_reg_reg(*fp, X64_XMM13, X64_XMM10);
 
-    /* movaps xmm8, [rcx + r11] */
-    *(*fp)++ = 0x46;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x04;
-    *(*fp)++ = 0x19;
+	/* load [output + 7 * output_stride] */
+	x64_sse_movaps_reg_memindex(*fp, X64_XMM8, X64_RCX, 0, X64_R11, 0);
 
-    /* movaps xmm12, xmm6 */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xE6;
+	x64_sse_movaps_reg_reg(*fp, X64_XMM12, X64_XMM6);
 
-    /* movaps xmm9, [rax + 0x50] */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x48;
-    *(*fp)++ = 0x50;
+    /* load [input + 5 * input_stride] */
+	x64_sse_movaps_reg_membase(*fp, X64_XMM9, X64_RAX, 80);
 
-    /* input + 6 * input_stride */
+    /* move input by 6 * input_stride */
 	x64_alu_reg_imm_size(*fp, X86_ADD, X64_RAX, 0x60, 8);
 
 	x64_sse_mulps_reg_reg(*fp, X64_XMM13, X64_XMM7);
@@ -505,55 +420,25 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM7, X64_XMM7, 0xB1);
 	x64_sse_xorps_reg_reg(*fp, X64_XMM6, X64_XMM3);
 	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM8, X64_XMM8, 0xB1);
-
-    /* movaps xmm12, xmm2 */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xE2;
-
+	x64_sse_movaps_reg_reg(*fp, X64_XMM12, X64_XMM2);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM7, X64_XMM9);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM9, X64_XMM8);
 	x64_sse_subps_reg_reg(*fp, X64_XMM13, X64_XMM7);
 	x64_sse_addps_reg_reg(*fp, X64_XMM10, X64_XMM9);
 
-    /* movaps xmm4, [rcx + rbx] */
-    /* output + 1 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x19;
+    /* load [output + 1 * output_stride] */
+	x64_sse_movaps_reg_memindex(*fp, X64_XMM4, X64_RCX, 0, X64_RBX, 0);
 
 	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM11, X64_XMM11, 0xB1);
-
-    /* movaps xmm1, xmm4 */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xCC;
-
+	x64_sse_movaps_reg_reg(*fp, X64_XMM1, X64_XMM4);
 	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM6, X64_XMM6, 0xB1);
 	x64_sse_addps_reg_reg(*fp, X64_XMM1, X64_XMM11);
 	x64_sse_subps_reg_reg(*fp, X64_XMM4, X64_XMM11);
 	x64_sse_addps_reg_reg(*fp, X64_XMM12, X64_XMM6);
 	x64_sse_subps_reg_reg(*fp, X64_XMM2, X64_XMM6);
-
-    /* movaps xmm11, xmm13 */
-    *(*fp)++ = 0x45;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xDD;
-
-    /* movaps xmm14, xmm4 */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xF4;
-
-    /* movaps xmm6, xmm1 */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x28;
-    *(*fp)++ = 0xF1;
-
+	x64_sse_movaps_reg_reg(*fp, X64_XMM11, X64_XMM13);
+	x64_sse_movaps_reg_reg(*fp, X64_XMM14, X64_XMM4);
+	x64_sse_movaps_reg_reg(*fp, X64_XMM6, X64_XMM1);
 	x64_sse_subps_reg_reg(*fp, X64_XMM13, X64_XMM10);
 	x64_sse_addps_reg_reg(*fp, X64_XMM11, X64_XMM10);
 	x64_sse_xorps_reg_reg(*fp, X64_XMM13, X64_XMM3);
@@ -561,72 +446,35 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 	x64_sse_subps_reg_reg(*fp, X64_XMM14, X64_XMM11);
 	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM13, X64_XMM13, 0xB1);
 
-    /* movaps [rcx], xmm5 */
-    /* output + 0 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x29;
-    *(*fp)++ = 0x29;
+    /* store [output + 0 * output_stride] */
+	x64_sse_movaps_membase_reg(*fp, X64_RCX, 0, X64_XMM5);
 
-    /* movaps [rcx + rbx], xmm4 */
-    /* output + 1 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x29;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x19;
+    /* store [output + 1 * output_stride] */
+	x64_sse_movaps_memindex_reg(*fp, X64_RCX, 0, X64_RBX, 0, X64_XMM4);
 
-    /* movaps [rcx + rbx*2], xmm2 */
-    /* output + 2 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x29;
-    *(*fp)++ = 0x14;
-    *(*fp)++ = 0x59;
+    /* store [output + 2 * output_stride] */
+	x64_sse_movaps_memindex_reg(*fp, X64_RCX, 0, X64_RBX, 1, X64_XMM2);
 
 	x64_sse_subps_reg_reg(*fp, X64_XMM1, X64_XMM13);
 	x64_sse_addps_reg_reg(*fp, X64_XMM6, X64_XMM13);
 
-    /* movaps [rcx + rsi], xmm1 */
-    /* output + 3 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x29;
-    *(*fp)++ = 0x0C;
-    *(*fp)++ = 0x31;
+    /* store [output + 3 * output_stride] */
+	x64_sse_movaps_memindex_reg(*fp, X64_RCX, 0, X64_RSI, 0, X64_XMM1);
 
-    /* movaps [rcx + rbx*4], xmm0 */
-    /* output + 4 * output_stride */
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x29;
-    *(*fp)++ = 0x04;
-    *(*fp)++ = 0x99;
+    /* store [output + 4 * output_stride] */
+	x64_sse_movaps_memindex_reg(*fp, X64_RCX, 0, X64_RBX, 2, X64_XMM0);
 
-    /* movaps [rcx + r10], xmm14 */
-    /* output + 5 * output_stride */
-    *(*fp)++ = 0x46;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x29;
-    *(*fp)++ = 0x34;
-    *(*fp)++ = 0x11;
+    /* store [output + 5 * output_stride] */
+	x64_sse_movaps_memindex_reg(*fp, X64_RCX, 0, X64_R10, 0, X64_XMM14);
 
-    /* movaps [rcx + rsi*2], xmm12 */
-    /* output + 6 * output_stride */
-    *(*fp)++ = 0x44;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x29;
-    *(*fp)++ = 0x24;
-    *(*fp)++ = 0x71;
+    /* store [output + 6 * output_stride] */
+	x64_sse_movaps_memindex_reg(*fp, X64_RCX, 0, X64_RSI, 1, X64_XMM12);
 
-    /* movaps [rcx + r11], xmm6 */
-    /* output + 7 * output_stride */
-    *(*fp)++ = 0x42;
-    *(*fp)++ = 0x0F;
-    *(*fp)++ = 0x29;
-    *(*fp)++ = 0x34;
-    *(*fp)++ = 0x19;
+    /* store [output + 7 * output_stride] */
+	x64_sse_movaps_memindex_reg(*fp, X64_RCX, 0, X64_R11, 0, X64_XMM6);
 
-    /* add rcx, 0x10 */
-    *(*fp)++ = 0x48;
-    *(*fp)++ = 0x83;
-    *(*fp)++ = 0xC1;
-    *(*fp)++ = 0x10;
+    /* move output by 16 */
+	x64_alu_reg_imm_size(*fp, X86_ADD, X64_RCX, 16, 8);
 
     /* cmp rcx, rdx */
     *(*fp)++ = 0x48;
