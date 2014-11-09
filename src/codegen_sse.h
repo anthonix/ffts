@@ -350,24 +350,6 @@ static FFTS_INLINE void SUBPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
     *(*p)++ = 0xC0 | r1 | (r2 << 3);
 }
 
-static FFTS_INLINE void XORPS(uint8_t **p, uint8_t reg2, uint8_t reg1)
-{
-    uint8_t r1 = (reg1 & 7);
-    uint8_t r2 = (reg2 & 7);
-
-    /* REX prefix */
-    if ((reg1 & 8) || (reg2 & 8)) {
-        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
-    }
-
-    /* esacape opcode */
-    *(*p)++ = 0x0F;
-
-    /* opcode */
-    *(*p)++ = 0x57;
-    *(*p)++ = 0xC0 | r1 | (r2 << 3);
-}
-
 static FFTS_INLINE void ffts_insert_nops(uint8_t **p, uint32_t count)
 {
     if (count >= 9) {
@@ -720,7 +702,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
     *(*fp)++ = 0x2C;
     *(*fp)++ = 0x71;
 
-    XORPS(fp, XMM11, XMM3);
+	x64_sse_xorps_reg_reg(*fp, X64_XMM11, X64_XMM3);
 
     /* movaps xmm14, [rax + 0x30] */
     /* input + 3 * input_stride */
@@ -797,7 +779,8 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
     SUBPS(fp, XMM0, XMM12);
     ADDPS(fp, XMM5, XMM12);
     SHUFPS(fp, XMM7, XMM7, 0xB1);
-    XORPS(fp, XMM6, XMM3);
+	x64_sse_xorps_reg_reg(*fp, X64_XMM6, X64_XMM3);
+
     SHUFPS(fp, XMM8, XMM8, 0xB1);
 
     /* movaps xmm12, xmm2 */
@@ -850,7 +833,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 
     SUBPS(fp, XMM13, XMM10);
     ADDPS(fp, XMM11, XMM10);
-    XORPS(fp, XMM13, XMM3);
+	x64_sse_xorps_reg_reg(*fp, X64_XMM13, X64_XMM3);
     ADDPS(fp, XMM4, XMM11);
     SUBPS(fp, XMM14, XMM11);
     SHUFPS(fp, XMM13, XMM13, 0xB1);
