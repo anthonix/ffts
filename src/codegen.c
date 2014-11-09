@@ -397,9 +397,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         }
 
         if (pps[0] == 2 * leaf_N) {
-			x64_call_imm(fp, (char*) x_4_addr - ((char*) fp + 4));
+			x64_call_code(fp, x_4_addr);
         } else {
-			x64_call_imm(fp, (char*) x_8_addr - ((char*) fp + 4));
+			x64_call_code(fp, x_8_addr);
         }
 
         pAddr = 4 * pps[1];
