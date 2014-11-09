@@ -1401,6 +1401,15 @@ typedef union {
 
 #define x64_sse_prefetch_reg_membase(inst, arg, basereg, disp) emit_sse_reg_membase_op2((inst), (arg), (basereg), (disp), 0x0f, 0x18)
 
+#define x64_sse_movdqa_membase_reg(inst, basereg, disp, reg) \
+	emit_sse_membase_reg((inst), (basereg), (disp), (reg), 0x66, 0x0f, 0x7f)
+
+#define x64_sse_movdqa_reg_membase(inst, dreg, basereg, disp) \
+	emit_sse_reg_membase((inst), (dreg), (basereg), (disp), 0x66, 0x0f, 0x6f)
+
+#define x64_sse_movdqa_reg_reg(inst, dreg, reg) \
+	emit_sse_reg_reg((inst), (dreg), (reg), 0x66, 0x0f, 0x6f)
+
 /* Generated from x86-codegen.h */
 
 #define x64_breakpoint_size(inst,size) do { x86_breakpoint(inst); } while (0)
