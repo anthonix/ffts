@@ -63,53 +63,7 @@ extern const uint32_t sse_leaf_oo_offsets[8];
 extern const uint32_t sse_leaf_eo_offsets[8];
 extern const uint32_t sse_leaf_oe_offsets[8];
 
-#define XMM_REG 0x40
-
-#define XMM0  (XMM_REG | 0x0)
-#define XMM1  (XMM_REG | 0x1)
-#define XMM2  (XMM_REG | 0x2)
-#define XMM3  (XMM_REG | 0x3)
-#define XMM4  (XMM_REG | 0x4)
-#define XMM5  (XMM_REG | 0x5)
-#define XMM6  (XMM_REG | 0x6)
-#define XMM7  (XMM_REG | 0x7)
-#define XMM8  (XMM_REG | 0x8)
-#define XMM9  (XMM_REG | 0x9)
-#define XMM10 (XMM_REG | 0xa)
-#define XMM11 (XMM_REG | 0xb)
-#define XMM12 (XMM_REG | 0xc)
-#define XMM13 (XMM_REG | 0xd)
-#define XMM14 (XMM_REG | 0xe)
-#define XMM15 (XMM_REG | 0xf)
-
 #define P(x) (*(*p)++ = x)
-
-/* forward declarations */
-static void IMM8(uint8_t **p, int32_t imm);
-static void IMM32(uint8_t **p, int32_t imm);
-
-static void IMM8(uint8_t **p, int32_t imm)
-{
-    *(*p)++ = (imm & 0xff);
-}
-
-static void IMM32(uint8_t **p, int32_t imm)
-{
-    int i;
-
-    for (i = 0; i < 4; i++) {
-        *(*p)++ = (imm & (0xff << (8 * i))) >> (8 * i);
-    }
-}
-
-static void IMM64(uint8_t **p, int64_t imm)
-{
-    int i;
-
-    for (i = 0; i < 8; i++) {
-        *(*p)++ = (imm & (0xff << (8 * i))) >> (8 * i);
-    }
-}
 
 static void IMM32_NI(uint8_t *p, int32_t imm)
 {
@@ -118,29 +72,6 @@ static void IMM32_NI(uint8_t *p, int32_t imm)
     for (i = 0; i < 4; i++) {
         *(p+i) = (imm & (0xff << (8 * i))) >> (8 * i);
     }
-}
-
-static FFTS_INLINE void SHUFPS(uint8_t **p, uint8_t reg2, uint8_t reg1, const int select)
-{
-    uint8_t r1 = (reg1 & 7);
-    uint8_t r2 = (reg2 & 7);
-    uint8_t	r;
-
-    /* REX prefix */
-    if ((reg1 & 8) || (reg2 & 8)) {
-        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
-    }
-
-    /* esacape opcode */
-    *(*p)++ = 0x0F;
-
-    /* opcode */
-    *(*p)++ = 0xC6;
-
-    r = r1 | (r2 << 3);
-
-    *(*p)++ = 0xC0 | r;
-    *(*p)++ = (select & 0xFF);
 }
 
 static FFTS_INLINE void ffts_insert_nops(uint8_t **p, uint32_t count)
@@ -437,9 +368,9 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 
 	x64_sse_mulps_reg_reg(*fp, X64_XMM11, X64_XMM6);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM9, X64_XMM7);
-    SHUFPS(fp, XMM6, XMM6, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM6, X64_XMM6, 0xB1);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM6, X64_XMM8);
-    SHUFPS(fp, XMM7, XMM7, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM7, X64_XMM7, 0xB1);
 	x64_sse_subps_reg_reg(*fp, X64_XMM11, X64_XMM6);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM8, X64_XMM7);
 
@@ -522,8 +453,8 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
     *(*fp)++ = 0x28;
     *(*fp)++ = 0xC5;
 
-    SHUFPS(fp, XMM12, XMM12, 0xB1);
-    SHUFPS(fp, XMM13, XMM13, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM12, X64_XMM12, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM13, X64_XMM13, 0xB1);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM12, X64_XMM14);
 	x64_sse_mulps_reg_reg(*fp, X64_XMM14, X64_XMM13);
 	x64_sse_subps_reg_reg(*fp, X64_XMM6, X64_XMM12);
@@ -571,10 +502,9 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 	x64_sse_mulps_reg_reg(*fp, X64_XMM10, X64_XMM8);
 	x64_sse_subps_reg_reg(*fp, X64_XMM0, X64_XMM12);
 	x64_sse_addps_reg_reg(*fp, X64_XMM5, X64_XMM12);
-    SHUFPS(fp, XMM7, XMM7, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM7, X64_XMM7, 0xB1);
 	x64_sse_xorps_reg_reg(*fp, X64_XMM6, X64_XMM3);
-
-    SHUFPS(fp, XMM8, XMM8, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM8, X64_XMM8, 0xB1);
 
     /* movaps xmm12, xmm2 */
     *(*fp)++ = 0x44;
@@ -594,14 +524,14 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
     *(*fp)++ = 0x24;
     *(*fp)++ = 0x19;
 
-    SHUFPS(fp, XMM11, XMM11, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM11, X64_XMM11, 0xB1);
 
     /* movaps xmm1, xmm4 */
     *(*fp)++ = 0x0F;
     *(*fp)++ = 0x28;
     *(*fp)++ = 0xCC;
 
-    SHUFPS(fp, XMM6, XMM6, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM6, X64_XMM6, 0xB1);
 	x64_sse_addps_reg_reg(*fp, X64_XMM1, X64_XMM11);
 	x64_sse_subps_reg_reg(*fp, X64_XMM4, X64_XMM11);
 	x64_sse_addps_reg_reg(*fp, X64_XMM12, X64_XMM6);
@@ -629,7 +559,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 	x64_sse_xorps_reg_reg(*fp, X64_XMM13, X64_XMM3);
 	x64_sse_addps_reg_reg(*fp, X64_XMM4, X64_XMM11);
 	x64_sse_subps_reg_reg(*fp, X64_XMM14, X64_XMM11);
-    SHUFPS(fp, XMM13, XMM13, 0xB1);
+	x64_sse_shufps_reg_reg_imm(*fp, X64_XMM13, X64_XMM13, 0xB1);
 
     /* movaps [rcx], xmm5 */
     /* output + 0 * output_stride */
