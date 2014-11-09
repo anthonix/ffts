@@ -258,26 +258,96 @@ static FFTS_INLINE void generate_transform_init(insns_t **fp)
 
 static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
 {
-    insns_t *x_4_addr;
+	insns_t *ins;
+    insns_t *x4_addr;
     size_t len;
 
-    /* align call destination */
-    ffts_align_mem16(fp, 0);
-    x_4_addr = *fp;
+	/* to avoid deferring */
+	ins = *fp;
 
+    /* align call destination */
+    ffts_align_mem16(&ins, 0);
+    x4_addr = ins;
+
+#ifdef _M_X64
+	/* generate function */
+	x64_sse_movaps_reg_membase(ins, X64_XMM0, X64_R8, 64);
+	x64_sse_movaps_reg_membase(ins, X64_XMM1, X64_R8, 96);
+	x64_sse_movaps_reg_membase(ins, X64_XMM7, X64_R8,  0);
+	x64_sse_movaps_reg_membase(ins, X64_XMM4, X64_RDI, 0);
+	x64_sse_movaps_reg_reg(ins, X64_XMM9, X64_XMM7);
+	x64_sse_movaps_reg_reg(ins, X64_XMM6, X64_XMM4);
+	x64_sse_movaps_reg_membase(ins, X64_XMM2, X64_RDI, 16);
+	x64_sse_mulps_reg_reg(ins, X64_XMM0, X64_XMM6);
+	x64_sse_mulps_reg_reg(ins, X64_XMM1, X64_XMM4);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM0, X64_XMM0, 0xB1);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM1, X64_XMM1, 0xB1);
+	x64_sse_mulps_reg_reg(ins, X64_XMM2, X64_XMM0);
+	x64_sse_mulps_reg_reg(ins, X64_XMM1, X64_XMM2);
+	x64_sse_subps_reg_reg(ins, X64_XMM0, X64_XMM6);
+	x64_sse_addps_reg_reg(ins, X64_XMM2, X64_XMM4);
+	x64_sse_movaps_reg_reg(ins, X64_XMM5, X64_XMM6);
+	x64_sse_subps_reg_reg(ins, X64_XMM4, X64_XMM6);
+	x64_sse_addps_reg_reg(ins, X64_XMM4, X64_XMM5);
+	x64_sse_movaps_reg_membase(ins, X64_XMM8, X64_R8, 32);
+	x64_sse_xorps_reg_reg(ins, X64_XMM6, X64_XMM3);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM6, X64_XMM6, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM10, X64_XMM8);
+	x64_sse_movaps_reg_membase(ins, X64_XMM12, X64_R8, 112);
+	x64_sse_subps_reg_reg(ins, X64_XMM5, X64_XMM9);
+	x64_sse_addps_reg_reg(ins, X64_XMM5, X64_XMM7);
+	x64_sse_addps_reg_reg(ins, X64_XMM6, X64_XMM10);
+	x64_sse_subps_reg_reg(ins, X64_XMM6, X64_XMM8);
+	x64_sse_movaps_membase_reg(ins, X64_R8,  0, X64_XMM7);
+	x64_sse_movaps_membase_reg(ins, X64_R8, 32, X64_XMM8);
+	x64_sse_movaps_membase_reg(ins, X64_R8, 64, X64_XMM9);
+	x64_sse_movaps_membase_reg(ins, X64_R8, 96, X64_XMM10);
+	x64_sse_movaps_reg_membase(ins, X64_XMM14, X64_RDI, 32);
+	x64_sse_movaps_reg_membase(ins, X64_XMM11, X64_R8,  80);
+	x64_sse_movaps_reg_reg(ins, X64_XMM0, X64_XMM14);
+	x64_sse_movaps_reg_membase(ins, X64_XMM13, X64_RDI, 48);
+	x64_sse_mulps_reg_reg(ins, X64_XMM11, X64_XMM0);
+	x64_sse_mulps_reg_reg(ins, X64_XMM12, X64_XMM14);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM11, X64_XMM11, 0xB1);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM12, X64_XMM12, 0xB1);
+	x64_sse_mulps_reg_reg(ins, X64_XMM13, X64_XMM11);
+	x64_sse_mulps_reg_reg(ins, X64_XMM12, X64_XMM13);
+	x64_sse_subps_reg_reg(ins, X64_XMM11, X64_XMM0);
+	x64_sse_addps_reg_reg(ins, X64_XMM13, X64_XMM14);
+	x64_sse_movaps_reg_reg(ins, X64_XMM15, X64_XMM0);
+	x64_sse_subps_reg_reg(ins, X64_XMM14, X64_XMM0);
+	x64_sse_addps_reg_reg(ins, X64_XMM14, X64_XMM15);
+	x64_sse_xorps_reg_reg(ins, X64_XMM0, X64_XMM3);
+	x64_sse_movaps_reg_membase(ins, X64_XMM1, X64_R8, 16);
+	x64_sse_movaps_reg_membase(ins, X64_XMM2, X64_R8, 48);
+	x64_sse_movaps_reg_reg(ins, X64_XMM4, X64_XMM1);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM0, X64_XMM0, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM5, X64_XMM2);
+	x64_sse_addps_reg_reg(ins, X64_XMM15, X64_XMM1);
+	x64_sse_subps_reg_reg(ins, X64_XMM0, X64_XMM2);
+	x64_sse_subps_reg_reg(ins, X64_XMM15, X64_XMM4);
+	x64_sse_addps_reg_reg(ins, X64_XMM0, X64_XMM5);
+	x64_sse_movaps_membase_reg(ins, X64_R8,  16, X64_XMM1);
+	x64_sse_movaps_membase_reg(ins, X64_R8,  48, X64_XMM2);
+	x64_sse_movaps_membase_reg(ins, X64_R8,  80, X64_XMM4);
+	x64_sse_movaps_membase_reg(ins, X64_R8, 112, X64_XMM5);
+	x64_ret(ins);
+#else
     /* copy function */
     assert((char*) x8_soft > (char*) x4);
     len = (char*) x8_soft - (char*) x4;
-    memcpy(*fp, x4, len);
-    *fp += len;
+    memcpy(ins, x4, len);
+    ins += len;
+#endif
 
-    return x_4_addr;
+	*fp = ins;
+    return x4_addr;
 }
 
 static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 {
 	insns_t *ins;
-    insns_t *x_8_addr;
+    insns_t *x8_addr;
 #ifdef _M_X64
     insns_t *x8_soft_loop;
 #else
@@ -289,7 +359,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 
     /* align call destination */
     ffts_align_mem16(&ins, 0);
-    x_8_addr = ins;
+    x8_addr = ins;
 
     /* align loop/jump destination */
 #ifdef _M_X64
@@ -470,7 +540,6 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 	x64_alu_reg_reg_size(ins, X86_CMP, X64_RCX, X64_RDX, 8);
 	x64_branch_size(ins, X86_CC_NE, x8_soft_loop, 0, 4);
 
-    /* ret */
     x64_ret(ins);
 #else
     /* copy function */
@@ -481,7 +550,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 #endif
 
 	*fp = ins;
-    return x_8_addr;
+    return x8_addr;
 }
 
 #endif /* FFTS_CODEGEN_SSE_H */
