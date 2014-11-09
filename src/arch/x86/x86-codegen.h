@@ -332,7 +332,7 @@ typedef union {
 #if defined(__native_client_codegen__) && defined(TARGET_AMD64)
 #define x86_membase_emit(inst,r,basereg,disp) \
 	do { \
-		amd64_nacl_membase_handler(&(inst), (basereg), (disp), (r)) ; \
+		x64_nacl_membase_handler(&(inst), (basereg), (disp), (r)) ; \
 	} while (0)
 #else /* __default_codegen__ || 32-bit NaCl codegen */
 #define x86_membase_emit(inst,r,basereg,disp) \
@@ -506,7 +506,7 @@ typedef union {
 /* See: mini-amd64.c:amd64_nacl_membase_handler for verbose details        */
 #define x86_prefix(inst,p) \
 	do { \
-		amd64_nacl_tag_legacy_prefix((inst)); \
+		x64_nacl_tag_legacy_prefix((inst)); \
 		*(inst)++ =(unsigned char) (p); \
 	} while (0)
 
@@ -1743,21 +1743,21 @@ typedef union {
 	} while (0)
 #elif defined(TARGET_AMD64)
 /* These macros are used directly from mini-amd64.c and other      */
-/* amd64 specific files, so they need to be instrumented directly. */
+/* x64 specific files, so they need to be instrumented directly. */
 #define x86_jump32(inst,imm)	\
 	do {	\
-		amd64_codegen_pre(inst); \
+		x64_codegen_pre(inst); \
 		*(inst)++ = (unsigned char)0xe9;	\
 		x86_imm_emit32 ((inst), (imm));	\
-		amd64_codegen_post(inst); \
+		x64_codegen_post(inst); \
 	} while (0)
 
 #define x86_jump8(inst,imm)	\
 	do {	\
-		amd64_codegen_pre(inst); \
+		x64_codegen_pre(inst); \
 		*(inst)++ = (unsigned char)0xeb;	\
 		x86_imm_emit8 ((inst), (imm));	\
-		amd64_codegen_post(inst); \
+		x64_codegen_post(inst); \
 	} while (0)
 #endif
 
@@ -1826,27 +1826,29 @@ typedef union {
 		}	\
 	} while (0)
 
-#if defined(__default_codegen__) 
-#define x86_jump_code(inst,target) \
-	do { \
-		x86_jump_code_body((inst),(target)); \
-	} while (0)
-#elif defined(__native_client_codegen__) && defined(TARGET_X86)
+#if defined(__native_client_codegen__)
+#if defined(TARGET_X86)
 #define x86_jump_code(inst,target) \
 	do { \
     		guint8* jump_start = (inst); \
 		x86_jump_code_body((inst),(target)); \
 		x86_patch(jump_start, (target)); \
 	} while (0)
-#elif defined(__native_client_codegen__) && defined(TARGET_AMD64)
+#else if defined(TARGET_AMD64)
 #define x86_jump_code(inst,target) \
 	do { \
 		/* jump_code_body is used twice because there are offsets */ \
 		/* calculated based on the IP, which can change after the */ \
-		/* call to amd64_codegen_post                             */ \
-		amd64_codegen_pre(inst); \
+		/* call to x64_codegen_post                             */ \
+		x64_codegen_pre(inst); \
 		x86_jump_code_body((inst),(target)); \
-		inst = amd64_codegen_post(inst); \
+		inst = x64_codegen_post(inst); \
+		x86_jump_code_body((inst),(target)); \
+	} while (0)
+#endif
+#else
+#define x86_jump_code(inst,target) \
+	do { \
 		x86_jump_code_body((inst),(target)); \
 	} while (0)
 #endif /* __native_client_codegen__ */
@@ -1885,27 +1887,27 @@ typedef union {
 	} while (0)
 #elif defined(TARGET_AMD64)
 /* These macros are used directly from mini-amd64.c and other      */
-/* amd64 specific files, so they need to be instrumented directly. */
+/* x64 specific files, so they need to be instrumented directly. */
 #define x86_branch8(inst,cond,imm,is_signed)	\
 	do {	\
-		amd64_codegen_pre(inst); \
+		x64_codegen_pre(inst); \
 		if ((is_signed))	\
 			*(inst)++ = x86_cc_signed_map [(cond)];	\
 		else	\
 			*(inst)++ = x86_cc_unsigned_map [(cond)];	\
 		x86_imm_emit8 ((inst), (imm));	\
-		amd64_codegen_post(inst); \
+		x64_codegen_post(inst); \
 	} while (0)
 #define x86_branch32(inst,cond,imm,is_signed)	\
 	do {	\
-		amd64_codegen_pre(inst); \
+		x64_codegen_pre(inst); \
 		*(inst)++ = (unsigned char)0x0f;	\
 		if ((is_signed))	\
 			*(inst)++ = x86_cc_signed_map [(cond)] + 0x10;	\
 		else	\
 			*(inst)++ = x86_cc_unsigned_map [(cond)] + 0x10;	\
 		x86_imm_emit32 ((inst), (imm));	\
-		amd64_codegen_post(inst); \
+		x64_codegen_post(inst); \
 	} while (0)
 #endif
 
@@ -1928,7 +1930,7 @@ typedef union {
 	} while (0)
 #elif defined(TARGET_AMD64)
 /* This macro is used directly from mini-amd64.c and other        */
-/* amd64 specific files, so it needs to be instrumented directly. */
+/* x64 specific files, so it needs to be instrumented directly. */
 
 #define x86_branch_body(inst,cond,target,is_signed)	\
 	do {	\
@@ -1941,20 +1943,20 @@ typedef union {
 		}	\
 	} while (0)
 
-#if defined(__default_codegen__)
-#define x86_branch(inst,cond,target,is_signed)	\
-	do { \
-		x86_branch_body((inst),(cond),(target),(is_signed)); \
-	} while (0)
-#elif defined(__native_client_codegen__)
+#if defined(__native_client_codegen__)
 #define x86_branch(inst,cond,target,is_signed)	\
 	do {	\
 		/* branch_body is used twice because there are offsets */ \
 		/* calculated based on the IP, which can change after  */ \
- 		/* the call to amd64_codegen_post                      */ \
-		amd64_codegen_pre(inst); \
+ 		/* the call to x64_codegen_post                      */ \
+		x64_codegen_pre(inst); \
 		x86_branch_body((inst),(cond),(target),(is_signed)); \
-		inst = amd64_codegen_post(inst); \
+		inst = x64_codegen_post(inst); \
+		x86_branch_body((inst),(cond),(target),(is_signed)); \
+	} while (0)
+#else
+#define x86_branch(inst,cond,target,is_signed)	\
+	do { \
 		x86_branch_body((inst),(cond),(target),(is_signed)); \
 	} while (0)
 #endif /* __native_client_codegen__ */
