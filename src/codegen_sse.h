@@ -120,81 +120,6 @@ static void IMM32_NI(uint8_t *p, int32_t imm)
     }
 }
 
-static FFTS_INLINE void MOVAPS(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
-{
-    uint8_t r1 = (reg1 & 7);
-    uint8_t r2 = (reg2 & 7);
-    uint8_t	r;
-
-    /* REX prefix */
-    if ((reg1 & 8) || (reg2 & 8)) {
-        *(*p)++ = 0x40 | ((reg1 & 8) >> 3) | ((reg2 & 8) >> 1);
-    }
-
-    /* esacape opcode */
-    *(*p)++ = 0x0F;
-
-    /* opcode */
-    if (is_store) {
-        *(*p)++ = 0x29;
-    } else {
-        *(*p)++ = 0x28;
-    }
-
-    r = r1 | (r2 << 3);
-
-    if ((reg1 & XMM_REG) && (reg2 & XMM_REG)) {
-        assert(disp == 0);
-        *(*p)++ = 0xC0 | r;
-    } else {
-        assert((reg1 & XMM_REG) || (reg2 & XMM_REG));
-
-        if (disp == 0 && r1 != 5) {
-            *(*p)++ = r;
-
-            if (r1 == 4) {
-                *(*p)++ = 0x24;
-            }
-        } else {
-            if (disp <= 127 && disp >= -128) {
-                *(*p)++ = 0x40 | r;
-
-                if (r1 == 4) {
-                    *(*p)++ = 0x24;
-                }
-
-                IMM8(p, disp);
-            } else {
-                *(*p)++ = 0x80 | r;
-
-                if (r1 == 4) {
-                    *(*p)++ = 0x24;
-                }
-
-                IMM32(p, disp);
-            }
-        }
-    }
-}
-
-static FFTS_INLINE void MOVAPS2(uint8_t **p, uint8_t reg1, uint8_t reg2)
-{
-    if (reg1 & XMM_REG) {
-        MOVAPS(p, reg2, reg1, 0, 0);
-    } else {
-        MOVAPS(p, reg1, reg2, 0, 1);
-    }
-}
-
-static FFTS_INLINE void MOVAPS3(uint8_t **p, uint8_t reg1, int32_t op2, int32_t op3)
-{
-    if (reg1 & XMM_REG) {
-        MOVAPS(p, (uint8_t) op2, reg1, op3, 0);
-    } else {
-        MOVAPS(p, reg1, (uint8_t) op3, op2, 1);
-    }
-}
-
 static FFTS_INLINE void MOVDQA(uint8_t **p, uint8_t reg1, uint8_t reg2, int32_t disp, int is_store)
 {
     uint8_t r1 = (reg1 & 7);
@@ -480,7 +405,7 @@ static FFTS_INLINE void generate_transform_init(insns_t **fp)
 {
 #ifdef _M_X64
     /* generate function */
-    MOVAPS2(fp, XMM3, X64_RSI);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM3, X64_RSI, 0);
 
     /* set "pointer" to twiddle factors */
 	x64_mov_reg_membase(*fp, X64_RDI, X64_RCX, 0x20, 8);
