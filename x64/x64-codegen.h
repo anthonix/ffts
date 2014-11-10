@@ -925,33 +925,39 @@ typedef union {
 //TODO Reorganize SSE opcode defines.
 
 /* Two opcode SSE defines */
+#define emit_sse_reg_reg_op2(inst, dreg, reg, op1, op2) \
+	emit_sse_reg_reg_op2_size((inst), (dreg), (reg), (op1), (op2), 0)
 
-#define emit_sse_reg_reg_op2_size(inst,dreg,reg,op1,op2,size) do { \
-    x64_codegen_pre(inst); \
-    x64_emit_rex ((inst), size, (dreg), 0, (reg)); \
-    *(inst)++ = (unsigned char)(op1); \
-    *(inst)++ = (unsigned char)(op2); \
-    x86_reg_emit ((inst), (dreg), (reg)); \
-    x64_codegen_post(inst); \
-} while (0)
+#define emit_sse_reg_reg_op2_size(inst, dreg, reg, op1, op2, size) \
+	do { \
+		x64_codegen_pre(inst); \
+		x64_emit_rex ((inst), size, (dreg), 0, (reg)); \
+		*(inst)++ = (unsigned char)(op1); \
+		*(inst)++ = (unsigned char)(op2); \
+		x86_reg_emit ((inst), (dreg), (reg)); \
+		x64_codegen_post(inst); \
+	} while (0)
 
-#define emit_sse_reg_reg_op2(inst,dreg,reg,op1,op2) emit_sse_reg_reg_op2_size ((inst), (dreg), (reg), (op1), (op2), 0)
+#define emit_sse_reg_reg_op2_imm(inst, dreg, reg, op1, op2, imm) \
+	do { \
+		x64_codegen_pre(inst); \
+		emit_sse_reg_reg_op2 ((inst), (dreg), (reg), (op1), (op2)); \
+		x86_imm_emit8 ((inst), (imm)); \
+		x64_codegen_post(inst); \
+	} while (0)
 
-#define emit_sse_reg_reg_op2_imm(inst,dreg,reg,op1,op2,imm) do { \
-   x64_codegen_pre(inst); \
-   emit_sse_reg_reg_op2 ((inst), (dreg), (reg), (op1), (op2)); \
-   x86_imm_emit8 ((inst), (imm)); \
-   x64_codegen_post(inst); \
-} while (0)
+#define emit_sse_membase_reg_op2(inst, basereg, disp, reg, op1, op2) \
+	emit_sse_membase_reg_op2_size((inst), (basereg), (disp), (reg), (op1), (op2), 0)
 
-#define emit_sse_membase_reg_op2(inst,basereg,disp,reg,op1,op2) do { \
-    x64_codegen_pre(inst); \
-    x64_emit_rex ((inst), 0, (reg), 0, (basereg)); \
-    *(inst)++ = (unsigned char)(op1); \
-    *(inst)++ = (unsigned char)(op2); \
-    x64_membase_emit ((inst), (reg), (basereg), (disp)); \
-    x64_codegen_post(inst); \
-} while (0)
+#define emit_sse_membase_reg_op2_size(inst, basereg, disp, reg, op1, op2, size) \
+	do { \
+		x64_codegen_pre(inst); \
+		x64_emit_rex ((inst), (size), (reg), 0, (basereg)); \
+		*(inst)++ = (unsigned char)(op1); \
+		*(inst)++ = (unsigned char)(op2); \
+		x64_membase_emit ((inst), (reg), (basereg), (disp)); \
+		x64_codegen_post(inst); \
+	} while (0)
 
 #define emit_sse_memindex_reg_op2(inst, basereg, disp, indexreg, shift, reg, op1, op2) \
 	do { \
@@ -963,14 +969,18 @@ typedef union {
 		x64_codegen_post(inst); \
 	} while(0)
 
-#define emit_sse_reg_membase_op2(inst,dreg,basereg,disp,op1,op2) do { \
-    x64_codegen_pre(inst); \
-    x64_emit_rex ((inst), 0, (dreg), 0, (basereg) == X64_RIP ? 0 : (basereg)); \
-    *(inst)++ = (unsigned char)(op1); \
-    *(inst)++ = (unsigned char)(op2); \
-    x64_membase_emit ((inst), (dreg), (basereg), (disp)); \
-    x64_codegen_post(inst); \
-} while (0)
+#define emit_sse_reg_membase_op2(inst, dreg, basereg, disp, op1, op2) \
+	emit_sse_reg_membase_op2_size((inst), (dreg), (basereg), (disp), (op1), (op2), 0)
+
+#define emit_sse_reg_membase_op2_size(inst, dreg, basereg, disp, op1, op2, size) \
+	do { \
+		x64_codegen_pre(inst); \
+		x64_emit_rex ((inst), (size), (dreg), 0, (basereg) == X64_RIP ? 0 : (basereg)); \
+		*(inst)++ = (unsigned char)(op1); \
+		*(inst)++ = (unsigned char)(op2); \
+		x64_membase_emit ((inst), (dreg), (basereg), (disp)); \
+		x64_codegen_post(inst); \
+	} while (0)
 
 #define emit_sse_reg_memindex_op2(inst, dreg, basereg, disp, indexreg, shift, op1, op2) \
 	do { \
@@ -983,7 +993,6 @@ typedef union {
 	} while(0)
 
 /* Three opcode SSE defines */
-
 #define emit_opcode3(inst,op1,op2,op3) do { \
    *(inst)++ = (unsigned char)(op1); \
    *(inst)++ = (unsigned char)(op2); \
@@ -1410,18 +1419,32 @@ typedef union {
 #define x64_movhlps_reg_reg(inst,dreg,sreg) emit_sse_reg_reg_op2((inst), (dreg), (sreg), 0x0f, 0x12)
 
 
-#define x64_sse_movups_membase_reg(inst, basereg, disp, reg) emit_sse_membase_reg_op2((inst), (basereg), (disp), (reg), 0x0f, 0x11)
+#define x64_sse_movups_membase_reg(inst, basereg, disp, reg) \
+	emit_sse_membase_reg_op2((inst), (basereg), (disp), (reg), 0x0f, 0x11)
 
-#define x64_sse_movups_reg_membase(inst, dreg, basereg, disp) emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x10)
+#define x64_sse_movups_membase_reg_size(inst, basereg, disp, reg, size) \
+	emit_sse_membase_reg_op2_size((inst), (basereg), (disp), (reg), 0x0f, 0x11, (size))
+
+#define x64_sse_movups_reg_membase(inst, dreg, basereg, disp) \
+	emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x10)
+
+#define x64_sse_movups_reg_membase_size(inst, dreg, basereg, disp, size) \
+	emit_sse_reg_membase_op2_size((inst), (dreg), (basereg), (disp), 0x0f, 0x10, (size))
 
 #define x64_sse_movaps_membase_reg(inst, basereg, disp, reg) \
 	emit_sse_membase_reg_op2((inst), (basereg), (disp), (reg), 0x0f, 0x29)
+
+#define x64_sse_movaps_membase_reg_size(inst, basereg, disp, reg, size) \
+	emit_sse_membase_reg_op2_size((inst), (basereg), (disp), (reg), 0x0f, 0x29, (size))
 
 #define x64_sse_movaps_memindex_reg(inst, basereg, disp, indexreg, shift, reg) \
 	emit_sse_memindex_reg_op2((inst), (basereg), (disp), (indexreg), (shift), (reg), 0x0f, 0x29);
 
 #define x64_sse_movaps_reg_membase(inst, dreg, basereg, disp) \
 	emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x28)
+
+#define x64_sse_movaps_reg_membase_size(inst, dreg, basereg, disp, size) \
+	emit_sse_reg_membase_op2_size((inst), (dreg), (basereg), (disp), 0x0f, 0x28, (size))
 
 #define x64_sse_movaps_reg_memindex(inst, dreg, basereg, disp, indexreg, shift) \
 	emit_sse_reg_memindex_op2((inst), (dreg), (basereg), (disp), (indexreg), (shift), 0x0f, 0x28);
