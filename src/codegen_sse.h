@@ -162,24 +162,24 @@ static FFTS_INLINE void generate_epilogue(insns_t **fp)
 {
 #ifdef _M_X64
     /* restore nonvolatile registers */
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM6,  X64_RSP,   0);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM7,  X64_RSP,  16);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM8,  X64_RSP,  32);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM9,  X64_RSP,  48);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM10, X64_RSP,  64);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM11, X64_RSP,  80);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM12, X64_RSP,  96);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM13, X64_RSP, 112);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM14, X64_RSP, 128);
-	x64_sse_movdqa_reg_membase(*fp, X64_XMM15, X64_RSP, 144);
+	x64_mov_reg_membase(*fp, X64_RBX, X64_RSP, -64, 8);
+	x64_mov_reg_membase(*fp, X64_RSI, X64_RSP, -56, 8);
+
+	x64_sse_movaps_reg_membase(*fp, X64_XMM6,  X64_RSP, -48);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM7,  X64_RSP, -32);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM8,  X64_RSP, -16);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM9,  X64_RSP,   0);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM10, X64_RSP,  16);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM11, X64_RSP,  32);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM12, X64_RSP,  48);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM13, X64_RSP,  64);
+
+    /* restore the last 2 registers from the shadow space */
+	x64_sse_movaps_reg_membase(*fp, X64_XMM14, X64_RSP,  96);
+	x64_sse_movaps_reg_membase(*fp, X64_XMM15, X64_RSP, 112);
 
     /* restore stack */
-	x64_alu_reg_imm_size(*fp, X86_ADD, X64_RSP, 168, 8);
-
-    /* restore the last 3 registers from the shadow space */
-	x64_mov_reg_membase(*fp, X64_RBX, X64_RSP,  8, 8);
-	x64_mov_reg_membase(*fp, X64_RSI, X64_RSP, 16, 8);
-	x64_mov_reg_membase(*fp, X64_RDI, X64_RSP, 24, 8);
+	x64_alu_reg_imm_size(*fp, X86_ADD, X64_RSP, 88, 8);
 #else	
     x64_pop_reg(*fp, X64_R15);
     x64_pop_reg(*fp, X64_R14);
@@ -204,25 +204,24 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 
     /* save nonvolatile registers */
 #ifdef _M_X64
-    /* use the shadow space to save first 3 registers */
-	x64_mov_membase_reg(*fp, X64_RSP,  8, X64_RBX, 8);
-	x64_mov_membase_reg(*fp, X64_RSP, 16, X64_RSI, 8);
-	x64_mov_membase_reg(*fp, X64_RSP, 24, X64_RDI, 8);
+    /* reserve space to save XMM6-XMM15 registers */
+	x64_alu_reg_imm_size(*fp, X86_SUB, X64_RSP, 88, 8);
 
-    /* reserve space.. */
-	x64_alu_reg_imm_size(*fp, X86_SUB, X64_RSP, 168, 8);
+	x64_mov_membase_reg(*fp, X64_RSP, -64, X64_RBX, 8);
+	x64_mov_membase_reg(*fp, X64_RSP, -56, X64_RSI, 8);
 
-    /* to save XMM6-XMM15 registers */
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  0,  X64_XMM6);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  16, X64_XMM7);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  32, X64_XMM8);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  48, X64_XMM9);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  64, X64_XMM10);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  80, X64_XMM11);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP,  96, X64_XMM12);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP, 112, X64_XMM13);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP, 128, X64_XMM14);
-	x64_sse_movdqa_membase_reg(*fp, X64_RSP, 144, X64_XMM15);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP, -48, X64_XMM6);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP, -32, X64_XMM7);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP, -16, X64_XMM8);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP,   0, X64_XMM9);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP,  16, X64_XMM10);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP,  32, X64_XMM11);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP,  48, X64_XMM12);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP,  64, X64_XMM13);
+
+	/* use the shadow space to save last 2 registers */
+	x64_sse_movaps_membase_reg(*fp, X64_RSP,  96, X64_XMM14);
+	x64_sse_movaps_membase_reg(*fp, X64_RSP, 112, X64_XMM15);
 #else
 	x64_push_reg(*fp, X64_RBP);
 	x64_push_reg(*fp, X64_RBX);
@@ -244,7 +243,7 @@ static FFTS_INLINE void generate_transform_init(insns_t **fp)
 	x64_sse_movaps_reg_membase(*fp, X64_XMM3, X64_RSI, 0);
 
     /* set "pointer" to twiddle factors */
-	x64_mov_reg_membase(*fp, X64_RDI, X64_RCX, 0x20, 8);
+	x64_mov_reg_membase(*fp, X64_R9, X64_RCX, 0x20, 8);
 #else
     size_t len;
 
@@ -260,7 +259,9 @@ static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
 {
 	insns_t *ins;
     insns_t *x4_addr;
+#ifndef _M_X64
     size_t len;
+#endif
 
 	/* to avoid deferring */
 	ins = *fp;
@@ -274,10 +275,10 @@ static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
 	x64_sse_movaps_reg_membase(ins, X64_XMM0, X64_R8, 64);
 	x64_sse_movaps_reg_membase(ins, X64_XMM1, X64_R8, 96);
 	x64_sse_movaps_reg_membase(ins, X64_XMM7, X64_R8,  0);
-	x64_sse_movaps_reg_membase(ins, X64_XMM4, X64_RDI, 0);
+	x64_sse_movaps_reg_membase(ins, X64_XMM4, X64_R9, 0);
 	x64_sse_movaps_reg_reg(ins, X64_XMM9, X64_XMM7);
 	x64_sse_movaps_reg_reg(ins, X64_XMM6, X64_XMM4);
-	x64_sse_movaps_reg_membase(ins, X64_XMM2, X64_RDI, 16);
+	x64_sse_movaps_reg_membase(ins, X64_XMM2, X64_R9, 16);
 	x64_sse_mulps_reg_reg(ins, X64_XMM0, X64_XMM6);
 	x64_sse_mulps_reg_reg(ins, X64_XMM1, X64_XMM4);
 	x64_sse_shufps_reg_reg_imm(ins, X64_XMM0, X64_XMM0, 0xB1);
@@ -302,10 +303,10 @@ static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
 	x64_sse_movaps_membase_reg(ins, X64_R8, 32, X64_XMM8);
 	x64_sse_movaps_membase_reg(ins, X64_R8, 64, X64_XMM9);
 	x64_sse_movaps_membase_reg(ins, X64_R8, 96, X64_XMM10);
-	x64_sse_movaps_reg_membase(ins, X64_XMM14, X64_RDI, 32);
+	x64_sse_movaps_reg_membase(ins, X64_XMM14, X64_R9, 32);
 	x64_sse_movaps_reg_membase(ins, X64_XMM11, X64_R8,  80);
 	x64_sse_movaps_reg_reg(ins, X64_XMM0, X64_XMM14);
-	x64_sse_movaps_reg_membase(ins, X64_XMM13, X64_RDI, 48);
+	x64_sse_movaps_reg_membase(ins, X64_XMM13, X64_R9, 48);
 	x64_sse_mulps_reg_reg(ins, X64_XMM11, X64_XMM0);
 	x64_sse_mulps_reg_reg(ins, X64_XMM12, X64_XMM14);
 	x64_sse_shufps_reg_reg_imm(ins, X64_XMM11, X64_XMM11, 0xB1);
@@ -370,7 +371,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 
 #ifdef _M_X64
     /* input */
-	x64_mov_reg_reg(ins, X64_RAX, X64_RDI, 8);
+	x64_mov_reg_reg(ins, X64_RAX, X64_R9, 8);
 
     /* output */
 	x64_mov_reg_reg(ins, X64_RCX, X64_R8, 8);

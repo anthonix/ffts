@@ -150,19 +150,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
 #ifdef __arm__
     start = generate_prologue(&fp, p);
-#else
-    start = generate_prologue(&fp, p);
 
-    /* assign loop counter register */
-    loop_count = 4 * p->i0;
-#ifdef _M_X64
-	x86_mov_reg_imm(fp, X86_EBX, loop_count);
-#else
-	x86_mov_reg_imm(fp, X86_ECX, loop_count);
-#endif
-#endif
-
-#ifdef __arm__
 #ifdef HAVE_NEON
     memcpy(fp, neon_ee, neon_oo - neon_ee);
     if (sign < 0) {
@@ -201,24 +189,27 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     fp += (vfp_o - vfp_e) / 4;
 #endif
 #else
-    //fprintf(stderr, "Body start address = %016p\n", start);
+    /* generate function */
+    start = generate_prologue(&fp, p);
+    loop_count = 4 * p->i0;
 
 #ifdef _M_X64
-    /* generate function */
+	/* set loop counter */
+	x86_mov_reg_imm(fp, X86_EBX, loop_count);
 
     /* clear */
 	x86_clear_reg(fp, X86_EAX);
 
     /* set "pointer" to offsets */
-	x64_mov_reg_membase(fp, X64_RDI, X64_RCX, 0x0, 8);
+	x64_mov_reg_membase(fp, X64_R9, X64_RCX, 0x0, 8);
 
     /* set "pointer" to constants */
 	x64_mov_reg_membase(fp, X64_RSI, X64_RCX, 0xE0, 8);
-
-    /* align loop/jump destination */
-    ffts_align_mem16(&fp, 8);
 #else
-    /* copy function */
+	/* set loop counter */
+	x86_mov_reg_imm(fp, X86_ECX, loop_count);
+
+	/* copy function */
     assert((char*) leaf_ee > (char*) leaf_ee_init);
     len = (char*) leaf_ee - (char*) leaf_ee_init;
     memcpy(fp, leaf_ee_init, (size_t) len);
@@ -390,7 +381,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             int offset = (int) (ws_is - pLUT);
 
 #ifdef _M_X64
-			x64_alu_reg_imm_size(fp, X86_ADD, X64_RDI, offset, 8);
+			x64_alu_reg_imm_size(fp, X86_ADD, X64_R9, offset, 8);
 #else
 			x64_alu_reg_imm_size(fp, X86_ADD, X64_R8, offset, 8);
 #endif

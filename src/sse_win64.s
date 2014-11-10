@@ -58,12 +58,12 @@ leaf_ee_init:
 # rdx is 'in' base pointer
 # rbx is loop max count
 # rsi is constants pointer
-# rdi is offsets pointer
+# r9 is offsets pointer
 # r8  is 'out' base pointer
 # scratch: rax r10 r11
 
         xorl %eax, %eax
-        movq (%rcx), %rdi
+        movq (%rcx), %r9
         movq 0xe0(%rcx), %rsi
 
 # _leaf_ee + 8 needs 16 byte alignment
@@ -105,7 +105,7 @@ LEAF_EE_const_7:
         movaps    %xmm3, %xmm15                                 #83.5
         shufps    $177, %xmm12, %xmm12                          #83.5
         movaps    %xmm7, %xmm4                                  #83.5
-        movslq    (%rdi, %rax, 4), %r10                         #83.44
+        movslq    (%r9, %rax, 4), %r10                         #83.44
         subps     %xmm13, %xmm10                                #83.5
         subps     %xmm14, %xmm3                                 #83.5
         addps     %xmm11, %xmm5                                 #83.5
@@ -146,7 +146,7 @@ LEAF_EE_const_7:
         movaps    %xmm2, %xmm3                                  #83.5
         shufps    $177, %xmm12, %xmm12                          #83.5
         movaps    %xmm6, %xmm9                                  #83.5
-        movslq    8(%rdi, %rax, 4), %r11                        #83.59
+        movslq    8(%r9, %rax, 4), %r11                        #83.59
         movlhps   %xmm4, %xmm3                                  #83.5
         addq      $4, %rax
         shufps    $238, %xmm4, %xmm2                           #83.5
@@ -205,7 +205,7 @@ LEAF_OO_const_6:
 LEAF_OO_const_7:
         movaps    0xFECA(%rdx,%rax,4), %xmm12                   #93.5
         movaps    %xmm14, %xmm13                                #93.5
-        movslq    (%rdi, %rax, 4), %r10                         #83.44
+        movslq    (%r9, %rax, 4), %r10                         #83.44
         subps     %xmm8, %xmm10                                 #93.5
         addps     %xmm8, %xmm9                                  #93.5
         addps     %xmm11, %xmm2                                 #93.5
@@ -220,7 +220,7 @@ LEAF_OO_const_7:
         movaps    %xmm2, %xmm9                                  #93.5
         shufps    $177, %xmm14, %xmm14                          #93.5
         movaps    %xmm6, %xmm7                                  #93.5
-        movslq    8(%rdi, %rax, 4), %r11                        #83.59
+        movslq    8(%r9, %rax, 4), %r11                        #83.59
         addq      $4, %rax                                      #92.18
         addps     %xmm10, %xmm4                                 #93.5
         addps     %xmm13, %xmm9                                 #93.5
@@ -281,9 +281,9 @@ LEAF_EO_const_1:
         subps     %xmm6, %xmm11                                #88.5
         subps     %xmm7, %xmm8                                 #88.5
         addps     %xmm7, %xmm9                                 #88.5
-        movslq    8(%rdi, %rax, 4), %r11                       #83.59
+        movslq    8(%r9, %rax, 4), %r11                       #83.59
         movaps    %xmm10, %xmm2                                #88.5
-        movslq    (%rdi, %rax, 4), %r10                        #83.44
+        movslq    (%r9, %rax, 4), %r10                        #83.44
         movaps    %xmm11, %xmm1                                #88.5
         shufps    $238, %xmm8, %xmm10                          #88.5
         shufps    $238, %xmm9, %xmm11                          #88.5
@@ -370,7 +370,7 @@ LEAF_OE_const_0:
 LEAF_OE_const_1:
         movaps    0xFECA(%rdx,%rax,4), %xmm7                    #70.5
         movaps    %xmm12, %xmm14                                #70.5
-        movslq    (%rdi, %rax, 4), %r10                         #83.44
+        movslq    (%r9, %rax, 4), %r10                         #83.44
         addps     %xmm8, %xmm9                                  #70.5
         subps     %xmm8, %xmm10                                 #70.5
         addps     %xmm7, %xmm14                                 #70.5
@@ -387,7 +387,7 @@ LEAF_OE_const_1:
         subps     %xmm9, %xmm14                                 #70.5
         shufps    $238, %xmm12, %xmm5                           #70.5
         addps     %xmm10, %xmm12                                #70.5
-        movslq    8(%rdi, %rax, 4), %r11                        #83.59
+        movslq    8(%r9, %rax, 4), %r11                        #83.59
         movlhps   %xmm11, %xmm13                                #70.5
         movaps    %xmm13, (%r8,%r10,4)                          #70.5
         movaps    0x30(%rsi), %xmm13                            #70.5
@@ -466,7 +466,7 @@ _x_init:
 x_init:
 #endif
         movaps    (%rsi), %xmm3                                 #34.3
-        movq      0x20(%rcx), %rdi
+        movq      0x20(%rcx), %r9
 #ifdef __APPLE__
     .globl	_x4
 _x4:
@@ -477,10 +477,10 @@ x4:
         movaps    64(%r8), %xmm0                               #34.3
         movaps    96(%r8), %xmm1                               #34.3
         movaps    (%r8), %xmm7                                 #34.3
-        movaps    (%rdi), %xmm4        #const
+        movaps    (%r9), %xmm4        #const
         movaps    %xmm7, %xmm9                                 #34.3
         movaps    %xmm4, %xmm6                                 #34.3
-        movaps    16(%rdi), %xmm2      #const
+        movaps    16(%r9), %xmm2      #const
         mulps     %xmm0, %xmm6                                 #34.3
         mulps     %xmm1, %xmm4                                 #34.3
         shufps    $177, %xmm0, %xmm0                           #34.3
@@ -505,10 +505,10 @@ x4:
         movaps    %xmm8, 32(%r8)                               #34.3
         movaps    %xmm9, 64(%r8)                               #34.3
         movaps    %xmm10, 96(%r8)                              #34.3
-        movaps    32(%rdi), %xmm14    #const                   #34.3
+        movaps    32(%r9), %xmm14    #const                   #34.3
         movaps    80(%r8), %xmm11                              #34.3
         movaps    %xmm14, %xmm0                                #34.3
-        movaps    48(%rdi), %xmm13    #const                   #34.3
+        movaps    48(%r9), %xmm13    #const                   #34.3
         mulps     %xmm11, %xmm0                                #34.3
         mulps     %xmm12, %xmm14                               #34.3
         shufps    $177, %xmm11, %xmm11                         #34.3
@@ -544,11 +544,11 @@ _x8_soft:
     .globl	x8_soft
 x8_soft:
 #endif
-        # rax, rcx, rdx, r8, r10, r11 (r9 not used)
-        # rbx, rdi, rsi
+        # rax, rcx, rdx, r8, r9, r10, r11
+        # rbx, rsi
         
         # input
-        movq      %rdi, %rax
+        movq      %r9, %rax
 
         # output
         movq      %r8, %rcx
