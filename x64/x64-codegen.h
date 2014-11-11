@@ -480,6 +480,15 @@ typedef union {
 	x64_codegen_post(inst); \
     } while (0)
 
+#define x64_movsxd_reg_memindex(inst, reg, basereg, disp, indexreg, shift) \
+    do {     \
+	x64_codegen_pre(inst); \
+	x64_emit_rex(inst,8,(reg),0,(basereg)); \
+	*(inst)++ = (unsigned char)0x63; \
+	x64_memindex_emit((inst), (reg), (basereg), (disp), (indexreg), (shift)); \
+	x64_codegen_post(inst); \
+    } while (0)
+
 #define x64_movsxd_reg_reg(inst,dreg,reg) \
     do {     \
 	x64_codegen_pre(inst); \
