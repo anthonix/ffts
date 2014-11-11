@@ -100,8 +100,8 @@ static void ffts_elaborate_tree(size_t **p, int N, int leaf_N, int offset)
 
 transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 {
-    uint32_t offsets[8] = {0, N, N/2, 3*N/2, N/4, 5*N/4, 7*N/4, 3*N/4};
-    uint32_t offsets_o[8] = {0, N, N/2, 3*N/2, 7*N/4, 3*N/4, N/4, 5*N/4};
+    uint32_t offsets[8] = {0, 4*N, 2*N, 6*N, N, 5*N, 7*N, 3*N};
+    uint32_t offsets_o[8] = {0, 4*N, 2*N, 6*N, 7*N, 3*N, N, 5*N};
 
     int32_t pAddr = 0;
     int32_t pN = 0;
@@ -189,128 +189,33 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     fp += (vfp_o - vfp_e) / 4;
 #endif
 #else
-    /* generate function */
+    /* generate functions */
     start = generate_prologue(&fp, p);
-    loop_count = 4 * p->i0;
-
-#ifdef _M_X64
-	/* set loop counter */
-	x86_mov_reg_imm(fp, X86_EBX, loop_count);
-
-    /* clear */
-	x86_clear_reg(fp, X86_EAX);
-
-    /* set "pointer" to offsets */
-	x64_mov_reg_membase(fp, X64_R9, X64_RCX, 0x0, 8);
-
-    /* set "pointer" to constants */
-	x64_mov_reg_membase(fp, X64_RSI, X64_RCX, 0xE0, 8);
-#else
-	/* set loop counter */
-	x86_mov_reg_imm(fp, X86_ECX, loop_count);
-
-	/* copy function */
-    assert((char*) leaf_ee > (char*) leaf_ee_init);
-    len = (char*) leaf_ee - (char*) leaf_ee_init;
-    memcpy(fp, leaf_ee_init, (size_t) len);
-    fp += len;
-
-    ffts_align_mem16(&fp, 9);
-#endif
-
-    /* copy function */
-    assert((char*) leaf_oo > (char*) leaf_ee);
-    len = (char*) leaf_oo - (char*) leaf_ee;
-    memcpy(fp, leaf_ee, (size_t) len);
-
-    /* patch offsets */
-    for (i = 0; i < 8; i++) {
-        IMM32_NI(fp + sse_leaf_ee_offsets[i], 4 * offsets[i]);
-    }
-
-    fp += len;
+    
+	loop_count = 4 * p->i0;
+	generate_leaf_init(&fp, loop_count);
+	generate_leaf_ee(&fp, offsets);
 
     if (ffts_ctzl(N) & 1) {
         if (p->i1) {
             loop_count += 4 * p->i1;
-
-            /* align loop/jump destination */
-#ifdef _M_X64
-			x86_mov_reg_imm(fp, X86_EBX, loop_count);
-            ffts_align_mem16(&fp, 3);
-#else
-			x86_mov_reg_imm(fp, X86_ECX, loop_count);
-            ffts_align_mem16(&fp, 4);
-#endif
-
-            /* copy function */
-            assert((char*) leaf_eo > (char*) leaf_oo);
-            len = (char*) leaf_eo - (char*) leaf_oo;
-            memcpy(fp, leaf_oo, len);
-
-            /* patch offsets */
-            for (i = 0; i < 8; i++) {
-                IMM32_NI(fp + sse_leaf_oo_offsets[i], 4 * offsets_o[i]);
-            }
-
-            fp += len;
+			generate_leaf_oo(&fp, loop_count, offsets_o);
         }
 
-        loop_count += 4;
-
-        /* copy function */
-        assert((char*) leaf_end > (char*) leaf_oe);
-        len = (char*) leaf_end - (char*) leaf_oe;
-        memcpy(fp, leaf_oe, len);
-
-        /* patch offsets */
-        for (i = 0; i < 8; i++) {
-            IMM32_NI(fp + sse_leaf_oe_offsets[i], 4 * offsets_o[i]);
-        }
-
-        fp += len;
+		loop_count += 4;
+		generate_leaf_oe(&fp, offsets_o);
     } else {
         loop_count += 4;
-
-        /* copy function */
-        assert((char*) leaf_oe > (char*) leaf_eo);
-        len = (char*) leaf_oe - (char*) leaf_eo;
-        memcpy(fp, leaf_eo, len);
-
-        /* patch offsets */
-        for (i = 0; i < 8; i++) {
-            IMM32_NI(fp + sse_leaf_eo_offsets[i], 4 * offsets[i]);
-        }
-
-        fp += len;
+		generate_leaf_eo(&fp, offsets);
 
         if (p->i1) {
             loop_count += 4 * p->i1;
-
-            /* align loop/jump destination */
-#ifdef _M_X64
-			x86_mov_reg_imm(fp, X86_EBX, loop_count);
-            ffts_align_mem16(&fp, 3);
-#else
-			x86_mov_reg_imm(fp, X86_ECX, loop_count);
-            ffts_align_mem16(&fp, 4);
-#endif
-
-            /* copy function */
-            assert((char*) leaf_eo > (char*) leaf_oo);
-            len = (char*) leaf_eo - (char*) leaf_oo;
-            memcpy(fp, leaf_oo, len);
-
-            for (i = 0; i < 8; i++) {
-                IMM32_NI(fp + sse_leaf_oo_offsets[i], 4 * offsets_o[i]);
-            }
-
-            fp += len;
+			generate_leaf_oo(&fp, loop_count, offsets_o);
         }
     }
 
     if (p->i1) {
-        uint32_t offsets_oe[8] = {7*N/4, 3*N/4, N/4, 5*N/4, 0, N, 3*N/2, N/2};
+        uint32_t offsets_oe[8] = {7*N, 3*N, N, 5*N, 0, 4*N, 6*N, 2*N};
 
         loop_count += 4 * p->i1;
 
@@ -323,15 +228,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         ffts_align_mem16(&fp, 9);
 #endif
 
-        assert((char*) leaf_oo > (char*) leaf_ee);
-        len = (char*) leaf_oo - (char*) leaf_ee;
-        memcpy(fp, leaf_ee, len);
-
-        for (i = 0; i < 8; i++) {
-            IMM32_NI(fp + sse_leaf_ee_offsets[i], 4 * offsets_oe[i]);
-        }
-
-        fp += len;
+		generate_leaf_ee(&fp, offsets_oe);
     }
 
     generate_transform_init(&fp);

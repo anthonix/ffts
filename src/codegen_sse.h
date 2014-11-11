@@ -60,9 +60,9 @@ void sse_constants_inv();
 //	typedef uint8_t insns_t;
 
 extern const uint32_t sse_leaf_ee_offsets[8];
-extern const uint32_t sse_leaf_oo_offsets[8];
 extern const uint32_t sse_leaf_eo_offsets[8];
 extern const uint32_t sse_leaf_oe_offsets[8];
+extern const uint32_t sse_leaf_oo_offsets[8];
 
 #define P(x) (*(*p)++ = x)
 
@@ -153,7 +153,7 @@ static FFTS_INLINE void ffts_insert_nops(uint8_t **p, uint32_t count)
 
 static FFTS_INLINE void ffts_align_mem16(uint8_t **p, uint32_t offset)
 {
-    int r = (16 - (offset & 0xf)) - ((uintptr_t)(*p) & 0xf);
+    int r = (16 - (offset & 0xf)) - (int) ((uintptr_t)(*p) & 0xf);
     r = (16 + r) & 0xf;
     ffts_insert_nops(p, r);
 }
@@ -345,6 +345,509 @@ static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
     return x4_addr;
 }
 
+static FFTS_INLINE void generate_leaf_init(insns_t **fp, uint32_t loop_count)
+{
+#ifndef _M_X64
+	size_t len;
+#endif
+
+	/* to avoid deferring */	
+	insns_t *ins = *fp;
+
+#ifdef _M_X64
+	/* set loop counter */
+	x86_mov_reg_imm(ins, X86_EBX, loop_count);
+
+	/* generate function */
+
+    /* clear */
+	x86_clear_reg(ins, X86_EAX);
+
+    /* set "pointer" to offsets */
+	x64_mov_reg_membase(ins, X64_R9, X64_RCX, 0x0, 8);
+
+    /* set "pointer" to constants */
+	x64_mov_reg_membase(ins, X64_RSI, X64_RCX, 0xE0, 8);
+#else
+	/* set loop counter */
+	x86_mov_reg_imm(ins, X86_ECX, loop_count);
+
+	/* copy function */
+    assert((char*) leaf_ee > (char*) leaf_ee_init);
+    len = (char*) leaf_ee - (char*) leaf_ee_init;
+    memcpy(ins, leaf_ee_init, (size_t) len);
+    ins += len;
+
+	/* align loop/jump destination */
+    ffts_align_mem16(&ins, 9);
+#endif
+
+	*fp = ins;
+}
+
+static FFTS_INLINE void generate_leaf_ee(insns_t **fp, uint32_t *offsets)
+{
+#ifdef _M_X64
+    insns_t *leaf_ee_loop;
+#else
+	size_t len;
+	int i;
+#endif
+
+	/* to avoid deferring */	
+	insns_t *ins = *fp;
+
+#ifdef _M_X64
+	x64_sse_movaps_reg_membase(ins, X64_XMM0, X64_RSI, 32);
+	x64_sse_movaps_reg_membase(ins, X64_XMM8, X64_RSI, 0);
+	
+	/* beginning of the loop (make sure it's 16 byte aligned) */
+    leaf_ee_loop = ins;
+    assert(!(((uintptr_t) leaf_ee_loop) & 0xF));
+
+	x64_sse_movaps_reg_memindex(ins, X64_XMM7,  X64_RDX, offsets[0], X64_RAX, 2);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM12, X64_RDX, offsets[2], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM6, X64_XMM7);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM10, X64_RDX, offsets[3], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM11, X64_XMM12);
+	x64_sse_subps_reg_reg(ins, X64_XMM12, X64_XMM10);
+	x64_sse_addps_reg_reg(ins, X64_XMM11, X64_XMM10);
+	x64_sse_xorps_reg_reg(ins, X64_XMM12, X64_XMM8);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM9,  X64_RDX, offsets[1], X64_RAX, 2);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM10, X64_RDX, offsets[4], X64_RAX, 2);
+	x64_sse_addps_reg_reg(ins, X64_XMM6, X64_XMM9);
+	x64_sse_subps_reg_reg(ins, X64_XMM7, X64_XMM9);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM13, X64_RDX, offsets[5], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM9, X64_XMM10);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM3,  X64_RDX, offsets[6], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM5, X64_XMM6);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM14, X64_RDX, offsets[7], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM15, X64_XMM3);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM12, X64_XMM12, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM4, X64_XMM7);
+	x64_movsxd_reg_memindex(ins, X64_R10, X64_R9, 0, X64_RAX, 2);
+	x64_sse_subps_reg_reg(ins, X64_XMM10, X64_XMM13);
+	x64_sse_subps_reg_reg(ins, X64_XMM3, X64_XMM14);
+	x64_sse_addps_reg_reg(ins, X64_XMM5, X64_XMM11);
+	x64_sse_subps_reg_reg(ins, X64_XMM6, X64_XMM11);
+	x64_sse_subps_reg_reg(ins, X64_XMM4, X64_XMM12);
+	x64_sse_addps_reg_reg(ins, X64_XMM7, X64_XMM12);
+	x64_sse_addps_reg_reg(ins, X64_XMM9, X64_XMM13);
+	x64_sse_addps_reg_reg(ins, X64_XMM15, X64_XMM14);
+	x64_sse_movaps_reg_membase(ins, X64_XMM12, X64_RSI, 16);
+	x64_sse_movaps_reg_reg(ins, X64_XMM1, X64_XMM9);
+
+	/* TODO?? */
+	x64_sse_movaps_reg_membase(ins, X64_XMM11, X64_RSI, 16);
+
+	x64_sse_movaps_reg_reg(ins, X64_XMM2, X64_XMM5);
+	x64_sse_mulps_reg_reg(ins, X64_XMM12, X64_XMM10);
+	x64_sse_subps_reg_reg(ins, X64_XMM9, X64_XMM15);
+	x64_sse_addps_reg_reg(ins, X64_XMM1, X64_XMM15);
+	x64_sse_mulps_reg_reg(ins, X64_XMM11, X64_XMM3);
+	x64_sse_addps_reg_reg(ins, X64_XMM2, X64_XMM1);
+	x64_sse_subps_reg_reg(ins, X64_XMM5, X64_XMM1);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM10, X64_XMM10, 0xB1);
+	x64_sse_xorps_reg_reg(ins, X64_XMM9, X64_XMM8);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM3, X64_XMM3, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM1, X64_XMM6);
+	x64_sse_mulps_reg_reg(ins, X64_XMM10, X64_XMM0);
+	x64_sse_movaps_reg_reg(ins, X64_XMM13, X64_XMM4);
+	x64_sse_mulps_reg_reg(ins, X64_XMM3, X64_XMM0);
+	x64_sse_subps_reg_reg(ins, X64_XMM12, X64_XMM10);
+	x64_sse_addps_reg_reg(ins, X64_XMM11, X64_XMM3);
+	x64_sse_movaps_reg_reg(ins, X64_XMM3, X64_XMM12);
+	x64_sse_movaps_reg_reg(ins, X64_XMM14, X64_XMM7);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM9, X64_XMM9, 0xB1);
+	x64_sse_subps_reg_reg(ins, X64_XMM12, X64_XMM11);
+	x64_sse_addps_reg_reg(ins, X64_XMM3, X64_XMM11);
+	x64_sse_subps_reg_reg(ins, X64_XMM1, X64_XMM9);
+	x64_sse_addps_reg_reg(ins, X64_XMM6, X64_XMM9);
+	x64_sse_addps_reg_reg(ins, X64_XMM4, X64_XMM3);
+	x64_sse_subps_reg_reg(ins, X64_XMM13, X64_XMM3);
+	x64_sse_xorps_reg_reg(ins, X64_XMM12, X64_XMM8);
+	x64_sse_movaps_reg_reg(ins, X64_XMM3, X64_XMM2);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM12, X64_XMM12, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM9, X64_XMM6);
+	x64_movsxd_reg_memindex(ins, X64_R11, X64_R9, 8, X64_RAX, 2);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM3, X64_XMM4);
+	x64_alu_reg_imm_size(ins, X86_ADD, X64_RAX, 4, 8);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM2, X64_XMM4, 0xEE);
+	x64_sse_movaps_reg_reg(ins, X64_XMM4, X64_XMM1);
+	x64_sse_subps_reg_reg(ins, X64_XMM7, X64_XMM12);
+	x64_sse_addps_reg_reg(ins, X64_XMM14, X64_XMM12);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM4, X64_XMM7);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM1, X64_XMM7, 0xEE);
+	x64_sse_movaps_reg_reg(ins, X64_XMM7, X64_XMM5);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM7, X64_XMM13);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM9, X64_XMM14);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM5, X64_XMM13, 0xEE);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM6, X64_XMM14, 0xEE);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  0, X64_R10, 2, X64_XMM3);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 16, X64_R10, 2, X64_XMM4);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 32, X64_R10, 2, X64_XMM7);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 48, X64_R10, 2, X64_XMM9);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  0, X64_R11, 2, X64_XMM2);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 16, X64_R11, 2, X64_XMM1);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 32, X64_R11, 2, X64_XMM5);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 48, X64_R11, 2, X64_XMM6);
+
+	/* loop condition */
+	x64_alu_reg_reg_size(ins, X86_CMP, X64_RBX, X64_RAX, 8);
+	x64_branch_size(ins, X86_CC_NE, leaf_ee_loop, 0, 4);
+#else
+	/* copy function */
+    assert((char*) leaf_oo > (char*) leaf_ee);
+    len = (char*) leaf_oo - (char*) leaf_ee;
+    memcpy(ins, leaf_ee, (size_t) len);
+
+    /* patch offsets */
+    for (i = 0; i < 8; i++) {
+        IMM32_NI(ins + sse_leaf_ee_offsets[i], offsets[i]);
+    }
+
+    ins += len;
+#endif
+
+	*fp = ins;
+}	
+
+static FFTS_INLINE void generate_leaf_eo(insns_t **fp, uint32_t *offsets)
+{
+#ifndef _M_X64
+	size_t len;
+	int i;
+#endif
+
+	/* to avoid deferring */	
+	insns_t *ins = *fp;
+
+#ifdef _M_X64
+	x64_sse_movaps_reg_memindex(ins, X64_XMM9,  X64_RDX, offsets[0], X64_RAX, 2);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM7,  X64_RDX, offsets[2], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM11, X64_XMM9);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM5,  X64_RDX, offsets[3], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM6, X64_XMM7);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM4,  X64_RDX, offsets[1], X64_RAX, 2);
+	x64_sse_subps_reg_reg(ins, X64_XMM7, X64_XMM5);
+	x64_sse_addps_reg_reg(ins, X64_XMM11, X64_XMM4);
+	x64_sse_subps_reg_reg(ins, X64_XMM9, X64_XMM4);
+	x64_sse_addps_reg_reg(ins, X64_XMM6, X64_XMM5);
+	x64_sse_movaps_reg_membase(ins, X64_XMM3, X64_RSI, 0);
+	x64_sse_movaps_reg_reg(ins, X64_XMM10, X64_XMM11);
+	x64_sse_xorps_reg_reg(ins, X64_XMM7, X64_XMM3);
+	x64_sse_movaps_reg_reg(ins, X64_XMM8, X64_XMM9);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM7, X64_XMM7, 0xB1);
+	x64_sse_addps_reg_reg(ins, X64_XMM10, X64_XMM6);
+	x64_sse_subps_reg_reg(ins, X64_XMM11, X64_XMM6);
+	x64_sse_subps_reg_reg(ins, X64_XMM8, X64_XMM7);
+	x64_sse_addps_reg_reg(ins, X64_XMM9, X64_XMM7);
+	x64_movsxd_reg_memindex(ins, X64_R11, X64_R9, 8, X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM2, X64_XMM10);
+	x64_movsxd_reg_memindex(ins, X64_R10, X64_R9, 0, X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM1, X64_XMM11);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM10, X64_XMM8, 0xEE);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM11, X64_XMM9, 0xEE);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  0, X64_R11, 2, X64_XMM10);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 16, X64_R11, 2, X64_XMM11);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM15,  X64_RDX, offsets[4], X64_RAX, 2);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM12,  X64_RDX, offsets[5], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM14, X64_XMM15);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM4,  X64_RDX, offsets[6], X64_RAX, 2);
+	x64_sse_addps_reg_reg(ins, X64_XMM14, X64_XMM12);
+	x64_sse_subps_reg_reg(ins, X64_XMM15, X64_XMM12);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM13,  X64_RDX, offsets[7], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM5, X64_XMM4);
+	x64_sse_movaps_reg_reg(ins, X64_XMM7, X64_XMM14);
+	x64_sse_addps_reg_reg(ins, X64_XMM5, X64_XMM13);
+	x64_sse_subps_reg_reg(ins, X64_XMM4, X64_XMM13);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM2, X64_XMM8);
+	x64_sse_movaps_reg_reg(ins, X64_XMM8, X64_XMM5);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM7, X64_XMM15);
+	x64_sse_xorps_reg_reg(ins, X64_XMM15, X64_XMM3);
+	x64_sse_movaps_reg_reg(ins, X64_XMM6, X64_XMM5);
+	x64_sse_subps_reg_reg(ins, X64_XMM5, X64_XMM14);
+	x64_sse_addps_reg_reg(ins, X64_XMM6, X64_XMM14);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM1, X64_XMM9);
+	x64_sse_movaps_reg_reg(ins, X64_XMM14, X64_XMM4);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM8, X64_XMM4);
+	x64_sse_movaps_reg_reg(ins, X64_XMM12, X64_XMM1);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM15, X64_XMM15, 0xB1);
+	x64_sse_movaps_reg_membase(ins, X64_XMM11, X64_RSI, 48);
+	x64_alu_reg_imm_size(ins, X86_ADD, X64_RAX, 4, 8);
+	x64_sse_subps_reg_reg(ins, X64_XMM14, X64_XMM15);
+	x64_sse_mulps_reg_reg(ins, X64_XMM11, X64_XMM7);
+	x64_sse_addps_reg_reg(ins, X64_XMM4, X64_XMM15);
+
+	/* TODO? */
+	x64_sse_movaps_reg_membase(ins, X64_XMM9, X64_RSI, 48);
+
+	x64_sse_movaps_reg_membase(ins, X64_XMM15, X64_RSI, 64);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM7, X64_XMM7, 0xB1);
+	x64_sse_mulps_reg_reg(ins, X64_XMM9, X64_XMM8);
+	x64_sse_mulps_reg_reg(ins, X64_XMM7, X64_XMM15);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM8, X64_XMM8, 0xB1);
+	x64_sse_subps_reg_reg(ins, X64_XMM11, X64_XMM7);
+	x64_sse_mulps_reg_reg(ins, X64_XMM8, X64_XMM15);
+	x64_sse_movaps_reg_reg(ins, X64_XMM10, X64_XMM11);
+	x64_sse_addps_reg_reg(ins, X64_XMM9, X64_XMM8);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM6, X64_XMM14, 0xEE);
+	x64_sse_subps_reg_reg(ins, X64_XMM11, X64_XMM9);
+	x64_sse_addps_reg_reg(ins, X64_XMM10, X64_XMM9);
+	x64_sse_xorps_reg_reg(ins, X64_XMM11, X64_XMM3);
+	x64_sse_movaps_reg_reg(ins, X64_XMM3, X64_XMM2);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM11, X64_XMM11, 0xB1);
+	x64_sse_subps_reg_reg(ins, X64_XMM3, X64_XMM10);
+	x64_sse_addps_reg_reg(ins, X64_XMM2, X64_XMM10);
+	x64_sse_addps_reg_reg(ins, X64_XMM12, X64_XMM11);
+	x64_sse_subps_reg_reg(ins, X64_XMM1, X64_XMM11);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM5, X64_XMM4, 0xEE);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  48, X64_R11, 2, X64_XMM5);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  32, X64_R11, 2, X64_XMM6);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  0, X64_R10, 2, X64_XMM2);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 16, X64_R10, 2, X64_XMM1);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 32, X64_R10, 2, X64_XMM3);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 48, X64_R10, 2, X64_XMM12);
+#else
+	/* copy function */
+	assert((char*) leaf_oe > (char*) leaf_eo);
+	len = (char*) leaf_oe - (char*) leaf_eo;
+	memcpy(ins, leaf_eo, len);
+
+	/* patch offsets */
+	for (i = 0; i < 8; i++) {
+		IMM32_NI(ins + sse_leaf_eo_offsets[i], offsets[i]);
+	}
+
+	ins += len;
+#endif
+
+	*fp = ins;
+}
+
+static FFTS_INLINE void generate_leaf_oe(insns_t **fp, uint32_t *offsets)
+{
+#ifndef _M_X64
+	size_t len;
+	int i;
+#endif
+
+	/* to avoid deferring */	
+	insns_t *ins = *fp;
+
+#ifdef _M_X64
+	x64_sse_movaps_reg_membase(ins, X64_XMM0, X64_RSI, 0);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM6, X64_RDX, offsets[2], X64_RAX, 2);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM8, X64_RDX, offsets[3], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM10, X64_XMM6);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM10, X64_XMM8, 0xE4);
+	x64_sse_movaps_reg_reg(ins, X64_XMM9, X64_XMM10);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM8, X64_XMM6, 0xE4);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM12, X64_RDX, offsets[0], X64_RAX, 2);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM7, X64_RDX, offsets[1], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM14, X64_XMM12);
+	x64_movsxd_reg_memindex(ins, X64_R10, X64_R9, 0, X64_RAX, 2);
+	x64_sse_addps_reg_reg(ins, X64_XMM9, X64_XMM8);
+	x64_sse_subps_reg_reg(ins, X64_XMM10, X64_XMM8);
+	x64_sse_addps_reg_reg(ins, X64_XMM14, X64_XMM7);
+	x64_sse_subps_reg_reg(ins, X64_XMM12, X64_XMM7);
+	x64_sse_movaps_reg_reg(ins, X64_XMM4, X64_XMM9);
+	x64_sse_movaps_reg_reg(ins, X64_XMM13, X64_XMM14);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM4, X64_XMM10, 0xEE);
+	x64_sse_xorps_reg_reg(ins, X64_XMM10, X64_XMM0);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM10, X64_XMM10, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM11, X64_XMM12);
+	x64_sse_movaps_reg_reg(ins, X64_XMM5, X64_XMM14);
+	x64_sse_addps_reg_reg(ins, X64_XMM13, X64_XMM9);
+	x64_sse_subps_reg_reg(ins, X64_XMM11, X64_XMM10);
+	x64_sse_subps_reg_reg(ins, X64_XMM14, X64_XMM9);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM5, X64_XMM12, 0xEE);
+	x64_sse_addps_reg_reg(ins, X64_XMM12, X64_XMM10);
+	x64_movsxd_reg_memindex(ins, X64_R11, X64_R9, 8, X64_RAX, 2);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM13, X64_XMM11);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 0, X64_R10, 2, X64_XMM13);
+	x64_sse_movaps_reg_membase(ins, X64_XMM13, X64_RSI, 48);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM14, X64_XMM12);
+	x64_sse_movaps_reg_membase(ins, X64_XMM12, X64_RSI, 64);
+	x64_sse_mulps_reg_reg(ins, X64_XMM13, X64_XMM5);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM5, X64_XMM5, 0xB1);
+	x64_sse_mulps_reg_reg(ins, X64_XMM5, X64_XMM12);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 16, X64_R10, 2, X64_XMM14);
+	x64_sse_subps_reg_reg(ins, X64_XMM13, X64_XMM5);
+
+	/* TODO? */
+	x64_sse_movaps_reg_membase(ins, X64_XMM5, X64_RSI, 48);
+
+	x64_sse_mulps_reg_reg(ins, X64_XMM5, X64_XMM4);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM4, X64_XMM4, 0xB1);
+	x64_sse_mulps_reg_reg(ins, X64_XMM4, X64_XMM12);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM9, X64_RDX, offsets[4], X64_RAX, 2);
+	x64_sse_addps_reg_reg(ins, X64_XMM5, X64_XMM4);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM7, X64_RDX, offsets[6], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM3, X64_XMM9);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM2, X64_RDX, offsets[7], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM6, X64_XMM7);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM15, X64_RDX, offsets[5], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM4, X64_XMM13);
+	x64_sse_subps_reg_reg(ins, X64_XMM7, X64_XMM2);
+	x64_sse_addps_reg_reg(ins, X64_XMM3, X64_XMM15);
+	x64_sse_subps_reg_reg(ins, X64_XMM9, X64_XMM15);
+	x64_sse_addps_reg_reg(ins, X64_XMM6, X64_XMM2);
+	x64_sse_subps_reg_reg(ins, X64_XMM13, X64_XMM5);
+	x64_sse_addps_reg_reg(ins, X64_XMM4, X64_XMM5);
+	x64_sse_xorps_reg_reg(ins, X64_XMM7, X64_XMM0);
+	x64_alu_reg_imm_size(ins, X86_ADD, X64_RAX, 4, 8);
+	x64_sse_movaps_reg_reg(ins, X64_XMM2, X64_XMM3);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM7, X64_XMM7, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM8, X64_XMM9);
+	x64_sse_xorps_reg_reg(ins, X64_XMM13, X64_XMM0);
+	x64_sse_addps_reg_reg(ins, X64_XMM2, X64_XMM6);
+	x64_sse_subps_reg_reg(ins, X64_XMM8, X64_XMM7);
+	x64_sse_subps_reg_reg(ins, X64_XMM3, X64_XMM6);
+	x64_sse_addps_reg_reg(ins, X64_XMM9, X64_XMM7);
+	x64_sse_movaps_reg_reg(ins, X64_XMM10, X64_XMM2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM11, X64_XMM3);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM2, X64_XMM8, 0xEE);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM3, X64_XMM9, 0xEE);
+	x64_sse_movaps_reg_reg(ins, X64_XMM14, X64_XMM2);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM13, X64_XMM13, 0xB1);
+	x64_sse_subps_reg_reg(ins, X64_XMM14, X64_XMM4);
+	x64_sse_addps_reg_reg(ins, X64_XMM2, X64_XMM4);
+	x64_sse_movaps_reg_reg(ins, X64_XMM4, X64_XMM3);
+	x64_sse_subps_reg_reg(ins, X64_XMM3, X64_XMM13);
+	x64_sse_addps_reg_reg(ins, X64_XMM4, X64_XMM13);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM10, X64_XMM8);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM11, X64_XMM9);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 32, X64_R10, 2, X64_XMM10);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 48, X64_R10, 2, X64_XMM11);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  0, X64_R11, 2, X64_XMM2);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 16, X64_R11, 2, X64_XMM3);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 32, X64_R11, 2, X64_XMM14);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 48, X64_R11, 2, X64_XMM4);
+#else
+	/* copy function */
+	assert((char*) leaf_end > (char*) leaf_oe);
+	len = (char*) leaf_end - (char*) leaf_oe;
+	memcpy(ins, leaf_oe, len);
+
+	/* patch offsets */
+	for (i = 0; i < 8; i++) {
+		IMM32_NI(ins + sse_leaf_oe_offsets[i], offsets[i]);
+	}
+
+	ins += len;
+#endif
+
+	*fp = ins;
+}
+
+static FFTS_INLINE void generate_leaf_oo(insns_t **fp, uint32_t loop_count, uint32_t *offsets)
+{
+#ifdef _M_X64
+    insns_t *leaf_oo_loop;
+#else
+	size_t len;
+	int i;
+#endif
+
+	/* to avoid deferring */	
+	insns_t *ins = *fp;
+
+#ifdef _M_X64
+	/* align loop/jump destination */
+	x86_mov_reg_imm(ins, X86_EBX, loop_count);
+	ffts_align_mem16(&ins, 3);
+
+	x64_sse_movaps_reg_membase(ins, X64_XMM5, X64_RSI, 0);
+	
+	/* beginning of the loop (make sure it's 16 byte aligned) */
+	leaf_oo_loop = ins;
+    assert(!(((uintptr_t) leaf_oo_loop) & 0xF));
+
+	x64_sse_movaps_reg_memindex(ins, X64_XMM4, X64_RDX, offsets[0], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM6, X64_XMM4);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM7, X64_RDX, offsets[1], X64_RAX, 2);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM10, X64_RDX, offsets[2], X64_RAX, 2);
+	x64_sse_addps_reg_reg(ins, X64_XMM6, X64_XMM7);
+	x64_sse_subps_reg_reg(ins, X64_XMM4, X64_XMM7);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM8, X64_RDX, offsets[3], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM9, X64_XMM10);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM1, X64_RDX, offsets[4], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM3, X64_XMM6);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM11, X64_RDX, offsets[5], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM2, X64_XMM1);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM14, X64_RDX, offsets[6], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM15, X64_XMM4);
+	x64_sse_movaps_reg_memindex(ins, X64_XMM12, X64_RDX, offsets[7], X64_RAX, 2);
+	x64_sse_movaps_reg_reg(ins, X64_XMM13, X64_XMM14);
+	x64_movsxd_reg_memindex(ins, X64_R10, X64_R9, 0, X64_RAX, 2);
+	x64_sse_subps_reg_reg(ins, X64_XMM10, X64_XMM8);
+	x64_sse_addps_reg_reg(ins, X64_XMM9, X64_XMM8);
+	x64_sse_addps_reg_reg(ins, X64_XMM2, X64_XMM11);
+	x64_sse_subps_reg_reg(ins, X64_XMM14, X64_XMM12);
+	x64_sse_subps_reg_reg(ins, X64_XMM1, X64_XMM11);
+	x64_sse_addps_reg_reg(ins, X64_XMM13, X64_XMM12);
+	x64_sse_addps_reg_reg(ins, X64_XMM3, X64_XMM9);
+	x64_sse_subps_reg_reg(ins, X64_XMM6, X64_XMM9);
+	x64_sse_xorps_reg_reg(ins, X64_XMM10, X64_XMM5);
+	x64_sse_xorps_reg_reg(ins, X64_XMM14, X64_XMM5);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM10, X64_XMM10, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM9, X64_XMM2);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM14, X64_XMM14, 0xB1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM7, X64_XMM6);
+	x64_movsxd_reg_memindex(ins, X64_R11, X64_R9, 8, X64_RAX, 2);
+	x64_alu_reg_imm_size(ins, X86_ADD, X64_RAX, 4, 8);
+	x64_sse_addps_reg_reg(ins, X64_XMM4, X64_XMM10);
+	x64_sse_addps_reg_reg(ins, X64_XMM9, X64_XMM13);
+	x64_sse_subps_reg_reg(ins, X64_XMM2, X64_XMM13);
+	x64_sse_subps_reg_reg(ins, X64_XMM15, X64_XMM10);
+	x64_sse_movaps_reg_reg(ins, X64_XMM13, X64_XMM1);
+	x64_sse_movaps_reg_reg(ins, X64_XMM8, X64_XMM2);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM7, X64_XMM4);
+	x64_sse_subps_reg_reg(ins, X64_XMM13, X64_XMM14);
+	x64_sse_addps_reg_reg(ins, X64_XMM1, X64_XMM14);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM6, X64_XMM4, 0xEE);
+	x64_sse_movaps_reg_reg(ins, X64_XMM14, X64_XMM3);
+	x64_sse_movaps_reg_reg(ins, X64_XMM4, X64_XMM9);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM14, X64_XMM15);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM4, X64_XMM13);
+	x64_sse_movlhps_reg_reg(ins, X64_XMM8, X64_XMM1);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM3, X64_XMM15, 0xEE);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM9, X64_XMM13, 0xEE);
+	x64_sse_shufps_reg_reg_imm(ins, X64_XMM2, X64_XMM1, 0xEE);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  0, X64_R10, 2, X64_XMM14);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 16, X64_R10, 2, X64_XMM7);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 32, X64_R10, 2, X64_XMM4);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 48, X64_R10, 2, X64_XMM8);
+	x64_sse_movaps_memindex_reg(ins, X64_R8,  0, X64_R11, 2, X64_XMM3);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 16, X64_R11, 2, X64_XMM6);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 32, X64_R11, 2, X64_XMM9);
+	x64_sse_movaps_memindex_reg(ins, X64_R8, 48, X64_R11, 2, X64_XMM2);
+
+	/* loop condition */
+	x64_alu_reg_reg_size(ins, X86_CMP, X64_RBX, X64_RAX, 8);
+	x64_branch_size(ins, X86_CC_NE, leaf_oo_loop, 0, 4);
+#else
+	/* align loop/jump destination */
+	x86_mov_reg_imm(ins, X86_ECX, loop_count);
+	ffts_align_mem16(&ins, 4);
+
+	/* copy function */
+	assert((char*) leaf_eo > (char*) leaf_oo);
+	len = (char*) leaf_eo - (char*) leaf_oo;
+	memcpy(ins, leaf_oo, len);
+
+	/* patch offsets */
+	for (i = 0; i < 8; i++) {
+		IMM32_NI(ins + sse_leaf_oo_offsets[i], offsets[i]);
+	}
+
+	ins += len;
+#endif
+
+	*fp = ins;
+}
+
 static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 {
 	insns_t *ins;
@@ -370,6 +873,8 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 #endif
 
 #ifdef _M_X64
+    /* generate function */
+
     /* input */
 	x64_mov_reg_reg(ins, X64_RAX, X64_R9, 8);
 
