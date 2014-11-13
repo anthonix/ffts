@@ -34,12 +34,19 @@ option(ENABLE_SHARED
 add_definitions(-DFFTS_CMAKE_GENERATED)
 
 if(MSVC)
+  # enable all warnings but also disable some..
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 /wd4127")
+
   add_definitions(-D_USE_MATH_DEFINES)
-else()
+endif(MSVC)
+
+# GCC specific options
+if(CMAKE_COMPILER_IS_GNUCC)
   include(CheckIncludeFile)
   include(CheckLibraryExists)
-
-  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -pipe -Wall")
+  
+  # enable all warnings
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
   
   # some systems need libm for some of the math functions to work
   check_library_exists(m pow "" HAVE_LIBM)
@@ -47,7 +54,7 @@ else()
     list(APPEND CMAKE_REQUIRED_LIBRARIES m)
     list(APPEND FFTS_EXTRA_LIBRARIES m)
   endif(HAVE_LIBM)
-endif(MSVC)
+endif(CMAKE_COMPILER_IS_GNUCC)
 
 include_directories(src)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
