@@ -103,6 +103,9 @@ static FFTS_INLINE int ffts_deny_execute(void *start, size_t len)
 
 static FFTS_INLINE int ffts_flush_instruction_cache(void *start, size_t length)
 {
+#ifdef _WIN32
+    return !FlushInstructionCache(GetCurrentProcess(), start, length);
+#else
 #ifdef __APPLE__
     sys_icache_invalidate(start, length);
 #elif __ANDROID__
@@ -113,10 +116,9 @@ static FFTS_INLINE int ffts_flush_instruction_cache(void *start, size_t length)
 #elif __GNUC__
     __clear_cache((long) start, (long) start + length);
 #endif
-#elif _WIN32
-    return !FlushInstructionCache(GetCurrentProcess(), start, length);
-#endif
     return 0;
+#endif
+#endif
 }
 
 static FFTS_INLINE void *ffts_vmem_alloc(size_t length)
