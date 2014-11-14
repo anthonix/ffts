@@ -197,6 +197,9 @@ static FFTS_INLINE void generate_epilogue(insns_t **fp)
 static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 {
     insns_t	*start;
+	
+	/* unreferenced parameter */
+	(void) p;
 
     /* align call destination */
     ffts_align_mem16(fp, 0);
@@ -262,6 +265,9 @@ static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
 #ifndef _M_X64
     size_t len;
 #endif
+
+	/* unreferenced parameter */
+	(void) sign;
 
 	/* to avoid deferring */
 	ins = *fp;
@@ -857,6 +863,9 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 #else
     size_t len;
 #endif
+
+	/* unreferenced parameter */
+	(void) sign;
 
 	/* to avoid deferring */
 	ins = *fp;

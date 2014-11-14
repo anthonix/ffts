@@ -98,6 +98,9 @@ void ffts_firstpass_4_f(ffts_plan_t *p, const void *in, void *out)
     data_t *dout = (data_t*) out;
     cdata_t t0, t1, t2, t3, t4, t5, t6, t7;
 
+	/* unreferenced parameter */
+	(void) p;
+
     t0[0] = din[0];
     t0[1] = din[1];
     t1[0] = din[4];
@@ -132,6 +135,9 @@ void ffts_firstpass_4_b(ffts_plan_t *p, const void *in, void *out)
     data_t *dout = (data_t*) out;
     cdata_t t0, t1, t2, t3, t4, t5, t6, t7;
 
+	/* unreferenced parameter */
+	(void) p;
+
     t0[0] = din[0];
     t0[1] = din[1];
     t1[0] = din[4];
@@ -165,6 +171,9 @@ void ffts_firstpass_2(ffts_plan_t *p, const void *in, void *out)
     const data_t *din = (const data_t*) in;
     data_t *dout = (data_t*) out;
     cdata_t t0, t1, r0, r1;
+
+	/* unreferenced parameter */
+	(void) p;
 
     t0[0] = din[0];
     t0[1] = din[1];
