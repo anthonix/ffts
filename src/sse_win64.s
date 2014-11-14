@@ -33,18 +33,6 @@
 
     .code64
 
-    .globl	_neon_x4
-    .align	4
-_neon_x4:
-
-    .globl _neon_x8
-    .align 4
-_neon_x8:
-
-    .globl _neon_x8_t
-    .align 4
-_neon_x8_t:
-
 #ifdef __APPLE__
     .globl _leaf_ee_init
 _leaf_ee_init:

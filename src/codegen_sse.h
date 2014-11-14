@@ -40,24 +40,19 @@
 #include <assert.h>
 #include <string.h>
 
-void neon_x4(float *, size_t, float *);
-void neon_x8(float *, size_t, float *);
-void neon_x8_t(float *, size_t, float *);
-void leaf_ee_init();
-void leaf_ee();
-void leaf_oo();
-void leaf_eo();
-void leaf_oe();
-void leaf_end();
-void x_init();
-void x4();
-void x8_soft();
-void x8_soft_end();
+extern void leaf_ee_init();
+extern void leaf_ee();
+extern void leaf_oo();
+extern void leaf_eo();
+extern void leaf_oe();
+extern void leaf_end();
+extern void x_init();
+extern void x4();
+extern void x8_soft();
+extern void x8_soft_end();
 
-void sse_constants();
-void sse_constants_inv();
-
-//	typedef uint8_t insns_t;
+extern void sse_constants();
+extern void sse_constants_inv();
 
 extern const uint32_t sse_leaf_ee_offsets[8];
 extern const uint32_t sse_leaf_eo_offsets[8];
