@@ -1461,8 +1461,11 @@ typedef union {
 #define x64_sse_movaps_reg_reg(inst, dreg, reg) \
 	emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x28)
 
-#define x64_sse_movntps_reg_membase(inst, dreg, basereg, disp) \
-	emit_sse_reg_membase_op2((inst), (dreg), (basereg), (disp), 0x0f, 0x2b)
+#define x64_sse_movntps_membase_reg(inst, basereg, disp, reg) \
+	emit_sse_membase_reg_op2((inst), (basereg), (disp), (reg), 0x0f, 0x2b)
+
+#define x64_sse_movntps_memindex_reg(inst, basereg, disp, indexreg, shift, reg) \
+	emit_sse_memindex_reg_op2((inst), (basereg), (disp), (indexreg), (shift), (reg),  0x0f, 0x2b)
 
 #define x64_sse_prefetch_reg_membase(inst, arg, basereg, disp) \
 	emit_sse_reg_membase_op2((inst), (arg), (basereg), (disp), 0x0f, 0x18)
