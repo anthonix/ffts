@@ -33,6 +33,7 @@
 
 #include "ffts_real_nd.h"
 #include "ffts_real.h"
+#include "ffts.h"
 
 #ifdef __ARM_NEON__
 #include "neon.h"

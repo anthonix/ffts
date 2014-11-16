@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "ffts_nd.h"
+#include "ffts.h"
 
 #ifdef HAVE_NEON
 #include "neon.h"
