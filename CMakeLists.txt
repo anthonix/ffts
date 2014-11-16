@@ -60,8 +60,13 @@ if(CMAKE_COMPILER_IS_GNUCC)
   endif(HAVE_LIBM)
 endif(CMAKE_COMPILER_IS_GNUCC)
 
+include_directories(include)
 include_directories(src)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+set(FFTS_HEADERS
+  include/ffts.h
+)
 
 set(FFTS_SOURCES
   src/ffts_attributes.h
@@ -168,6 +173,7 @@ else()
 endif()
 
 add_library(ffts_static
+  ${FFTS_HEADERS}
   ${FFTS_SOURCES}
 )
 

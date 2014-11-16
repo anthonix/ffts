@@ -31,8 +31,8 @@
 
 */
 
-#ifndef __CP_SSE_H__
-#define __CP_SSE_H__
+#ifndef FFTS_INTERNAL_H
+#define FFTS_INTERNAL_H
 
 //#include "config.h"
 //#include "codegen.h"
@@ -231,8 +231,4 @@ static FFTS_ALWAYS_INLINE float W_im(float N, float k)
     return sin(-2.0 * M_PI * k / N);
 }
 
-void         ffts_free(ffts_plan_t *);
-void         ffts_execute(ffts_plan_t *, const void *, void *);
-ffts_plan_t *ffts_init_1d(size_t N, int sign);
-
-#endif
+#endif /* FFTS_INTERNAL_H */

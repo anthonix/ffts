@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "ffts.h"
 #include "ffts_internal.h"
 #include "macros.h"
 #include "patterns.h"
