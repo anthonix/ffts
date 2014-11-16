@@ -191,26 +191,26 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 #else
     /* generate functions */
     start = generate_prologue(&fp, p);
-    
-	loop_count = 4 * p->i0;
-	generate_leaf_init(&fp, loop_count);
-	generate_leaf_ee(&fp, offsets);
+
+    loop_count = 4 * p->i0;
+    generate_leaf_init(&fp, loop_count);
+    generate_leaf_ee(&fp, offsets);
 
     if (ffts_ctzl(N) & 1) {
         if (p->i1) {
             loop_count += 4 * p->i1;
-			generate_leaf_oo(&fp, loop_count, offsets_o);
+            generate_leaf_oo(&fp, loop_count, offsets_o);
         }
 
-		loop_count += 4;
-		generate_leaf_oe(&fp, offsets_o);
+        loop_count += 4;
+        generate_leaf_oe(&fp, offsets_o);
     } else {
         loop_count += 4;
-		generate_leaf_eo(&fp, offsets);
+        generate_leaf_eo(&fp, offsets);
 
         if (p->i1) {
             loop_count += 4 * p->i1;
-			generate_leaf_oo(&fp, loop_count, offsets_o);
+            generate_leaf_oo(&fp, loop_count, offsets_o);
         }
     }
 
@@ -221,14 +221,14 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
         /* align loop/jump destination */
 #ifdef _M_X64
-		x86_mov_reg_imm(fp, X86_EBX, loop_count);
+        x86_mov_reg_imm(fp, X86_EBX, loop_count);
         ffts_align_mem16(&fp, 8);
 #else
-		x86_mov_reg_imm(fp, X86_ECX, loop_count);
+        x86_mov_reg_imm(fp, X86_ECX, loop_count);
         ffts_align_mem16(&fp, 9);
 #endif
 
-		generate_leaf_ee(&fp, offsets_oe);
+        generate_leaf_ee(&fp, offsets_oe);
     }
 
     generate_transform_init(&fp);
@@ -240,17 +240,17 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
         if (!pN) {
 #ifdef _M_X64
-			x86_mov_reg_imm(fp, X86_EBX, pps[0]);
+            x86_mov_reg_imm(fp, X86_EBX, pps[0]);
 #else
-			x86_mov_reg_imm(fp, X86_ECX, pps[0] / 4);
+            x86_mov_reg_imm(fp, X86_ECX, pps[0] / 4);
 #endif
         } else {
             int offset = (4 * pps[1]) - pAddr;
             if (offset) {
 #ifdef _M_X64
-				x64_alu_reg_imm_size(fp, X86_ADD, X64_R8, offset, 8);
+                x64_alu_reg_imm_size(fp, X86_ADD, X64_R8, offset, 8);
 #else
-				x64_alu_reg_imm_size(fp, X86_ADD, X64_RDX, offset, 8);
+                x64_alu_reg_imm_size(fp, X86_ADD, X64_RDX, offset, 8);
 #endif
             }
 
@@ -258,17 +258,17 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
                 int factor = ffts_ctzl(pps[0]) - ffts_ctzl(pN);
 
 #ifdef _M_X64
-				if (factor > 0) {
-					x86_shift_reg_imm(fp, X86_SHL, X86_EBX, factor);
-				} else {
-					x86_shift_reg_imm(fp, X86_SHR, X86_EBX, -factor);
-				}
+                if (factor > 0) {
+                    x86_shift_reg_imm(fp, X86_SHL, X86_EBX, factor);
+                } else {
+                    x86_shift_reg_imm(fp, X86_SHR, X86_EBX, -factor);
+                }
 #else
-				if (factor > 0) {
-					x86_shift_reg_imm(fp, X86_SHL, X86_ECX, factor);
-				} else {
-					x86_shift_reg_imm(fp, X86_SHR, X86_ECX, -factor);
-				}
+                if (factor > 0) {
+                    x86_shift_reg_imm(fp, X86_SHL, X86_ECX, factor);
+                } else {
+                    x86_shift_reg_imm(fp, X86_SHR, X86_ECX, -factor);
+                }
 #endif
             }
         }
@@ -278,16 +278,16 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             int offset = (int) (ws_is - pLUT);
 
 #ifdef _M_X64
-			x64_alu_reg_imm_size(fp, X86_ADD, X64_R9, offset, 8);
+            x64_alu_reg_imm_size(fp, X86_ADD, X64_R9, offset, 8);
 #else
-			x64_alu_reg_imm_size(fp, X86_ADD, X64_R8, offset, 8);
+            x64_alu_reg_imm_size(fp, X86_ADD, X64_R8, offset, 8);
 #endif
         }
 
         if (pps[0] == 2 * leaf_N) {
-			x64_call_code(fp, x_4_addr);
+            x64_call_code(fp, x_4_addr);
         } else {
-			x64_call_code(fp, x_8_addr);
+            x64_call_code(fp, x_8_addr);
         }
 
         pAddr = 4 * pps[1];
@@ -599,5 +599,16 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
     free(ps);
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+
+    /* disable type cast warning from data pointer to function pointer */
+#pragma warning(disable : 4055)
+#endif
+
     return (transform_func_t) start;
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 }
