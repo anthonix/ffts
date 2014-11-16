@@ -6,16 +6,20 @@ To build for Android, edit and run build_android.sh
 To build for iOS, edit and run build_iphone.sh 
 
 To build for Linux or OS X on x86, run 
-./configure --enable-sse --enable-single --prefix=/usr/local
-make
-make install
+  ./configure --enable-sse --enable-single --prefix=/usr/local
+  make
+  make install
 
-To build for Windows x64 with MSVC 2005 and YASM v1.3, run
+Optionally build for Linux with CMake, run
+  mkdir build
+  cmake ..
+
+To build for Windows x64 with MSVC 2005, run
   mkdir build
   cmake .. -G "Visual Studio 8 2005 Win64"
   
 Note that 32 bit Windows is not supported at the moment.
-  
+
 FFTS dynamically generates code at runtime. This can be disabled with 
 --disable-dynamic-code
 

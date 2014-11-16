@@ -31,6 +31,10 @@ option(ENABLE_SHARED
   "Enable building a shared library." OFF
 )
 
+option(ENABLE_YASM_COMPILE
+  "Enables compiling with YASM for Windows." OFF
+)
+
 add_definitions(-DFFTS_CMAKE_GENERATED)
 
 if(MSVC)
@@ -85,23 +89,27 @@ if(ENABLE_SSE)
   )
 
   if(MSVC)
-    set(CMAKE_ASM-ATT_COMPILER yasm)
-    enable_language(ASM-ATT)
+    if(ENABLE_YASM_COMPILE)
+      set(CMAKE_ASM-ATT_COMPILER yasm)
+      enable_language(ASM-ATT)
 
-    add_custom_command(
-      OUTPUT sse_win64.obj
-      COMMAND ${CMAKE_ASM-ATT_COMPILER} -f win64 -m amd64
-      -o ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj -p gas
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      COMMENT "Generating sse_win64.obj"
-    )
-
-    list(APPEND FFTS_SOURCES
-      ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj
-      src/sse_win64.s
-    )
+      add_custom_command(
+        OUTPUT sse_win64.obj
+        COMMAND ${CMAKE_ASM-ATT_COMPILER} -f win64 -m amd64
+        -o ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj -p gas
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating sse_win64.obj"
+      )
+      
+      list(APPEND FFTS_SOURCES
+        ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj
+        src/sse_win64.s
+      )
+    else()
+      add_definitions(-DSSE_DEFINE_CONSTANTS)    
+    endif(ENABLE_YASM_COMPILE)
   else()
     list(APPEND FFTS_SOURCES
       src/sse.s
