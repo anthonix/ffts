@@ -51,8 +51,26 @@ extern void x4();
 extern void x8_soft();
 extern void x8_soft_end();
 
+#ifdef SSE_DEFINE_CONSTANTS
+static const FFTS_ALIGN(16) unsigned int sse_constants[20] = {
+	0x00000000, 0x80000000, 0x00000000, 0x80000000,
+	0x3f3504f3, 0x3f3504f3, 0x3f3504f3, 0x3f3504f3,
+	0xbf3504f3, 0x3f3504f3, 0xbf3504f3, 0x3f3504f3,
+	0x3f800000, 0x3f800000, 0x3f3504f3, 0x3f3504f3,
+	0x00000000, 0x00000000, 0xbf3504f3, 0x3f3504f3
+};
+
+static const FFTS_ALIGN(16) unsigned int sse_constants_inv[20] = {
+	0x80000000, 0x00000000, 0x80000000, 0x00000000,
+    0x3f3504f3, 0x3f3504f3, 0x3f3504f3, 0x3f3504f3,
+    0x3f3504f3, 0xbf3504f3, 0x3f3504f3, 0xbf3504f3,
+    0x3f800000, 0x3f800000, 0x3f3504f3, 0x3f3504f3,
+    0x00000000, 0x00000000, 0x3f3504f3, 0xbf3504f3
+};
+#else
 extern void sse_constants();
 extern void sse_constants_inv();
+#endif
 
 extern const uint32_t sse_leaf_ee_offsets[8];
 extern const uint32_t sse_leaf_eo_offsets[8];
