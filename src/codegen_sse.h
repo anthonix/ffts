@@ -40,17 +40,6 @@
 #include <assert.h>
 #include <string.h>
 
-extern void leaf_ee_init();
-extern void leaf_ee();
-extern void leaf_oo();
-extern void leaf_eo();
-extern void leaf_oe();
-extern void leaf_end();
-extern void x_init();
-extern void x4();
-extern void x8_soft();
-extern void x8_soft_end();
-
 #ifdef SSE_DEFINE_CONSTANTS
 static const FFTS_ALIGN(16) unsigned int sse_constants[20] = {
 	0x00000000, 0x80000000, 0x00000000, 0x80000000,
@@ -68,14 +57,26 @@ static const FFTS_ALIGN(16) unsigned int sse_constants_inv[20] = {
     0x00000000, 0x00000000, 0x3f3504f3, 0xbf3504f3
 };
 #else
+extern void leaf_ee_init();
+extern void leaf_ee();
+extern void leaf_eo();
+extern void leaf_oe();
+extern void leaf_oo();
+extern void leaf_end();
+
 extern void sse_constants();
 extern void sse_constants_inv();
-#endif
 
 extern const uint32_t sse_leaf_ee_offsets[8];
 extern const uint32_t sse_leaf_eo_offsets[8];
 extern const uint32_t sse_leaf_oe_offsets[8];
 extern const uint32_t sse_leaf_oo_offsets[8];
+
+extern void x_init();
+extern void x4();
+extern void x8_soft();
+extern void x8_soft_end();
+#endif
 
 #define P(x) (*(*p)++ = x)
 
