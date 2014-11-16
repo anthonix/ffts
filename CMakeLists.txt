@@ -66,7 +66,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(FFTS_SOURCES
   src/ffts_attributes.h
   src/ffts.c
-  src/ffts.h
+  src/ffts_internal.h
   src/ffts_nd.c
   src/ffts_nd.h
   src/ffts_real.h

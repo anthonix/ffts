@@ -1,7 +1,7 @@
 #ifndef FFTS_SMALL_H
 #define FFTS_SMALL_H
 
-#include "ffts.h"
+#include "ffts_internal.h"
 
 void ffts_firstpass_16_f(ffts_plan_t *p, const void *in, void *out);
 void ffts_firstpass_16_b(ffts_plan_t *p, const void *in, void *out);

@@ -38,7 +38,7 @@
 #pragma once
 #endif
 
-#include "ffts.h"
+#include "ffts_internal.h"
 #include <stddef.h>
 
 ffts_plan_t *ffts_init_1d_real(size_t N, int sign);

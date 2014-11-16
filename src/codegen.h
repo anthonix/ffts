@@ -38,7 +38,7 @@
 #pragma once
 #endif
 
-#include "ffts.h"
+#include "ffts_internal.h"
 
 transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N, int sign);
 
