@@ -194,23 +194,26 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
     loop_count = 4 * p->i0;
     generate_leaf_init(&fp, loop_count);
-    generate_leaf_ee(&fp, offsets);
 
     if (ffts_ctzl(N) & 1) {
+		generate_leaf_ee(&fp, offsets, p->i1 ? 6 : 0);
+
         if (p->i1) {
             loop_count += 4 * p->i1;
-            generate_leaf_oo(&fp, loop_count, offsets_o);
+            generate_leaf_oo(&fp, loop_count, offsets_o, 7);
         }
 
         loop_count += 4;
         generate_leaf_oe(&fp, offsets_o);
     } else {
+		generate_leaf_ee(&fp, offsets, N >= 256 ? 2 : 8);
+
         loop_count += 4;
         generate_leaf_eo(&fp, offsets);
 
         if (p->i1) {
             loop_count += 4 * p->i1;
-            generate_leaf_oo(&fp, loop_count, offsets_o);
+			generate_leaf_oo(&fp, loop_count, offsets_o, N >= 256 ? 4 : 7);
         }
     }
 
@@ -222,13 +225,12 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         /* align loop/jump destination */
 #ifdef _M_X64
         x86_mov_reg_imm(fp, X86_EBX, loop_count);
-        ffts_align_mem16(&fp, 8);
 #else
         x86_mov_reg_imm(fp, X86_ECX, loop_count);
         ffts_align_mem16(&fp, 9);
 #endif
 
-        generate_leaf_ee(&fp, offsets_oe);
+        generate_leaf_ee(&fp, offsets_oe, 0);
     }
 
     generate_transform_init(&fp);
