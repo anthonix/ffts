@@ -1123,13 +1123,25 @@ typedef union {
 #define x64_sse_cvttsd2si_reg_xreg_size(inst,reg,xreg,size) emit_sse_reg_reg_size ((inst), (reg), (xreg), 0xf2, 0x0f, 0x2c, (size))
 
 
-#define x64_sse_addps_reg_reg(inst,dreg,reg) emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x58)
+#define x64_sse_addps_reg_reg(inst, dreg, reg) \
+	emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x58)
+
+#define x64_sse_addps_reg_reg_size(inst, dreg, reg, size) \
+	emit_sse_reg_reg_op2_size((inst), (dreg), (reg), 0x0f, 0x58, size)
 
 #define x64_sse_divps_reg_reg(inst,dreg,reg) emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x5e)
 
-#define x64_sse_mulps_reg_reg(inst,dreg,reg) emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x59)
+#define x64_sse_mulps_reg_reg(inst, dreg, reg) \
+	emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x59)
 
-#define x64_sse_subps_reg_reg(inst,dreg,reg) emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x5c)
+#define x64_sse_mulps_reg_reg_size(inst, dreg, reg, size) \
+	emit_sse_reg_reg_op2_size((inst), (dreg), (reg), 0x0f, 0x59, size)
+
+#define x64_sse_subps_reg_reg(inst, dreg, reg) \
+	emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x5c)
+
+#define x64_sse_subps_reg_reg_size(inst, dreg, reg, size) \
+	emit_sse_reg_reg_op2_size((inst), (dreg), (reg), 0x0f, 0x5c, size)
 
 #define x64_sse_maxps_reg_reg(inst,dreg,reg) emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x5f)
 
@@ -1422,11 +1434,17 @@ typedef union {
 
 #define x64_movd_xreg_membase(inst,dreg,basereg,disp) emit_sse_reg_membase((inst), (dreg), (basereg), (disp), 0x66, 0x0f, 0x6e)
 
-#define x64_sse_movlhps_reg_reg(inst,dreg,sreg) \
+#define x64_sse_movhlps_reg_reg(inst, dreg, sreg) \
+	emit_sse_reg_reg_op2((inst), (dreg), (sreg), 0x0f, 0x12)
+
+#define x64_sse_movhlps_reg_reg_size(inst, dreg, sreg, size) \
+	emit_sse_reg_reg_op2_size((inst), (dreg), (sreg), 0x0f, 0x12, size)
+
+#define x64_sse_movlhps_reg_reg(inst, dreg, sreg) \
 	emit_sse_reg_reg_op2((inst), (dreg), (sreg), 0x0f, 0x16)
 
-#define x64_sse_movhlps_reg_reg(inst,dreg,sreg) \
-	emit_sse_reg_reg_op2((inst), (dreg), (sreg), 0x0f, 0x12)
+#define x64_sse_movlhps_reg_reg_size(inst, dreg, sreg, size) \
+	emit_sse_reg_reg_op2_size((inst), (dreg), (sreg), 0x0f, 0x16, size)
 
 #define x64_sse_movups_membase_reg(inst, basereg, disp, reg) \
 	emit_sse_membase_reg_op2((inst), (basereg), (disp), (reg), 0x0f, 0x11)
@@ -1460,6 +1478,9 @@ typedef union {
 
 #define x64_sse_movaps_reg_reg(inst, dreg, reg) \
 	emit_sse_reg_reg_op2((inst), (dreg), (reg), 0x0f, 0x28)
+
+#define x64_sse_movaps_reg_reg_size(inst, dreg, reg, size) \
+	emit_sse_reg_reg_op2_size((inst), (dreg), (reg), 0x0f, 0x28, size)
 
 #define x64_sse_movntps_membase_reg(inst, basereg, disp, reg) \
 	emit_sse_membase_reg_op2((inst), (basereg), (disp), (reg), 0x0f, 0x2b)
