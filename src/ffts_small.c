@@ -32,6 +32,7 @@
 */
 
 #include "ffts_small.h"
+#include "ffts_internal.h"
 #include "macros.h"
 
 #include <stdlib.h>

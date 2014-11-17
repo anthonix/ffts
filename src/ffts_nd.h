@@ -34,7 +34,7 @@
 #ifndef FFTS_ND_H
 #define FFTS_ND_H
 
-#include "ffts_internal.h"
+#include "ffts.h"
 #include <stddef.h>
 
 ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign);

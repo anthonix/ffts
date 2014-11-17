@@ -72,8 +72,6 @@
 #define M_PI 3.1415926535897932384626433832795028841971693993751058209
 #endif
 
-typedef struct _ffts_plan_t ffts_plan_t;
-
 typedef void (*transform_func_t)(ffts_plan_t *p, const void *in, void *out);
 
 /**

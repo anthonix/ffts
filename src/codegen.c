@@ -33,7 +33,6 @@
 
 #include "codegen.h"
 #include "macros.h"
-#include "ffts_internal.h"
 
 #ifdef __arm__
 typedef uint32_t insns_t;
