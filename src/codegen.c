@@ -48,7 +48,6 @@ typedef uint8_t insns_t;
 #include "vfp.h"
 #else
 #include "codegen_sse.h"
-#include "macros-sse.h"
 #endif
 
 #include <assert.h>
