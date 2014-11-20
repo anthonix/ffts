@@ -80,6 +80,8 @@ set(FFTS_SOURCES
   src/ffts_real_nd.h
   src/ffts_small.c
   src/ffts_small.h
+  src/ffts_static.c
+  src/ffts_static.h
   src/macros.h
   src/patterns.c
   src/patterns.h
