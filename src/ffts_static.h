@@ -1,10 +1,10 @@
 /*
- 
+
  This file is part of FFTS -- The Fastest Fourier Transform in the South
-  
+
  Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato 
- 
+ Copyright (c) 2012, The University of Waikato
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,14 @@
 
 */
 
-#ifndef __FFTS_STATIC_H__
-#define __FFTS_STATIC_H__
+#ifndef FFTS_STATIC_H
+#define FFTS_STATIC_H
+
+#if defined (_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
 
 #include "ffts.h"
-#include "neon.h"
 
 void ffts_static_rec_f(ffts_plan_t *p, float *data, size_t N) ;
 void ffts_static_transform_f(ffts_plan_t *p, const void *in, void *out);
@@ -43,5 +46,4 @@ void ffts_static_transform_f(ffts_plan_t *p, const void *in, void *out);
 void ffts_static_rec_i(ffts_plan_t *p, float *data, size_t N) ;
 void ffts_static_transform_i(ffts_plan_t *p, const void *in, void *out);
 
-#endif
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+#endif /* FFTS_STATIC_H */
