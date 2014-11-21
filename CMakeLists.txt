@@ -11,10 +11,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # common options
-option(ENABLE_SSE
-  "Enables the use of SSE instructions." ON
-)
-
 option(ENABLE_NEON
   "Enables the use of NEON instructions." OFF
 )
@@ -27,26 +23,36 @@ option(DISABLE_DYNAMIC_CODE
   "Disables the use of dynamic machine code generation." OFF
 )
 
+option(ENABLE_RUNTIME_DYNAMIC_CODE
+  "Enables the runtime generation of dynamic machine code." ON
+)
+
 option(ENABLE_SHARED
   "Enable building a shared library." OFF
 )
 
-option(ENABLE_YASM_COMPILE
-  "Enables compiling with YASM for Windows." OFF
-)
+include(CheckIncludeFile)
 
 add_definitions(-DFFTS_CMAKE_GENERATED)
 
+# check if the platform has support for SSE SIMD extension
+check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
+if(HAVE_XMMINTRIN_H)
+  add_definitions(-DHAVE_SSE)
+else()
+  # check if the platform has support NEON SIMD extension
+  check_include_file(arm_neon.h HAVE_ARM_NEON_H)
+  if(HAVE_ARM_NEON_H)
+  endif(HAVE_ARM_NEON_H)
+endif(HAVE_XMMINTRIN_H)
+
+# compiler settings
 if(MSVC)
   # enable all warnings but also disable some..
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 /wd4127")
 
   add_definitions(-D_USE_MATH_DEFINES)
-endif(MSVC)
-
-# GCC specific options
-if(CMAKE_COMPILER_IS_GNUCC)
-  include(CheckIncludeFile)
+elseif(CMAKE_COMPILER_IS_GNUCC)
   include(CheckLibraryExists)
   
   # enable all warnings
@@ -58,7 +64,11 @@ if(CMAKE_COMPILER_IS_GNUCC)
     list(APPEND CMAKE_REQUIRED_LIBRARIES m)
     list(APPEND FFTS_EXTRA_LIBRARIES m)
   endif(HAVE_LIBM)
-endif(CMAKE_COMPILER_IS_GNUCC)
+  
+  if(HAVE_XMMINTRIN_H)
+    add_definitions(-msse)
+  endif(HAVE_XMMINTRIN_H)
+endif(MSVC)
 
 include_directories(include)
 include_directories(src)
@@ -75,90 +85,97 @@ set(FFTS_SOURCES
   src/ffts_nd.c
   src/ffts_nd.h
   src/ffts_real.h
-  src/ffts_real.c  
+  src/ffts_real.c
   src/ffts_real_nd.c
   src/ffts_real_nd.h
   src/ffts_small.c
   src/ffts_small.h
-  src/ffts_static.c
-  src/ffts_static.h
   src/macros.h
   src/patterns.c
   src/patterns.h
   src/types.h
 )
 
-if(ENABLE_SSE)
+if(ENABLE_NEON)
+  if(DISABLE_DYNAMIC_CODE)
+    list(APPEND FFTS_SOURCES
+      src/neon_static_f.s
+      src/neon_static_i.s
+    )
+  else()
+    list(APPEND FFTS_SOURCES
+      src/neon.s
+      src/arch/neon.c
+    )
+  endif(DISABLE_DYNAMIC_CODE)
+
+  add_definitions(-DHAVE_NEON)
+elseif(ENABLE_VFP)
+  list(APPEND FFTS_SOURCES
+    src/vfp.s
+    src/arch/vfp.c
+  )
+
+  add_definitions(-DHAVE_VFP)
+elseif(HAVE_XMMINTRIN_H)
   add_definitions(-DHAVE_SSE)
-  add_definitions(-D__x86_64__)
 
   list(APPEND FFTS_SOURCES
     src/macros-sse.h
   )
 
-  if(MSVC)
-    if(ENABLE_YASM_COMPILE)
-      set(CMAKE_ASM-ATT_COMPILER yasm)
-      enable_language(ASM-ATT)
-
-      add_custom_command(
-        OUTPUT sse_win64.obj
-        COMMAND ${CMAKE_ASM-ATT_COMPILER} -f win64 -m amd64
-        -o ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj -p gas
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Generating sse_win64.obj"
-      )
-      
+  if(NOT DISABLE_DYNAMIC_CODE)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
       list(APPEND FFTS_SOURCES
-        ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj
-        src/sse_win64.s
+        src/codegen_sse.h
       )
+        
+      if(MSVC)
+        if(NOT ENABLE_RUNTIME_DYNAMIC_CODE)
+          # YASM supports x86 GAS syntax
+          set(CMAKE_ASM-ATT_COMPILER yasm)    
+          enable_language(ASM-ATT)
+      
+          if(CMAKE_ASM-ATT_COMPILER_WORKS)
+            add_custom_command(
+              OUTPUT sse_win64.obj
+              COMMAND ${CMAKE_ASM-ATT_COMPILER} -f win64 -m amd64
+              -o ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj -p gas
+              ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
+              DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+              COMMENT "Generating sse_win64.obj"
+            )
+      
+            list(APPEND FFTS_SOURCES
+              ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj
+              src/sse_win64.s
+            )
+          else()
+            message(WARNING "YASM is required, enabling runtime dynamic code.")
+            set(ENABLE_RUNTIME_DYNAMIC_CODE ON)
+          endif(CMAKE_ASM-ATT_COMPILER_WORKS)
+        endif(NOT ENABLE_RUNTIME_DYNAMIC_CODE)
+      
+        if(ENABLE_RUNTIME_DYNAMIC_CODE)
+          add_definitions(-DSSE_DEFINE_CONSTANTS)
+        endif(ENABLE_RUNTIME_DYNAMIC_CODE)
+      else()
+        list(APPEND FFTS_SOURCES
+          src/sse.s
+        )
+      endif(MSVC)
     else()
-      add_definitions(-DSSE_DEFINE_CONSTANTS)    
-    endif(ENABLE_YASM_COMPILE)
-  else()
-    list(APPEND FFTS_SOURCES
-      src/sse.s
-    )
-  else()
-    add_definitions(-msse2)
-  endif(MSVC)
-endif()
-
-if(ENABLE_NEON)
-  if(DISABLE_DYNAMIC_CODE)
-    list(APPEND FFTS_SOURCES
-      source/neon_static_f.s
-      source/neon_static_i.s
-    )
-  else()
-    list(APPEND FFTS_SOURCES
-      source/neon.s
-      source/arch/neon.c
-    )
-  endif()
-
-  add_definitions(-DHAVE_NEON)
-endif()
-
-if(ENABLE_VFP)
-  list(APPEND FFTS_SOURCES
-    source/vfp.s
-    source/arch/vfp.c
-  )
-
-  add_definitions(-DHAVE_VFP)
-endif()
-
-if(ENABLE_SINGLE)
-  add_definitions(-DHAVE_SINGLE)
-endif()
+      message(WARNING "Dynamic code is only supported with x64, disabling dynamic code.")
+      set(DISABLE_DYNAMIC_CODE ON)
+    endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  endif(NOT DISABLE_DYNAMIC_CODE)      
+endif(ENABLE_NEON)
 
 if(DISABLE_DYNAMIC_CODE)
   list(APPEND FFTS_SOURCES
     src/ffts_static.c
+    src/ffts_static.h
   )
 
   add_definitions(-DDYNAMIC_DISABLED)
@@ -167,13 +184,7 @@ else()
     src/codegen.c
     src/codegen.h
   )
-  
-  if(ENABLE_SSE)
-    list(APPEND FFTS_SOURCES
-      src/codegen_sse.h
-    )
-  endif(ENABLE_SSE)
-endif()
+endif(DISABLE_DYNAMIC_CODE)
 
 add_library(ffts_static
   ${FFTS_HEADERS}
