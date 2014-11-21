@@ -132,7 +132,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
     pps = ps;
 
-#ifdef __x86_64__
+#ifdef HAVE_SSE
     if (sign < 0) {
         p->constants = sse_constants;
     } else {
