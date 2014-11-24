@@ -10,18 +10,15 @@ To build for Linux or OS X on x86, run
   make
   make install
 
-Optionally build for Linux with CMake, run
+Optionally build for Windows and Linux with CMake, run
   mkdir build
+  cd build
   cmake ..
-
-To build for Windows x64 with MSVC 2005, run
-  mkdir build
-  cmake .. -G "Visual Studio 8 2005 Win64"
   
-Note that 32 bit Windows is not supported at the moment.
-
 FFTS dynamically generates code at runtime. This can be disabled with 
 --disable-dynamic-code
+
+Note that 32 bit x86 dynamic machine code generation is not supported at the moment.
 
 For JNI targets: --enable-jni will build the jni stuff automatically for
 the host target, and --enable-shared must also be added manually for it to
