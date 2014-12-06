@@ -52,9 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef HAVE_VFP
 #include "macros-alpha.h"
-#endif
-
-#ifdef HAVE_SSE
+#elif HAVE_SSE
 #include "macros-sse.h"
 #endif
 
