@@ -151,11 +151,11 @@ void ffts_execute(ffts_plan_t *p, const void *in, void *out)
 {
     /* TODO: Define NEEDS_ALIGNED properly instead */
 #if defined(HAVE_SSE) || defined(HAVE_NEON)
-    if (((int) in % 16) != 0) {
+    if (((uintptr_t) in % 16) != 0) {
         LOG("ffts_execute: input buffer needs to be aligned to a 128bit boundary\n");
     }
 
-    if (((int) out % 16) != 0) {
+    if (((uintptr_t) out % 16) != 0) {
         LOG("ffts_execute: output buffer needs to be aligned to a 128bit boundary\n");
     }
 #endif
