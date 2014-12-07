@@ -111,10 +111,12 @@ if(ENABLE_NEON)
 
   add_definitions(-DHAVE_NEON)
 elseif(ENABLE_VFP)
-  list(APPEND FFTS_SOURCES
-    src/vfp.s
-    src/arch/vfp.c
-  )
+  if(NOT DISABLE_DYNAMIC_CODE)
+    list(APPEND FFTS_SOURCES
+      src/vfp.s
+      src/arch/vfp.c
+    )
+  endif(NOT DISABLE_DYNAMIC_CODE)
 
   add_definitions(-DHAVE_VFP)
 elseif(HAVE_XMMINTRIN_H)
