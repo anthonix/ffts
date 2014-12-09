@@ -211,7 +211,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     float *tmp;
     cdata_t *w;
     size_t i;
-    int n;
+    size_t n;
 
 #ifdef __arm__
     /* #ifdef HAVE_NEON */

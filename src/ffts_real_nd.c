@@ -155,11 +155,12 @@ static void ffts_execute_nd_real(ffts_plan_t *p, const void *in, void *out)
     uint64_t *transpose_buf = (uint64_t*) p->transpose_buf;
 
     ffts_plan_t *plan;
-    size_t i, j;
+    int i;
+    size_t j;
 
     plan = p->plans[0];
-    for (i = 0; i < Ns0; i++) {
-        plan->transform(plan, din + (i * Ms0), buf + (i * (Ms0 / 2 + 1)));
+    for (j = 0; j < Ns0; j++) {
+        plan->transform(plan, din + (j * Ms0), buf + (j * (Ms0 / 2 + 1)));
     }
 
     ffts_scalar_transpose(buf, dout, Ms0 / 2 + 1, Ns0, transpose_buf);
@@ -194,7 +195,8 @@ static void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *in, void *out)
     ffts_plan_t *plan;
     size_t vol;
 
-    size_t i, j;
+    int i;
+    size_t j;
 
     vol = p->Ns[0];
     for (i = 1; i < p->rank; i++) {
@@ -206,8 +208,8 @@ static void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *in, void *out)
     ffts_scalar_transpose(din, buf, Ms0, Ns0, transpose_buf);
 
     plan = p->plans[0];
-    for (i = 0; i < Ms0; i++) {
-        plan->transform(plan, buf + (i * Ns0), buf2 + (i * Ns0));
+    for (j = 0; j < Ms0; j++) {
+        plan->transform(plan, buf + (j * Ns0), buf2 + (j * Ns0));
     }
 
     ffts_scalar_transpose(buf2, buf, Ns0, Ms0, transpose_buf);

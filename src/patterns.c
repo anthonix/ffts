@@ -107,7 +107,7 @@ static void ffts_hardcodedleaf_is_rec(ptrdiff_t **is, int big_N, int N, int poff
     }
 }
 
-ptrdiff_t *ffts_init_is(int N, int leaf_N, int VL)
+ptrdiff_t *ffts_init_is(size_t N, size_t leaf_N, int VL)
 {
     int i, i0, i1, i2;
     int stride = (int) (log(N/leaf_N) / log(2));
@@ -163,7 +163,7 @@ static int ffts_compare_offsets(const void *a, const void *b)
     return (int) diff;
 }
 
-ptrdiff_t *ffts_init_offsets(int N, int leaf_N)
+ptrdiff_t *ffts_init_offsets(size_t N, size_t leaf_N)
 {
     ptrdiff_t *offsets, *tmp;
     size_t i;

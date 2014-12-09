@@ -40,7 +40,7 @@
 
 #include <stddef.h>
 
-ptrdiff_t *ffts_init_is(int N, int leaf_N, int VL);
-ptrdiff_t *ffts_init_offsets(int N, int leaf_N);
+ptrdiff_t *ffts_init_is(size_t N, size_t leaf_N, int VL);
+ptrdiff_t *ffts_init_offsets(size_t N, size_t leaf_N);
 
 #endif /* FFTS_PATTERNS_H */
