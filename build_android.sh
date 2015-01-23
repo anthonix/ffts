@@ -11,7 +11,7 @@ TOOL="4.6"
 case $(uname -s) in
   Darwin)
     CONFBUILD=i386-apple-darwin`uname -r`
-    HOSTPLAT=darwin-x86
+    HOSTPLAT=darwin-x86_64
   ;;
   Linux)
     CONFBUILD=x86-unknown-linux
@@ -24,7 +24,7 @@ case arm in
   arm)
     TARGPLAT=arm-linux-androideabi
     ARCH=arm
-    CONFTARG=arm-eabi
+    CONFTARG=arm-linux-androideabi
   ;;
   x86)
     TARGPLAT=x86
@@ -46,15 +46,17 @@ echo "Using: $NDK_ROOT/toolchains/${TARGPLAT}-${TOOL}/prebuilt/${HOSTPLAT}/bin"
 
 export PATH="$NDK_ROOT/toolchains/${TARGPLAT}-${TOOL}/prebuilt/${HOSTPLAT}/bin/:$PATH"
 export SYS_ROOT="$NDK_ROOT/platforms/${PLATFORM}/arch-${ARCH}/"
-export CC="${TARGPLAT}-gcc --sysroot=$SYS_ROOT"
+export CC="${TARGPLAT}-gcc"
 export LD="${TARGPLAT}-ld"
 export AR="${TARGPLAT}-ar"
 export RANLIB="${TARGPLAT}-ranlib"
 export STRIP="${TARGPLAT}-strip"
-export CFLAGS="-Os"
+export CFLAGS="-Os --sysroot=$SYS_ROOT"
+export CFLAGS="--sysroot=$ANDROID_SYSROOT"
+export CXXFLAGS="--sysroot=$ANDROID_SYSROOT"
 
 mkdir -p $INSTALL_DIR
-./configure --enable-neon --build=${CONFBUILD} --host=${CONFTARG} --prefix=$INSTALL_DIR LIBS="-lc -lgcc"
+./configure --enable-neon --build=${CONFBUILD} --host=${CONFTARG} --prefix=$INSTALL_DIR LIBS="-lc -lgcc -llog" 
 
 make clean
 make
