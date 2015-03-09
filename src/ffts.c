@@ -500,7 +500,8 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
     p->destroy = ffts_free_1d;
     p->N = N;
 
-    if (ffts_generate_luts(p, N, leaf_N, sign)) {
+	/* generate lookup tables */
+    if (N > 4 && ffts_generate_luts(p, N, leaf_N, sign)) {
         goto cleanup;
     }
 
