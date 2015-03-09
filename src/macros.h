@@ -40,20 +40,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef HAVE_NEON
 #include "macros-neon.h"
-#else
-#ifdef __alpha__
-#include "macros-alpha.h"
-#else
-#ifdef __powerpc__
-#include "macros-altivec.h"
-#endif
-#endif
-#endif
-
-#ifdef HAVE_VFP
-#include "macros-alpha.h"
 #elif HAVE_SSE
 #include "macros-sse.h"
+#elif __powerpc__
+#include "macros-altivec.h"
+#else
+#include "macros-alpha.h"
 #endif
 
 static FFTS_INLINE void TX2(V *a, V *b)
