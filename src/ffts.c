@@ -382,8 +382,6 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             }
 
 #ifdef __arm__
-            //w = FFTS_MALLOC(n/8 * 3 * sizeof(cdata_t), 32);
-            float *fw = (float *)w;
 #ifdef HAVE_NEON
             VS temp0, temp1, temp2;
             for (j = 0; j < n/8; j += 4) {
