@@ -31,10 +31,8 @@
 
 */
 
-#ifndef __CODEGEN_ARM_H__
-#define __CODEGEN_ARM_H__
-
-
+#ifndef FFTS_CODEGEN_ARM_H
+#define FFTS_CODEGEN_ARM_H
 
 uint32_t BL(void *pos, void *target) {
 	return 0xeb000000 | (((target - pos) / 4) & 0xffffff);
@@ -195,14 +193,14 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 	*(*fp)++ = PUSH_LR();
 	*(*fp)++ = 0xed2d8b10;
 
-	ADDI(fp, 3, 1, 0);
-	ADDI(fp, 7, 1, N);
-	ADDI(fp, 5, 1, 2*N);
-	ADDI(fp, 10, 7, 2*N);
-	ADDI(fp, 4, 5, 2*N);
-	ADDI(fp, 8, 10, 2*N);
-	ADDI(fp, 6, 4, 2*N);
-	ADDI(fp, 9, 8, 2*N);
+	ADDI(fp,  3,  1,        0);
+	ADDI(fp,  7,  1,     p->N);
+	ADDI(fp,  5,  1, 2 * p->N);
+	ADDI(fp, 10,  7, 2 * p->N);
+	ADDI(fp,  4,  5, 2 * p->N);
+	ADDI(fp,  8, 10, 2 * p->N);
+	ADDI(fp,  6,  4, 2 * p->N);
+	ADDI(fp,  9,  8, 2 * p->N);
 
 	// load offsets into r12
 	*(*fp)++ = LDRI(12, 0, ((uint32_t) &p->offsets) - ((uint32_t) p));
@@ -221,5 +219,4 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 	return start;
 }
 
-#endif
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+#endif /* FFTS_CODEGEN_ARM_H */
