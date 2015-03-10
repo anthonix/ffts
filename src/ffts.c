@@ -208,7 +208,6 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     int hardcoded;
     size_t lut_size;
     size_t n_luts;
-    float *tmp;
     cdata_t *w;
     size_t i;
     size_t n;
@@ -459,8 +458,6 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 
         n *= 2;
     }
-
-    tmp = (float *)p->ws;
 
 #ifdef __arm__
     if (sign < 0) {
