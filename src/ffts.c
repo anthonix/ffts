@@ -56,7 +56,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #endif
 
-#ifdef __arm__
+#if defined(__arm__) && !defined(DISABLE_DYNAMIC_CODE)
 static const FFTS_ALIGN(64) float w_data[16] = {
     0.70710678118654757273731092936941f,
     0.70710678118654746171500846685376f,
@@ -241,7 +241,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 
     for (i = 0; i < n_luts; i++) {
         if (!i || hardcoded) {
-#ifdef __arm__
+#if defined(__arm__) && !defined(DISABLE_DYNAMIC_CODE)
             if (N <= 32) {
                 lut_size += n/4 * 2 * sizeof(cdata_t);
             } else {
@@ -252,7 +252,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 #endif
             n *= 2;
         } else {
-#ifdef __arm__
+#if defined(__arm__) && !defined(DISABLE_DYNAMIC_CODE)
             lut_size += n/8 * 3 * sizeof(cdata_t);
 #else
             lut_size += n/8 * 3 * 2 * sizeof(cdata_t);
@@ -303,7 +303,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 w0[j][1] = W_im(n,j);
             }
 
-#ifdef __arm__
+#if defined(__arm__) && !defined(DISABLE_DYNAMIC_CODE)
             if (N < 32) {
                 // w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
                 float *fw = (float *)w;
@@ -381,7 +381,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 w2[j][1] = W_im((float) n, (float) (j + (n/8)));
             }
 
-#ifdef __arm__
+#if defined(__arm__) && !defined(DISABLE_DYNAMIC_CODE)
 #ifdef HAVE_NEON
             VS temp0, temp1, temp2;
             for (j = 0; j < n/8; j += 4) {
@@ -443,7 +443,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         n *= 2;
     }
 
-#ifdef __arm__
+#if defined(__arm__) && !defined(DISABLE_DYNAMIC_CODE)
     if (sign < 0) {
         p->oe_ws = (void*)(&w_data[4]);
         p->ee_ws = (void*)(w_data);
@@ -514,7 +514,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
         }
 #else
         /* determinate transform size */
-#ifdef __arm__
+#if defined(__arm__) && !defined(DISABLE_DYNAMIC_CODE)
         if (N < 8192) {
             p->transform_size = 8192;
         } else {
