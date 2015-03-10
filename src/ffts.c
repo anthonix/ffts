@@ -503,15 +503,8 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
             p->i1++;
         }
 
-#ifdef __arm__
-#ifdef HAVE_NEON
         p->i0 /= 2;
         p->i1 /= 2;
-#endif
-#else
-        p->i0 /= 2;
-        p->i1 /= 2;
-#endif
 
 #ifdef DYNAMIC_DISABLED
         if (sign < 0) {
@@ -540,6 +533,7 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
         if (!p->transform_base) {
             goto cleanup;
         }
+
 
         /* generate code */
         p->transform = ffts_generate_func_code(p, N, leaf_N, sign);
