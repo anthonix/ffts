@@ -133,6 +133,8 @@ struct _ffts_plan_t {
     size_t N;
     void *lastlut;
 
+	size_t *temporary_fix_as_dynamic_code_assumes_fixed_offset;
+
     /**
      * Pointer to the dynamically generated function
      * that will execute the FFT
