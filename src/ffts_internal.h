@@ -42,8 +42,15 @@
 #include <malloc.h>
 #include <math.h>
 #include <stddef.h>
+
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
+
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+
 #include <stdio.h>
 
 #define FFTS_PREFIX ffts

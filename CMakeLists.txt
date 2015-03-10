@@ -35,6 +35,33 @@ include(CheckIncludeFile)
 
 add_definitions(-DFFTS_CMAKE_GENERATED)
 
+# check existence of various headers
+check_include_file(stdint.h   HAVE_STDINT_H)
+check_include_file(stdlib.h   HAVE_STDLIB_H)
+check_include_file(string.h   HAVE_STRING_H)
+check_include_file(sys/mman.h HAVE_SYS_MMAN_H)
+check_include_file(unistd.h   HAVE_UNISTD_H)
+
+if(HAVE_STDINT_H)
+  add_definitions(-DHAVE_STDINT_H)
+endif(HAVE_STDINT_H)
+
+if(HAVE_STDLIB_H)
+  add_definitions(-DHAVE_STDLIB_H)
+endif(HAVE_STDLIB_H)
+
+if(HAVE_STRING_H)
+  add_definitions(-DHAVE_STRING_H)
+endif(HAVE_STRING_H)
+
+if(HAVE_SYS_MMAN_H)
+  add_definitions(-DHAVE_SYS_MMAN_H)
+endif(HAVE_SYS_MMAN_H)
+
+if(HAVE_UNISTD_H)
+  add_definitions(-DHAVE_UNISTD_H)
+endif(HAVE_UNISTD_H)
+
 # check if the platform has support for SSE SIMD extension
 check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
 if(HAVE_XMMINTRIN_H)
@@ -43,6 +70,7 @@ else()
   # check if the platform has support NEON SIMD extension
   check_include_file(arm_neon.h HAVE_ARM_NEON_H)
   if(HAVE_ARM_NEON_H)
+    add_definitions(-DHAVE_NEON)
   endif(HAVE_ARM_NEON_H)
 endif(HAVE_XMMINTRIN_H)
 

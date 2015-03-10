@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "ffts.h"
+
 #include "ffts_internal.h"
 #include "macros.h"
 #include "patterns.h"
@@ -49,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if _WIN32
 #include <windows.h>
-#else
+#elif HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
 

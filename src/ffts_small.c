@@ -35,8 +35,6 @@
 #include "ffts_internal.h"
 #include "macros.h"
 
-#include <stdlib.h>
-
 void ffts_firstpass_16_f(ffts_plan_t *p, const void *in, void *out)
 {
     const data_t *din = (const data_t*) in;

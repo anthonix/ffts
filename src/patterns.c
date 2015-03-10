@@ -37,7 +37,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits.h>
 #include <malloc.h>
 #include <math.h>
+
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
 
 static void ffts_permute_addr(int N, int offset, int stride, int *d)
 {
