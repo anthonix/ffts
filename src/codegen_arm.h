@@ -188,7 +188,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 
 static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 {
-	insns_t	*start = fp;
+	insns_t	*start = *fp;
 
 	*(*fp)++ = PUSH_LR();
 	*(*fp)++ = 0xed2d8b10;
