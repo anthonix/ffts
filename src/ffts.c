@@ -187,10 +187,6 @@ void ffts_free_1d(ffts_plan_t *p)
         FFTS_FREE(p->ws);
     }
 
-    if (p->transforms) {
-        free(p->transforms);
-    }
-
     if (p->is) {
         free(p->is);
     }
@@ -574,14 +570,6 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
         }
 #endif
     } else {
-        p->transforms = malloc(2 * sizeof(*p->transforms));
-        if (!p->transforms) {
-            goto cleanup;
-        }
-
-        p->transforms[0] = 0;
-        p->transforms[1] = 1;
-
         switch (N) {
         case 2:
             p->transform = &ffts_firstpass_2;

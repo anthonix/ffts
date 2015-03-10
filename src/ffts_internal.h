@@ -127,11 +127,6 @@ struct _ffts_plan_t {
     void *lastlut;
 
     /**
-     * Used in multidimensional Code ??
-     */
-    size_t *transforms;
-
-    /**
      * Pointer to the dynamically generated function
      * that will execute the FFT
      */
