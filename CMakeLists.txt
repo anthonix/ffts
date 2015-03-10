@@ -146,9 +146,6 @@ elseif(ENABLE_VFP)
       src/vfp.s
     )
   endif(NOT DISABLE_DYNAMIC_CODE)
-    list(APPEND FFTS_SOURCES
-      src/vfp.s
-    )
 
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp")
   add_definitions(-DHAVE_VFP)
