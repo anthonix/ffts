@@ -44,8 +44,8 @@ typedef uint8_t insns_t;
 #include "codegen_arm.h"
 #include "neon.h"
 #elif HAVE_VFP
-#include "codegen_arm.h"
 #include "vfp.h"
+#include "codegen_arm.h"
 #else
 #include "codegen_sse.h"
 #endif
