@@ -271,7 +271,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             goto cleanup;
         }
 
-        p->ws_is = malloc(n_luts * sizeof(*p->ws_is));
+        p->ws_is = (size_t*) malloc(n_luts * sizeof(*p->ws_is));
         if (!p->ws_is) {
             goto cleanup;
         }
@@ -360,9 +360,9 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 
             FFTS_FREE(w0);
         } else {
-            cdata_t *w0 = FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
-            cdata_t *w1 = FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
-            cdata_t *w2 = FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
+            cdata_t *w0 = (cdata_t*) FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
+            cdata_t *w1 = (cdata_t*) FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
+            cdata_t *w2 = (cdata_t*) FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
 
             float *fw0 = (float*) w0;
             float *fw1 = (float*) w1;
