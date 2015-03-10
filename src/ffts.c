@@ -44,14 +44,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "codegen.h"
 #endif
 
+#if _WIN32
+#include <windows.h>
+#else
 #if __APPLE__
 #include <libkern/OSCacheControl.h>
 #endif
 
-#if _WIN32
-#include <windows.h>
-#elif HAVE_SYS_MMAN_H
+#if HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #endif
 
 #ifdef __arm__

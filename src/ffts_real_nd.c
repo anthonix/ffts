@@ -41,9 +41,7 @@
 
 #ifdef HAVE_NEON
 #include <arm_neon.h>
-#endif
-
-#ifdef HAVE_SSE
+#elif HAVE_SSE
 #include <xmmintrin.h>
 #endif
 
