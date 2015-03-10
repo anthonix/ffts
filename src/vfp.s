@@ -30,7 +30,7 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-
+	.fpu	vfp
 
 @ assumes r0 = out 
 @         r1 = in ? 
@@ -41,7 +41,7 @@
 @         r2 = const pointer
 @       & lr = temps
 
-	.align 4
+	.align	4
 #ifdef __APPLE__
 	.globl	_vfp_e
 _vfp_e:
@@ -50,44 +50,44 @@ _vfp_e:
 vfp_e:
 #endif
 _vfp_e_loop:
-	vldr	s15, [r2, #8]
-	vldr s2, [r3] @ x0 
-	vldr	s0, [r3, #4]
-	vldr s4, [r4] @ x1 
-	vldr	s11, [r2]
-	vldr s10, [r7] @ x4 
-	vldr	s3, [r7, #4]
-	vldr s8, [r8] @ x5 
-	vldr	s1, [r8, #4]
-	vldr s14, [r9] @ x6 
-	vldr	s9, [r9, #4]
-	vldr s6, [r10] @ x7 
-	vldr	s12, [r10, #4]
+	vldr		s15, [r2, #8]
+	vldr		s2, [r3] @ x0
+	vldr		s0, [r3, #4]
+	vldr		s4, [r4] @ x1
+	vldr		s11, [r2]
+	vldr		s10, [r7] @ x4
+	vldr		s3, [r7, #4]
+	vldr		s8, [r8] @ x5
+	vldr		s1, [r8, #4]
+	vldr		s14, [r9] @ x6
+	vldr		s9, [r9, #4]
+	vldr		s6, [r10] @ x7
+	vldr		s12, [r10, #4]
 	vsub.f32	s18, s3, s1
 	vsub.f32	s7, s10, s8
 	vsub.f32	s5, s14, s6
 	vadd.f32	s6, s14, s6
-	vldr	s24, [r5, #4]
+	vldr		s24, [r5, #4]
 	vsub.f32	s14, s9, s12
-	vldr	s22, [r6, #4]
+	vldr		s22, [r6, #4]
 	vadd.f32	s8, s10, s8
-	vldr s28, [r6] @ x3 
-	vldr s17, [r5] @ x2 
+	vldr		s28, [r6] @ x3
+	vldr		s17, [r5] @ x2
 	vadd.f32	s10, s9, s12
 	vmul.f32	s13, s18, s15
 	vmul.f32	s9, s7, s11
 	vmul.f32	s16, s5, s11
 	vmul.f32	s18, s18, s11
 	vmul.f32	s30, s14, s11
-	vldr	s11, [r4, #4]
-    add r3, r3, #8
-    add r4, r4, #8
-    add r5, r5, #8
-    add r6, r6, #8
-    add r7, r7, #8
-    add r8, r8, #8
-    add r9, r9, #8
-    add r10, r10, #8
+	vldr		s11, [r4, #4]
+	add			r3, r3, #8
+	add			r4, r4, #8
+	add			r5, r5, #8
+	add			r6, r6, #8
+	add			r7, r7, #8
+	add			r8, r8, #8
+	add			r9, r9, #8
+	add			r10, r10, #8
 	vmul.f32	s12, s5, s15
 	vmul.f32	s20, s14, s15
 	vadd.f32	s5, s2, s4
@@ -111,7 +111,7 @@ _vfp_e_loop:
 	vsub.f32	s12, s30, s12
 	vadd.f32	s20, s3, s10
 	vsub.f32	s15, s3, s10
-	vsub.f32	s3, s26, s1      
+	vsub.f32	s3, s26, s1
 	vadd.f32	s18, s9, s13
 	vadd.f32	s10, s14, s4
 	vadd.f32	s6, s2, s7      @
@@ -120,15 +120,15 @@ _vfp_e_loop:
 	vsub.f32	s4, s14, s4
 	vsub.f32	s8, s22, s16    @
 	vadd.f32	s1, s28, s12
-ldr lr, [r12], #4
-add lr, r0, lr, lsl #2
-subs	r11, r11, #1
-	vstr	s18, [lr]
+	ldr			lr, [r12], #4
+	add			lr, r0, lr, lsl #2
+	subs		r11, r11, #1
+	vstr		s18, [lr]
 	vsub.f32	s2, s28, s12
 	vadd.f32	s12, s22, s16   @
 	vsub.f32	s16, s3, s24    @
 	vsub.f32	s13, s9, s13
-	vstr	s26, [lr, #4]
+	vstr		s26, [lr, #4]
 	vadd.f32	s28, s5, s15    @
 	vsub.f32	s7, s5, s15     @
 	vadd.f32	s14, s6, s10
@@ -136,26 +136,26 @@ subs	r11, r11, #1
 	vadd.f32	s9, s0, s2      @
 	vsub.f32	s2, s0, s2      @
 	vsub.f32	s11, s11, s20
-	vstr	s28, [lr, #16]
+	vstr		s28, [lr, #16]
 	vadd.f32	s3, s3, s24     @
-	vstr	s16, [lr, #20]
+	vstr		s16, [lr, #20]
 	vsub.f32	s6, s6, s10
-	vstr	s13, [lr, #32]
+	vstr		s13, [lr, #32]
 	vsub.f32	s13, s12, s4    @
 	vsub.f32	s8, s8, s1
 	vadd.f32	s0, s12, s4     @
-	vstr	s11, [lr, #36]
-	vstr	s7, [lr, #48]
-	vstr	s3, [lr, #52]
-	vstr	s14, [lr, #8]
-	vstr	s5, [lr, #12]
-	vstr	s9, [lr, #24]
-	vstr	s13, [lr, #28]
-	vstr	s6, [lr, #40]
-	vstr	s8, [lr, #44]
-	vstr	s2, [lr, #56]
-	vstr	s0, [lr, #60]
-	bne _vfp_e_loop
+	vstr		s11, [lr, #36]
+	vstr		s7, [lr, #48]
+	vstr		s3, [lr, #52]
+	vstr		s14, [lr, #8]
+	vstr		s5, [lr, #12]
+	vstr		s9, [lr, #24]
+	vstr		s13, [lr, #28]
+	vstr		s6, [lr, #40]
+	vstr		s8, [lr, #44]
+	vstr		s2, [lr, #56]
+	vstr		s0, [lr, #60]
+	bne			_vfp_e_loop
 
 @ assumes r0 = out 
 @         r1 = in ? 
@@ -460,7 +460,6 @@ _vfp_x8_loop:
 	add r10, r10, #8
 	bne _vfp_x8_loop	
 	bx lr
-	
 	
 	.align 4
 #ifdef __APPLE__
