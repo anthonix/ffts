@@ -211,24 +211,11 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     size_t i;
     size_t n;
 
-#ifdef __arm__
-    /* #ifdef HAVE_NEON */
-    V MULI_SIGN;
-
-    if(sign < 0) {
-        MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
-    } else {
-        MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
-    }
-
-    /* #endif */
-#else
     if (sign < 0) {
         MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
     } else {
         MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
     }
-#endif
 
     /* LUTS */
     n_luts = ffts_ctzl(N / leaf_N);
