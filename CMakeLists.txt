@@ -71,6 +71,8 @@ else()
   check_include_file(arm_neon.h HAVE_ARM_NEON_H)
   if(HAVE_ARM_NEON_H)
     add_definitions(-DHAVE_NEON)
+  else()
+    add_definitions(-DHAVE_VFP)
   endif(HAVE_ARM_NEON_H)
 endif(HAVE_XMMINTRIN_H)
 
