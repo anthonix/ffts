@@ -70,8 +70,12 @@ if(NOT CMAKE_CROSSCOMPILING)
     # Determinate what floating-point hardware
     # (or hardware emulation) is available
     #
-    # Test compilation with -mfpu=neon
     cmake_push_check_state()
+
+    # Try to execute quietly without messages
+    set(CMAKE_REQUIRED_QUIET 1)
+
+    # Test compilation with -mfpu=neon
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfpu=neon")
     check_symbol_exists(exit stdlib.h NEON_AVAILABLE)
     if(NOT NEON_AVAILABLE)
