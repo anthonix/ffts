@@ -32,6 +32,8 @@ option(ENABLE_SHARED
 )
 
 include(CheckIncludeFile)
+include(CheckSymbolExists)
+include(CMakePushCheckState)
 
 add_definitions(-DFFTS_CMAKE_GENERATED)
 
@@ -62,19 +64,78 @@ if(HAVE_UNISTD_H)
   add_definitions(-DHAVE_UNISTD_H)
 endif(HAVE_UNISTD_H)
 
-# check if the platform has support for SSE SIMD extension
-check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
-if(HAVE_XMMINTRIN_H)
-  add_definitions(-DHAVE_SSE)
-else()
-  # check if the platform has support NEON SIMD extension
-  check_include_file(arm_neon.h HAVE_ARM_NEON_H)
-  if(HAVE_ARM_NEON_H)
-    add_definitions(-DHAVE_NEON)
+# Determinate if we are cross-compiling
+if(NOT CMAKE_CROSSCOMPILING)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+    # Determinate what floating-point hardware
+    # (or hardware emulation) is available
+    #
+    # Test compilation with -mfpu=neon
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfpu=neon")
+    check_symbol_exists(exit stdlib.h NEON_AVAILABLE)
+    if(NOT NEON_AVAILABLE)
+      cmake_reset_check_state()
+
+      # Test compilation with -mfpu=vfp
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfpu=vfp")
+      check_symbol_exists(exit stdlib.h VFP_AVAILABLE)
+      if(NOT VFP_AVAILABLE)
+        message(WARNING "FFTS is using 'soft' FPU")
+      else()
+        message("FFTS is using 'vfp' FPU")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp")
+        
+        set(ENABLE_NEON 0)
+        set(ENABLE_VFP 1)
+      endif(NOT SOFTFP_AVAILABLE)
+    else()
+      message("FFTS is using 'neon' FPU")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon")
+      
+      set(ENABLE_NEON 1)
+      set(ENABLE_VFP 0)
+    endif(NOT NEON_AVAILABLE)
+
+    # Determinate float ABI if NEON or VFP is used
+    if(NEON_AVAILABLE OR VFP_AVAILABLE)
+      cmake_push_check_state()
+
+      # Test compilation with -mfloat-abi=hard
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfloat-abi=hardfp")
+      check_symbol_exists(exit stdlib.h HARDFP_AVAILABLE)
+      if(NOT HARDFP_AVAILABLE)
+        cmake_reset_check_state()
+
+        # Test compilation with -mfloat-abi=hard
+        set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfloat-abi=softfp")
+        check_symbol_exists(exit stdlib.h SOFTFP_AVAILABLE)
+        if(NOT SOFTFP_AVAILABLE)
+          # Most likely development libraries are missing
+          message(WARNING "FFTS is using 'soft' float ABI")
+        else()
+          message("FFTS is using 'softfp' float ABI")
+          set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
+        endif(NOT SOFTFP_AVAILABLE)
+      else()
+        message(WARNING "FFTS is using 'hard' float ABI")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")
+      endif(NOT HARDFP_AVAILABLE)
+
+      cmake_pop_check_state()
+    endif(NEON_AVAILABLE OR VFP_AVAILABLE)
+
+    cmake_pop_check_state()
   else()
-    add_definitions(-DHAVE_VFP)
-  endif(HAVE_ARM_NEON_H)
-endif(HAVE_XMMINTRIN_H)
+    # check if the platform has support for SSE SIMD extension
+    check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
+    if(HAVE_XMMINTRIN_H)
+      add_definitions(-DHAVE_SSE)
+    endif(HAVE_XMMINTRIN_H)
+  endif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+else()
+  # Check if we can always use detection code above?
+endif(NOT CMAKE_CROSSCOMPILING)
 
 # compiler settings
 if(MSVC)
@@ -138,9 +199,6 @@ if(ENABLE_NEON)
     )
   endif(DISABLE_DYNAMIC_CODE)
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
-
   add_definitions(-DHAVE_NEON)
 elseif(ENABLE_VFP)
   if(NOT DISABLE_DYNAMIC_CODE)
@@ -148,9 +206,6 @@ elseif(ENABLE_VFP)
       src/vfp.s
     )
   endif(NOT DISABLE_DYNAMIC_CODE)
-
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
 
   add_definitions(-DHAVE_VFP)
 elseif(HAVE_XMMINTRIN_H)
