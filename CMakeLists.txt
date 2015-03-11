@@ -135,9 +135,11 @@ if(ENABLE_NEON)
   else()
     list(APPEND FFTS_SOURCES
       src/neon.s
-      src/arch/neon.c
     )
   endif(DISABLE_DYNAMIC_CODE)
+
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
 
   add_definitions(-DHAVE_NEON)
 elseif(ENABLE_VFP)
@@ -148,6 +150,8 @@ elseif(ENABLE_VFP)
   endif(NOT DISABLE_DYNAMIC_CODE)
 
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
+
   add_definitions(-DHAVE_VFP)
 elseif(HAVE_XMMINTRIN_H)
   add_definitions(-DHAVE_SSE)
