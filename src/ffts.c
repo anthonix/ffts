@@ -503,8 +503,10 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
             p->i1++;
         }
 
+#if !defined(HAVE_VFP) || defined(DYNAMIC_DISABLED)
         p->i0 /= 2;
         p->i1 /= 2;
+#endif
 
 #ifdef DYNAMIC_DISABLED
         if (sign < 0) {
