@@ -385,6 +385,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 
 #if defined(__arm__) && !defined(DYNAMIC_DISABLED)
 #ifdef HAVE_NEON
+			{
             VS temp0, temp1, temp2;
             for (j = 0; j < n/8; j += 4) {
                 temp0 = VLD2(fw0 + j*2);
@@ -397,6 +398,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 temp2.val[1] = VXOR(temp2.val[1], neg);
                 STORESPR(fw + j*2*3 + 16, temp2);
             }
+			}
 #else
             for (j = 0; j < n/8; j += 1) {
                 fw[j*6] = fw0[j*2];
