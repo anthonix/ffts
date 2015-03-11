@@ -30,6 +30,7 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+	.fpu	neon
 
 	.align 4
 #ifdef __APPLE__
