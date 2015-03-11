@@ -329,12 +329,14 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 //w = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
                 float *fw = (float *)w;
 #ifdef HAVE_NEON
+				{
                 VS temp0, temp1, temp2;
                 for (j=0; j<n/4; j+=4) {
                     temp0 = VLD2(fw0 + j*2);
                     temp0.val[1] = VXOR(temp0.val[1], neg);
                     STORESPR(fw + j*2, temp0);
                 }
+				}
 #else
                 for (j=0; j<n/4; j+=1) {
                     fw[j*2] = fw0[j*2];
