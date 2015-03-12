@@ -118,7 +118,6 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     uint32_t  loop_count;
 
     int       count;
-    int       i;
     ptrdiff_t len;
 
     size_t   *ps;
@@ -408,9 +407,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             }
             fp += (neon_eo - neon_oo) / 4;
         }
-
     }
-
 
     if(p->i1) {
         ADDI(&fp, 2, 3, 0);
@@ -452,7 +449,6 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             fp[57] ^= 0x00200000;
         }
         fp += (neon_oo - neon_ee) / 4;
-
     }
 #else
     ADDI(&fp, 2, 7, 0);
