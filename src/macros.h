@@ -49,102 +49,108 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 static FFTS_INLINE void
-TX2(V *a, V *b)
+V4SF_TX2(V4SF *a, V4SF *b)
 {
-    V TX2_t0 = VUNPACKLO(*a, *b);
-    V TX2_t1 = VUNPACKHI(*a, *b);
-    *a = TX2_t0;
-    *b = TX2_t1;
+    V4SF t0 = V4SF_UNPACK_LO(*a, *b);
+    V4SF t1 = V4SF_UNPACK_HI(*a, *b);
+    *a = t0;
+    *b = t1;
 }
 
 static FFTS_INLINE void
-K_N(int inv, V re, V im, V *r0, V *r1, V *r2, V *r3)
+V4SF_K_N(int inv,
+         V4SF re,
+         V4SF im,
+         V4SF *r0,
+         V4SF *r1,
+         V4SF *r2,
+         V4SF *r3)
 {
-    V uk, uk2, zk_p, zk_n, zk, zk_d;
+    V4SF uk, uk2, zk_p, zk_n, zk, zk_d;
 
     uk  = *r0;
     uk2 = *r1;
 
-    zk_p = IMUL(*r2, re, im);
-    zk_n = IMULJ(*r3, re, im);
+    zk_p = V4SF_IMUL(*r2, re, im);
+    zk_n = V4SF_IMULJ(*r3, re, im);
 
-    zk = VADD(zk_p, zk_n);
-    zk_d = IMULI(inv, VSUB(zk_p, zk_n));
+    zk   = V4SF_ADD(zk_p, zk_n);
+    zk_d = V4SF_IMULI(inv, V4SF_SUB(zk_p, zk_n));
 
-    *r2 = VSUB(uk, zk);
-    *r0 = VADD(uk, zk);
-    *r3 = VADD(uk2, zk_d);
-    *r1 = VSUB(uk2, zk_d);
+    *r2 = V4SF_SUB(uk, zk);
+    *r0 = V4SF_ADD(uk, zk);
+    *r3 = V4SF_ADD(uk2, zk_d);
+    *r1 = V4SF_SUB(uk2, zk_d);
 }
 
 static FFTS_INLINE void
-L_2_4(int inv,
-      const float *FFTS_RESTRICT i0,
-      const float *FFTS_RESTRICT i1,
-      const float *FFTS_RESTRICT i2,
-      const float *FFTS_RESTRICT i3,
-      V *r0,
-      V *r1,
-      V *r2,
-      V *r3)
+V4SF_L_2_4(int inv,
+           const float *FFTS_RESTRICT i0,
+           const float *FFTS_RESTRICT i1,
+           const float *FFTS_RESTRICT i2,
+           const float *FFTS_RESTRICT i3,
+           V4SF *r0,
+           V4SF *r1,
+           V4SF *r2,
+           V4SF *r3)
 {
-    V t0, t1, t2, t3, t4, t5, t6, t7;
+    V4SF t0, t1, t2, t3, t4, t5, t6, t7;
 
-    t0 = VLD(i0);
-    t1 = VLD(i1);
-    t2 = VLD(i2);
-    t3 = VLD(i3);
+    t0 = V4SF_LD(i0);
+    t1 = V4SF_LD(i1);
+    t2 = V4SF_LD(i2);
+    t3 = V4SF_LD(i3);
 
-    t4 = VADD(t0, t1);
-    t5 = VSUB(t0, t1);
-    t6 = VADD(t2, t3);
-    t7 = VSUB(t2, t3);
+    t4 = V4SF_ADD(t0, t1);
+    t5 = V4SF_SUB(t0, t1);
+    t6 = V4SF_ADD(t2, t3);
+    t7 = V4SF_SUB(t2, t3);
 
-    *r0 = VUNPACKLO(t4, t5);
-    *r1 = VUNPACKLO(t6, t7);
+    *r0 = V4SF_UNPACK_LO(t4, t5);
+    *r1 = V4SF_UNPACK_LO(t6, t7);
 
-    t5 = IMULI(inv, t5);
+    t5 = V4SF_IMULI(inv, t5);
 
-    t0 = VADD(t6, t4);
-    t2 = VSUB(t6, t4);
-    t1 = VSUB(t7, t5);
-    t3 = VADD(t7, t5);
+    t0 = V4SF_ADD(t6, t4);
+    t2 = V4SF_SUB(t6, t4);
+    t1 = V4SF_SUB(t7, t5);
+    t3 = V4SF_ADD(t7, t5);
 
-    *r3 = VUNPACKHI(t0, t1);
-    *r2 = VUNPACKHI(t2, t3);
+    *r3 = V4SF_UNPACK_HI(t0, t1);
+    *r2 = V4SF_UNPACK_HI(t2, t3);
 }
 
 static FFTS_INLINE void
-L_4_4(int inv,
-      const float *FFTS_RESTRICT i0,
-      const float *FFTS_RESTRICT i1,
-      const float *FFTS_RESTRICT i2,
-      const float *FFTS_RESTRICT i3,
-      V *r0,
-      V *r1,
-      V *r2,
-      V *r3)
+V4SF_L_4_4(int inv,
+           const float *FFTS_RESTRICT i0,
+           const float *FFTS_RESTRICT i1,
+           const float *FFTS_RESTRICT i2,
+           const float *FFTS_RESTRICT i3,
+           V4SF *r0,
+           V4SF *r1,
+           V4SF *r2,
+           V4SF *r3)
 {
-    V t0, t1, t2, t3, t4, t5, t6, t7;
+    V4SF t0, t1, t2, t3, t4, t5, t6, t7;
 
-    t0 = VLD(i0);
-    t1 = VLD(i1);
-    t2 = VLD(i2);
-    t3 = VLD(i3);
+    t0 = V4SF_LD(i0);
+    t1 = V4SF_LD(i1);
+    t2 = V4SF_LD(i2);
+    t3 = V4SF_LD(i3);
 
-    t4 = VADD(t0, t1);
-    t5 = VSUB(t0, t1);
-    t6 = VADD(t2, t3);
+    t4 = V4SF_ADD(t0, t1);
+    t5 = V4SF_SUB(t0, t1);
+    t6 = V4SF_ADD(t2, t3);
 
-    t7 = IMULI(inv, VSUB(t2, t3));
+    t7 = V4SF_IMULI(inv, V4SF_SUB(t2, t3));
 
-    t0 = VADD(t4, t6);
-    t2 = VSUB(t4, t6);
-    t1 = VSUB(t5, t7);
-    t3 = VADD(t5, t7);
+    t0 = V4SF_ADD(t4, t6);
+    t2 = V4SF_SUB(t4, t6);
+    t1 = V4SF_SUB(t5, t7);
+    t3 = V4SF_ADD(t5, t7);
 
-    TX2(&t0, &t1);
-    TX2(&t2, &t3);
+    V4SF_TX2(&t0, &t1);
+    V4SF_TX2(&t2, &t3);
 
     *r0 = t0;
     *r2 = t1;
@@ -153,46 +159,46 @@ L_4_4(int inv,
 }
 
 static FFTS_INLINE void
-L_4_2(int inv,
-      const float *FFTS_RESTRICT i0,
-      const float *FFTS_RESTRICT i1,
-      const float *FFTS_RESTRICT i2,
-      const float *FFTS_RESTRICT i3,
-      V *r0,
-      V *r1,
-      V *r2,
-      V *r3)
+V4SF_L_4_2(int inv,
+           const float *FFTS_RESTRICT i0,
+           const float *FFTS_RESTRICT i1,
+           const float *FFTS_RESTRICT i2,
+           const float *FFTS_RESTRICT i3,
+           V4SF *r0,
+           V4SF *r1,
+           V4SF *r2,
+           V4SF *r3)
 {
-    V t0, t1, t2, t3, t4, t5, t6, t7;
+    V4SF t0, t1, t2, t3, t4, t5, t6, t7;
 
-    t0 = VLD(i0);
-    t1 = VLD(i1);
-    t6 = VLD(i2);
-    t7 = VLD(i3);
+    t0 = V4SF_LD(i0);
+    t1 = V4SF_LD(i1);
+    t6 = V4SF_LD(i2);
+    t7 = V4SF_LD(i3);
 
-    t2 = VBLEND(t6, t7);
-    t3 = VBLEND(t7, t6);
+    t2 = V4SF_BLEND(t6, t7);
+    t3 = V4SF_BLEND(t7, t6);
 
-    t4 = VADD(t0, t1);
-    t5 = VSUB(t0, t1);
-    t6 = VADD(t2, t3);
-    t7 = VSUB(t2, t3);
+    t4 = V4SF_ADD(t0, t1);
+    t5 = V4SF_SUB(t0, t1);
+    t6 = V4SF_ADD(t2, t3);
+    t7 = V4SF_SUB(t2, t3);
 
-    *r2 = VUNPACKHI(t4, t5);
-    *r3 = VUNPACKHI(t6, t7);
+    *r2 = V4SF_UNPACK_HI(t4, t5);
+    *r3 = V4SF_UNPACK_HI(t6, t7);
 
-    t7 = IMULI(inv, t7);
+    t7 = V4SF_IMULI(inv, t7);
 
-    t0 = VADD(t4, t6);
-    t2 = VSUB(t4, t6);
-    t1 = VSUB(t5, t7);
-    t3 = VADD(t5, t7);
+    t0 = V4SF_ADD(t4, t6);
+    t2 = V4SF_SUB(t4, t6);
+    t1 = V4SF_SUB(t5, t7);
+    t3 = V4SF_ADD(t5, t7);
 
-    *r0 = VUNPACKLO(t0, t1);
-    *r1 = VUNPACKLO(t2, t3);
+    *r0 = V4SF_UNPACK_LO(t0, t1);
+    *r1 = V4SF_UNPACK_LO(t2, t3);
 }
 
-#define S_4(r0, r1, r2, r3, o0, o1, o2, o3) \
-	VST(o0, r0); VST(o1, r1); VST(o2, r2); VST(o3, r3);
+#define V4SF_S_4(r0, r1, r2, r3, o0, o1, o2, o3) \
+    V4SF_ST(o0, r0); V4SF_ST(o1, r1); V4SF_ST(o2, r2); V4SF_ST(o3, r3);
 
 #endif /* FFTS_MACROS_H */

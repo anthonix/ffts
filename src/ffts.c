@@ -203,7 +203,7 @@ void ffts_free_1d(ffts_plan_t *p)
 
 static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 {
-    V MULI_SIGN;
+    V4SF MULI_SIGN;
     int hardcoded;
     size_t lut_size;
     size_t n_luts;
@@ -212,9 +212,9 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     size_t n;
 
     if (sign < 0) {
-        MULI_SIGN = VLIT4(-0.0f, 0.0f, -0.0f, 0.0f);
+        MULI_SIGN = V4SF_LIT4(-0.0f, 0.0f, -0.0f, 0.0f);
     } else {
-        MULI_SIGN = VLIT4(0.0f, -0.0f, 0.0f, -0.0f);
+        MULI_SIGN = V4SF_LIT4(0.0f, -0.0f, 0.0f, -0.0f);
     }
 
     /* LUTS */
@@ -348,13 +348,13 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 #else
             //w = FFTS_MALLOC(n/4 * 2 * sizeof(ffts_cpx_32f), 32);
             for (j = 0; j < n/4; j += 2) {
-                V re, im, temp0;
-                temp0 = VLD(fw0 + j*2);
-                re = VDUPRE(temp0);
-                im = VDUPIM(temp0);
-                im = VXOR(im, MULI_SIGN);
-                VST(fw + j*4 + 0, re);
-                VST(fw + j*4 + 4, im);
+                V4SF re, im, temp0;
+                temp0 = V4SF_LD(fw0 + j*2);
+                re = V4SF_DUPLICATE_RE(temp0);
+                im = V4SF_DUPLICATE_IM(temp0);
+                im = V4SF_XOR(im, MULI_SIGN);
+                V4SF_ST(fw + j*4 + 0, re);
+                V4SF_ST(fw + j*4 + 4, im);
             }
 
             w += n/4 * 2;
@@ -371,7 +371,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             float *fw2 = (float*) w2;
 
             float *fw = (float *)w;
-            V temp0, temp1, temp2, re, im;
+            V4SF temp0, temp1, temp2, re, im;
 
             size_t j;
             for (j = 0; j < n/8; j++) {
@@ -413,26 +413,26 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 #else
             //w = FFTS_MALLOC(n/8 * 3 * 2 * sizeof(ffts_cpx_32f), 32);
             for (j = 0; j < n/8; j += 2) {
-                temp0 = VLD(fw0 + j*2);
-                re = VDUPRE(temp0);
-                im = VDUPIM(temp0);
-                im = VXOR(im, MULI_SIGN);
-                VST(fw + j*2*6  , re);
-                VST(fw + j*2*6+4, im);
+                temp0 = V4SF_LD(fw0 + j*2);
+                re = V4SF_DUPLICATE_RE(temp0);
+                im = V4SF_DUPLICATE_IM(temp0);
+                im = V4SF_XOR(im, MULI_SIGN);
+                V4SF_ST(fw + j*2*6  , re);
+                V4SF_ST(fw + j*2*6+4, im);
 
-                temp1 = VLD(fw1 + j*2);
-                re = VDUPRE(temp1);
-                im = VDUPIM(temp1);
-                im = VXOR(im, MULI_SIGN);
-                VST(fw + j*2*6+8 , re);
-                VST(fw + j*2*6+12, im);
+                temp1 = V4SF_LD(fw1 + j*2);
+                re = V4SF_DUPLICATE_RE(temp1);
+                im = V4SF_DUPLICATE_IM(temp1);
+                im = V4SF_XOR(im, MULI_SIGN);
+                V4SF_ST(fw + j*2*6+8 , re);
+                V4SF_ST(fw + j*2*6+12, im);
 
-                temp2 = VLD(fw2 + j*2);
-                re = VDUPRE(temp2);
-                im = VDUPIM(temp2);
-                im = VXOR(im, MULI_SIGN);
-                VST(fw + j*2*6+16, re);
-                VST(fw + j*2*6+20, im);
+                temp2 = V4SF_LD(fw2 + j*2);
+                re = V4SF_DUPLICATE_RE(temp2);
+                im = V4SF_DUPLICATE_IM(temp2);
+                im = V4SF_XOR(im, MULI_SIGN);
+                V4SF_ST(fw + j*2*6+16, re);
+                V4SF_ST(fw + j*2*6+20, im);
             }
 
             w += n/8 * 3 * 2;
@@ -514,9 +514,9 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
 
 #ifdef DYNAMIC_DISABLED
         if (sign < 0) {
-            p->transform = ffts_static_transform_f;
+            p->transform = ffts_static_transform_f_32f;
         } else {
-            p->transform = ffts_static_transform_i;
+            p->transform = ffts_static_transform_i_32f;
         }
 #else
         /* determinate transform size */

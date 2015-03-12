@@ -245,12 +245,12 @@ ffts_small_forward8_32f(ffts_plan_t *p, const void *in, void *out)
 {
     const float *din = (const float*) in;
     float *dout = (float*) out;
-    V r0_1, r2_3, r4_5, r6_7;
+    V4SF r0_1, r2_3, r4_5, r6_7;
     float *LUT8 = (float*) p->ws + p->ws_is[0];
 
-    L_4_2(0, din, din+8, din+4, din+12, &r0_1, &r2_3, &r4_5, &r6_7);
-    K_N(0, VLD(LUT8), VLD(LUT8+4), &r0_1, &r2_3, &r4_5, &r6_7);
-    S_4(r0_1, r2_3, r4_5, r6_7, dout+0, dout+4, dout+8, dout+12);
+    V4SF_L_4_2(0, din, din+8, din+4, din+12, &r0_1, &r2_3, &r4_5, &r6_7);
+    V4SF_K_N(0, V4SF_LD(LUT8), V4SF_LD(LUT8+4), &r0_1, &r2_3, &r4_5, &r6_7);
+    V4SF_S_4(r0_1, r2_3, r4_5, r6_7, dout+0, dout+4, dout+8, dout+12);
 }
 
 void
@@ -258,7 +258,7 @@ ffts_small_forward8_64f(ffts_plan_t *p, const void *in, void *out)
 {
     const double *din = (const double*) in;
     double *dout = (double*) out;
-    V r0_1, r2_3, r4_5, r6_7;
+    V4SF r0_1, r2_3, r4_5, r6_7;
     double *LUT8 = (double*) p->ws + p->ws_is[0];
 
 #if MACROS_READY
@@ -273,12 +273,12 @@ ffts_small_backward8_32f(ffts_plan_t *p, const void *in, void *out)
 {
     const float *din = (const float*) in;
     float *dout = (float*) out;
-    V r0_1, r2_3, r4_5, r6_7;
+    V4SF r0_1, r2_3, r4_5, r6_7;
     float *LUT8 = (float*) p->ws + p->ws_is[0];
 
-    L_4_2(1, din, din+8, din+4, din+12, &r0_1, &r2_3, &r4_5, &r6_7);
-    K_N(1, VLD(LUT8), VLD(LUT8+4), &r0_1, &r2_3, &r4_5, &r6_7);
-    S_4(r0_1, r2_3, r4_5, r6_7, dout+0, dout+4, dout+8, dout+12);
+    V4SF_L_4_2(1, din, din+8, din+4, din+12, &r0_1, &r2_3, &r4_5, &r6_7);
+    V4SF_K_N(1, V4SF_LD(LUT8), V4SF_LD(LUT8+4), &r0_1, &r2_3, &r4_5, &r6_7);
+    V4SF_S_4(r0_1, r2_3, r4_5, r6_7, dout+0, dout+4, dout+8, dout+12);
 }
 
 void
@@ -286,7 +286,7 @@ ffts_small_backward8_64f(ffts_plan_t *p, const void *in, void *out)
 {
     const double *din = (const double*) in;
     double *dout = (double*) out;
-    V r0_1, r2_3, r4_5, r6_7;
+    V4SF r0_1, r2_3, r4_5, r6_7;
     double *LUT8 = (double*) p->ws + p->ws_is[0];
 
 #if MACROS_READY
@@ -302,15 +302,15 @@ ffts_small_forward16_32f(ffts_plan_t *p, const void *in, void *out)
     const float *din = (const float*) in;
     float *dout = (float*) out;
     float *LUT8 = (float*) p->ws;
-    V r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
+    V4SF r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
 
-    L_4_4(0, din+0, din+16, din+8, din+24, &r0_1, &r2_3, &r8_9, &r10_11);
-    L_2_4(0, din+4, din+20, din+28, din+12, &r4_5, &r6_7, &r14_15, &r12_13);
-    K_N(0, VLD(LUT8), VLD(LUT8+4), &r0_1, &r2_3, &r4_5, &r6_7);
-    K_N(0, VLD(LUT8+8), VLD(LUT8+12), &r0_1, &r4_5, &r8_9, &r12_13);
-    S_4(r0_1, r4_5, r8_9, r12_13, dout+0, dout+8, dout+16, dout+24);
-    K_N(0, VLD(LUT8+16), VLD(LUT8+20), &r2_3, &r6_7, &r10_11, &r14_15);
-    S_4(r2_3, r6_7, r10_11, r14_15, dout+4, dout+12, dout+20, dout+28);
+    V4SF_L_4_4(0, din+0, din+16, din+8, din+24, &r0_1, &r2_3, &r8_9, &r10_11);
+    V4SF_L_2_4(0, din+4, din+20, din+28, din+12, &r4_5, &r6_7, &r14_15, &r12_13);
+    V4SF_K_N(0, V4SF_LD(LUT8), V4SF_LD(LUT8+4), &r0_1, &r2_3, &r4_5, &r6_7);
+    V4SF_K_N(0, V4SF_LD(LUT8+8), V4SF_LD(LUT8+12), &r0_1, &r4_5, &r8_9, &r12_13);
+    V4SF_S_4(r0_1, r4_5, r8_9, r12_13, dout+0, dout+8, dout+16, dout+24);
+    V4SF_K_N(0, V4SF_LD(LUT8+16), V4SF_LD(LUT8+20), &r2_3, &r6_7, &r10_11, &r14_15);
+    V4SF_S_4(r2_3, r6_7, r10_11, r14_15, dout+4, dout+12, dout+20, dout+28);
 }
 
 void
@@ -319,7 +319,7 @@ ffts_small_forward16_64f(ffts_plan_t *p, const void *in, void *out)
     const double *din = (const double*) in;
     double *dout = (double*) out;
     double *LUT8 = (double*) p->ws;
-    V r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
+    V4SF r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
 
 #ifdef MACROS_READY
     L_4_4(0, din+0, din+16, din+8, din+24, &r0_1, &r2_3, &r8_9, &r10_11);
@@ -338,15 +338,15 @@ ffts_small_backward16_32f(ffts_plan_t *p, const void *in, void *out)
     const float *din = (const float*) in;
     float *dout = (float*) out;
     float *LUT8 = (float*) p->ws;
-    V r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
+    V4SF r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
 
-    L_4_4(1, din+0, din+16, din+8, din+24, &r0_1, &r2_3, &r8_9, &r10_11);
-    L_2_4(1, din+4, din+20, din+28, din+12, &r4_5, &r6_7, &r14_15, &r12_13);
-    K_N(1, VLD(LUT8), VLD(LUT8+4), &r0_1, &r2_3, &r4_5, &r6_7);
-    K_N(1, VLD(LUT8+8), VLD(LUT8+12),&r0_1, &r4_5, &r8_9, &r12_13);
-    S_4(r0_1, r4_5, r8_9, r12_13, dout+0, dout+8, dout+16, dout+24);
-    K_N(1, VLD(LUT8+16), VLD(LUT8+20), &r2_3, &r6_7, &r10_11, &r14_15);
-    S_4(r2_3, r6_7, r10_11, r14_15, dout+4, dout+12, dout+20, dout+28);
+    V4SF_L_4_4(1, din+0, din+16, din+8, din+24, &r0_1, &r2_3, &r8_9, &r10_11);
+    V4SF_L_2_4(1, din+4, din+20, din+28, din+12, &r4_5, &r6_7, &r14_15, &r12_13);
+    V4SF_K_N(1, V4SF_LD(LUT8+ 0), V4SF_LD(LUT8+4), &r0_1, &r2_3, &r4_5, &r6_7);
+    V4SF_K_N(1, V4SF_LD(LUT8+ 8), V4SF_LD(LUT8+12), &r0_1, &r4_5, &r8_9, &r12_13);
+    V4SF_S_4(r0_1, r4_5, r8_9, r12_13, dout+0, dout+8, dout+16, dout+24);
+    V4SF_K_N(1, V4SF_LD(LUT8+16), V4SF_LD(LUT8+20), &r2_3, &r6_7, &r10_11, &r14_15);
+    V4SF_S_4(r2_3, r6_7, r10_11, r14_15, dout+4, dout+12, dout+20, dout+28);
 }
 
 void
@@ -355,7 +355,7 @@ ffts_small_backward16_64f(ffts_plan_t *p, const void *in, void *out)
     const double *din = (const double*) in;
     double *dout = (double*) out;
     double *LUT8 = (double*) p->ws;
-    V r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
+    V4SF r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
 
 #ifdef MACROS_READY
     L_4_4(1, din+0, din+16, din+8, din+24, &r0_1, &r2_3, &r8_9, &r10_11);
