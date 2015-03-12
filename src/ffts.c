@@ -207,7 +207,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     int hardcoded;
     size_t lut_size;
     size_t n_luts;
-    cdata_t *w;
+    ffts_cpx_32f *w;
     size_t i;
     size_t n;
 
@@ -243,19 +243,19 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         if (!i || hardcoded) {
 #if defined(__arm__) && !defined(DYNAMIC_DISABLED)
             if (N <= 32) {
-                lut_size += n/4 * 2 * sizeof(cdata_t);
+                lut_size += n/4 * 2 * sizeof(ffts_cpx_32f);
             } else {
-                lut_size += n/4 * sizeof(cdata_t);
+                lut_size += n/4 * sizeof(ffts_cpx_32f);
             }
 #else
-            lut_size += n/4 * 2 * sizeof(cdata_t);
+            lut_size += n/4 * 2 * sizeof(ffts_cpx_32f);
 #endif
             n *= 2;
         } else {
 #if defined(__arm__) && !defined(DYNAMIC_DISABLED)
-            lut_size += n/8 * 3 * sizeof(cdata_t);
+            lut_size += n/8 * 3 * sizeof(ffts_cpx_32f);
 #else
-            lut_size += n/8 * 3 * 2 * sizeof(cdata_t);
+            lut_size += n/8 * 3 * 2 * sizeof(ffts_cpx_32f);
 #endif
         }
         n *= 2;
@@ -289,11 +289,11 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 #endif
 
     for (i = 0; i < n_luts; i++) {
-        p->ws_is[i] = w - (cdata_t *)p->ws;
+        p->ws_is[i] = w - (ffts_cpx_32f*) p->ws;
         //fprintf(stderr, "LUT[%zu] = %d @ %08x - %zu\n", i, n, w, p->ws_is[i]);
 
         if(!i || hardcoded) {
-            cdata_t *w0 = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
+            ffts_cpx_32f *w0 = FFTS_MALLOC(n/4 * sizeof(ffts_cpx_32f), 32);
             float *fw0 = (float*) w0;
             float *fw = (float *)w;
 
@@ -305,7 +305,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 
 #if defined(__arm__) && !defined(DYNAMIC_DISABLED)
             if (N < 32) {
-                // w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
+                // w = FFTS_MALLOC(n/4 * 2 * sizeof(ffts_cpx_32f), 32);
                 float *fw = (float *)w;
                 V temp0, temp1, temp2;
                 for (j=0; j<n/4; j+=2) {
@@ -326,7 +326,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 }
                 w += n/4 * 2;
             } else {
-                //w = FFTS_MALLOC(n/4 * sizeof(cdata_t), 32);
+                //w = FFTS_MALLOC(n/4 * sizeof(ffts_cpx_32f), 32);
                 float *fw = (float *)w;
 #ifdef HAVE_NEON
 				{
@@ -346,7 +346,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 w += n/4;
             }
 #else
-            //w = FFTS_MALLOC(n/4 * 2 * sizeof(cdata_t), 32);
+            //w = FFTS_MALLOC(n/4 * 2 * sizeof(ffts_cpx_32f), 32);
             for (j = 0; j < n/4; j += 2) {
                 V re, im, temp0;
                 temp0 = VLD(fw0 + j*2);
@@ -362,9 +362,9 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 
             FFTS_FREE(w0);
         } else {
-            cdata_t *w0 = (cdata_t*) FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
-            cdata_t *w1 = (cdata_t*) FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
-            cdata_t *w2 = (cdata_t*) FFTS_MALLOC(n/8 * sizeof(cdata_t), 32);
+            ffts_cpx_32f *w0 = (ffts_cpx_32f*) FFTS_MALLOC(n/8 * sizeof(ffts_cpx_32f), 32);
+            ffts_cpx_32f *w1 = (ffts_cpx_32f*) FFTS_MALLOC(n/8 * sizeof(ffts_cpx_32f), 32);
+            ffts_cpx_32f *w2 = (ffts_cpx_32f*) FFTS_MALLOC(n/8 * sizeof(ffts_cpx_32f), 32);
 
             float *fw0 = (float*) w0;
             float *fw1 = (float*) w1;
@@ -411,7 +411,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 #endif
             w += n/8 * 3;
 #else
-            //w = FFTS_MALLOC(n/8 * 3 * 2 * sizeof(cdata_t), 32);
+            //w = FFTS_MALLOC(n/8 * 3 * 2 * sizeof(ffts_cpx_32f), 32);
             for (j = 0; j < n/8; j += 2) {
                 temp0 = VLD(fw0 + j*2);
                 re = VDUPRE(temp0);
@@ -560,28 +560,28 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
     } else {
         switch (N) {
         case 2:
-            p->transform = &ffts_firstpass_2;
+            p->transform = &ffts_small_2_32f;
             break;
         case 4:
             if (sign == -1) {
-                p->transform = &ffts_firstpass_4_f;
+                p->transform = &ffts_small_forward4_32f;
             } else if (sign == 1) {
-                p->transform = &ffts_firstpass_4_b;
+                p->transform = &ffts_small_backward4_32f;
             }
             break;
         case 8:
             if (sign == -1) {
-                p->transform = &ffts_firstpass_8_f;
+                p->transform = &ffts_small_forward8_32f;
             } else if (sign == 1) {
-                p->transform = &ffts_firstpass_8_b;
+                p->transform = &ffts_small_backward8_32f;
             }
             break;
         case 16:
         default:
             if (sign == -1) {
-                p->transform = &ffts_firstpass_16_f;
+                p->transform = &ffts_small_forward16_32f;
             } else {
-                p->transform = &ffts_firstpass_16_b;
+                p->transform = &ffts_small_backward16_32f;
             }
             break;
         }

@@ -48,7 +48,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "macros-alpha.h"
 #endif
 
-static FFTS_INLINE void TX2(V *a, V *b)
+static FFTS_INLINE void
+TX2(V *a, V *b)
 {
     V TX2_t0 = VUNPACKLO(*a, *b);
     V TX2_t1 = VUNPACKHI(*a, *b);
@@ -56,7 +57,8 @@ static FFTS_INLINE void TX2(V *a, V *b)
     *b = TX2_t1;
 }
 
-static FFTS_INLINE void K_N(int inv, V re, V im, V *r0, V *r1, V *r2, V *r3)
+static FFTS_INLINE void
+K_N(int inv, V re, V im, V *r0, V *r1, V *r2, V *r3)
 {
     V uk, uk2, zk_p, zk_n, zk, zk_d;
 
@@ -75,9 +77,16 @@ static FFTS_INLINE void K_N(int inv, V re, V im, V *r0, V *r1, V *r2, V *r3)
     *r1 = VSUB(uk2, zk_d);
 }
 
-static FFTS_INLINE void L_2_4(int inv, const data_t* FFTS_RESTRICT i0, const data_t* FFTS_RESTRICT i1,
-                              const data_t* FFTS_RESTRICT i2, const data_t* FFTS_RESTRICT i3,
-                              V *r0, V *r1, V *r2, V *r3)
+static FFTS_INLINE void
+L_2_4(int inv,
+      const float *FFTS_RESTRICT i0,
+      const float *FFTS_RESTRICT i1,
+      const float *FFTS_RESTRICT i2,
+      const float *FFTS_RESTRICT i3,
+      V *r0,
+      V *r1,
+      V *r2,
+      V *r3)
 {
     V t0, t1, t2, t3, t4, t5, t6, t7;
 
@@ -105,9 +114,16 @@ static FFTS_INLINE void L_2_4(int inv, const data_t* FFTS_RESTRICT i0, const dat
     *r2 = VUNPACKHI(t2, t3);
 }
 
-static FFTS_INLINE void L_4_4(int inv, const data_t* FFTS_RESTRICT i0, const data_t* FFTS_RESTRICT i1,
-                              const data_t* FFTS_RESTRICT i2, const data_t* FFTS_RESTRICT i3,
-                              V *r0, V *r1, V *r2, V *r3)
+static FFTS_INLINE void
+L_4_4(int inv,
+      const float *FFTS_RESTRICT i0,
+      const float *FFTS_RESTRICT i1,
+      const float *FFTS_RESTRICT i2,
+      const float *FFTS_RESTRICT i3,
+      V *r0,
+      V *r1,
+      V *r2,
+      V *r3)
 {
     V t0, t1, t2, t3, t4, t5, t6, t7;
 
@@ -136,9 +152,16 @@ static FFTS_INLINE void L_4_4(int inv, const data_t* FFTS_RESTRICT i0, const dat
     *r3 = t3;
 }
 
-static FFTS_INLINE void L_4_2(int inv, const data_t * FFTS_RESTRICT i0, const data_t * FFTS_RESTRICT i1,
-                              const data_t * FFTS_RESTRICT i2, const data_t * FFTS_RESTRICT i3,
-                              V *r0, V *r1, V *r2, V *r3)
+static FFTS_INLINE void
+L_4_2(int inv,
+      const float *FFTS_RESTRICT i0,
+      const float *FFTS_RESTRICT i1,
+      const float *FFTS_RESTRICT i2,
+      const float *FFTS_RESTRICT i3,
+      V *r0,
+      V *r1,
+      V *r2,
+      V *r3)
 {
     V t0, t1, t2, t3, t4, t5, t6, t7;
 

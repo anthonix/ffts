@@ -38,12 +38,8 @@
 #pragma once
 #endif
 
-#if defined(_Complex_I) && defined(complex) && defined(I)
-typedef complex float cdata_t;
-#else
-typedef float cdata_t[2];
-#endif
-
-typedef float data_t;
+/* Define complex number as two element array */
+typedef float  ffts_cpx_32f[2];
+typedef double ffts_cpx_64f[2];
 
 #endif /* FFTS_TYPES_H */
