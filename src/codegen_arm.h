@@ -36,6 +36,10 @@
 
 #include "neon.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 uint32_t BL(void *pos, void *target) {
 	return 0xeb000000 | (((target - pos) / 4) & 0xffffff);
 }
