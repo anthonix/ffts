@@ -285,7 +285,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     }
 
 #ifdef HAVE_NEON
-    V neg = (sign < 0) ? VLIT4(0.0f, 0.0f, 0.0f, 0.0f) : VLIT4(-0.0f, -0.0f, -0.0f, -0.0f);
+    V4SF neg = (sign < 0) ? V4SF_LIT4(0.0f, 0.0f, 0.0f, 0.0f) : V4SF_LIT4(-0.0f, -0.0f, -0.0f, -0.0f);
 #endif
 
     for (i = 0; i < n_luts; i++) {
@@ -307,21 +307,21 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             if (N < 32) {
                 // w = FFTS_MALLOC(n/4 * 2 * sizeof(ffts_cpx_32f), 32);
                 float *fw = (float *)w;
-                V temp0, temp1, temp2;
+                V4SF temp0, temp1, temp2;
                 for (j=0; j<n/4; j+=2) {
                     //	#ifdef HAVE_NEON
                     temp0 = VLD(fw0 + j*2);
-                    V re, im;
-                    re = VDUPRE(temp0);
-                    im = VDUPIM(temp0);
+                    V4SF re, im;
+                    re = V4SF_DUPLICATE_RE(temp0);
+                    im = V4SF_DUPLICATE_IM(temp0);
 #ifdef HAVE_NEON
-                    im = VXOR(im, MULI_SIGN);
+                    im = V4SF_XOR(im, MULI_SIGN);
                     //im = IMULI(sign>0, im);
 #else
-                    im = MULI(sign>0, im);
+                    im = V4SF_MULI(sign>0, im);
 #endif
-                    VST(fw + j*4  , re);
-                    VST(fw + j*4+4, im);
+                    V4SF_ST(fw + j*4  , re);
+                    V4SF_ST(fw + j*4+4, im);
                     //		#endif
                 }
                 w += n/4 * 2;
@@ -330,11 +330,11 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 float *fw = (float *)w;
 #ifdef HAVE_NEON
 				{
-                VS temp0, temp1, temp2;
+                V4SF2 temp0, temp1, temp2;
                 for (j=0; j<n/4; j+=4) {
-                    temp0 = VLD2(fw0 + j*2);
-                    temp0.val[1] = VXOR(temp0.val[1], neg);
-                    STORESPR(fw + j*2, temp0);
+                    temp0 = V4SF2_LD(fw0 + j*2);
+                    temp0.val[1] = V4SF_XOR(temp0.val[1], neg);
+                    V4SF2_STORE_SPR(fw + j*2, temp0);
                 }
 				}
 #else
@@ -386,17 +386,17 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 #if defined(__arm__) && !defined(DYNAMIC_DISABLED)
 #ifdef HAVE_NEON
 			{
-            VS temp0, temp1, temp2;
+            V4SF2 temp0, temp1, temp2;
             for (j = 0; j < n/8; j += 4) {
-                temp0 = VLD2(fw0 + j*2);
-                temp0.val[1] = VXOR(temp0.val[1], neg);
-                STORESPR(fw + j*2*3,      temp0);
-                temp1 = VLD2(fw1 + j*2);
-                temp1.val[1] = VXOR(temp1.val[1], neg);
-                STORESPR(fw + j*2*3 + 8,  temp1);
-                temp2 = VLD2(fw2 + j*2);
-                temp2.val[1] = VXOR(temp2.val[1], neg);
-                STORESPR(fw + j*2*3 + 16, temp2);
+                temp0 = V4SF2_LD(fw0 + j*2);
+                temp0.val[1] = V4SF_XOR(temp0.val[1], neg);
+                V4SF_STORE_SPR(fw + j*2*3, temp0);
+                temp1 = V4SF2_LD(fw1 + j*2);
+                temp1.val[1] = V4SF_XOR(temp1.val[1], neg);
+                V4SF2_STORE_SPR(fw + j*2*3 + 8,  temp1);
+                temp2 = V4SF2_LD(fw2 + j*2);
+                temp2.val[1] = V4SF_XOR(temp2.val[1], neg);
+                V4SF2_STORE_SPR(fw + j*2*3 + 16, temp2);
             }
 			}
 #else

@@ -81,7 +81,7 @@ V4SF_LIT4(float f3, float f2, float f1, float f0)
     vcombine_f32(vdup_lane_f32(vget_low_f32(r),1), vdup_lane_f32(vget_high_f32(r),1))
 
 static FFTS_ALWAYS_INLINE V4SF
-V4SF_IMULI(int inv, V a)
+V4SF_IMULI(int inv, V4SF a)
 {
     if (inv) {
         return V4SF_SWAP_PAIRS(V4SF_XOR(a, V4SF_LIT4(0.0f, -0.0f, 0.0f, -0.0f)));
@@ -99,7 +99,7 @@ V4SF_IMUL(V4SF d, V4SF re, V4SF im)
 }
 
 static FFTS_ALWAYS_INLINE V4SF
-V4SF_IMULJ(V d, V re, V im)
+V4SF_IMULJ(V4SF d, V4SF re, V4SF im)
 {
   re = V4SF_MUL(re, d);
   im = V4SF_MUL(im, V4SF_SWAP_PAIRS(d));
