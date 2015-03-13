@@ -310,7 +310,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 V4SF temp0, temp1, temp2;
                 for (j=0; j<n/4; j+=2) {
                     //	#ifdef HAVE_NEON
-                    temp0 = VLD(fw0 + j*2);
+                    temp0 = V4SF_LD(fw0 + j*2);
                     V4SF re, im;
                     re = V4SF_DUPLICATE_RE(temp0);
                     im = V4SF_DUPLICATE_IM(temp0);
@@ -390,7 +390,7 @@ static int ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             for (j = 0; j < n/8; j += 4) {
                 temp0 = V4SF2_LD(fw0 + j*2);
                 temp0.val[1] = V4SF_XOR(temp0.val[1], neg);
-                V4SF_STORE_SPR(fw + j*2*3, temp0);
+                V4SF2_STORE_SPR(fw + j*2*3, temp0);
                 temp1 = V4SF2_LD(fw1 + j*2);
                 temp1.val[1] = V4SF_XOR(temp1.val[1], neg);
                 V4SF2_STORE_SPR(fw + j*2*3 + 8,  temp1);
