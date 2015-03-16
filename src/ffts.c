@@ -483,12 +483,12 @@ ffts_plan_t *ffts_init_1d(size_t N, int sign)
     p->destroy = ffts_free_1d;
     p->N = N;
 
-	/* generate lookup tables */
-    if (N > 4 && ffts_generate_luts(p, N, leaf_N, sign)) {
-        goto cleanup;
-    }
-
     if (N >= 32) {
+		/* generate lookup tables */
+		if (ffts_generate_luts(p, N, leaf_N, sign)) {
+			goto cleanup;
+		}
+
         p->offsets = ffts_init_offsets(N, leaf_N);
         if (!p->offsets) {
             goto cleanup;
