@@ -40,7 +40,52 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ffts.h"
 
-void ffts_static_transform_f_32f(ffts_plan_t *p, const void *in, void *out);
-void ffts_static_transform_i_32f(ffts_plan_t *p, const void *in, void *out);
+void
+ffts_small_2_32f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_2_64f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_forward4_32f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_forward4_64f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_backward4_32f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_backward4_64f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_forward8_32f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_forward8_64f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_backward8_32f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_backward8_64f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_forward16_32f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_forward16_64f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_backward16_32f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_small_backward16_64f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_static_transform_f_32f(ffts_plan_t *p, const void *in, void *out);
+
+void
+ffts_static_transform_i_32f(ffts_plan_t *p, const void *in, void *out);
 
 #endif /* FFTS_STATIC_H */

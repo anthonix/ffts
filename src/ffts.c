@@ -34,13 +34,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ffts.h"
 
 #include "ffts_internal.h"
+#include "ffts_static.h"
 #include "macros.h"
 #include "patterns.h"
-#include "ffts_small.h"
 
-#ifdef DYNAMIC_DISABLED
-#include "ffts_static.h"
-#else
+#ifndef DYNAMIC_DISABLED
 #include "codegen.h"
 #endif
 
