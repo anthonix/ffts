@@ -203,7 +203,6 @@ static int
 ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 {
     V4SF MULI_SIGN;
-    size_t lut_size;
     size_t n_luts;
     ffts_cpx_32f *w;
     size_t i, n;
@@ -220,32 +219,15 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         n_luts = 0;
     }
 
-    /* fprintf(stderr, "n_luts = %zu\n", n_luts); */
-
-    n = leaf_N * 2;
-
-    lut_size = 0;
-    for (i = 0; i < n_luts; i++) {
-        if (!i) {
-#if defined(__arm__) && !defined(DYNAMIC_DISABLED)
-            lut_size += n/4 * sizeof(ffts_cpx_32f);
-#else
-            lut_size += n/4 * 2 * sizeof(ffts_cpx_32f);
-#endif
-            n *= 2;
-        } else {
-#if defined(__arm__) && !defined(DYNAMIC_DISABLED)
-            lut_size += n/8 * 3 * sizeof(ffts_cpx_32f);
-#else
-            lut_size += n/8 * 3 * 2 * sizeof(ffts_cpx_32f);
-#endif
-        }
-        n *= 2;
-    }
-
-    /* fprintf(stderr, "lut size = %zu\n", lut_size); */
-
     if (n_luts) {
+        size_t lut_size;
+
+#if defined(__arm__) && !defined(DYNAMIC_DISABLED)
+        lut_size = leaf_N * (((1 << n_luts) - 2) * 3 + 1) * sizeof(ffts_cpx_32f) / 2;
+#else
+        lut_size = leaf_N * (((1 << n_luts) - 2) * 3 + 1) * sizeof(ffts_cpx_32f);
+#endif
+
         p->ws = FFTS_MALLOC(lut_size, 32);
         if (!p->ws) {
             goto cleanup;
