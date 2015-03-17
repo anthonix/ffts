@@ -226,32 +226,6 @@ elseif(HAVE_XMMINTRIN_H)
       )
 
       if(MSVC)
-        if(NOT ENABLE_RUNTIME_DYNAMIC_CODE)
-          # YASM supports x86 GAS syntax
-          set(CMAKE_ASM-ATT_COMPILER yasm)
-          enable_language(ASM-ATT)
-
-          if(CMAKE_ASM-ATT_COMPILER_WORKS)
-            add_custom_command(
-              OUTPUT sse_win64.obj
-              COMMAND ${CMAKE_ASM-ATT_COMPILER} -f win64 -m amd64
-              -o ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj -p gas
-              ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
-              DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/sse_win64.s
-              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-              COMMENT "Generating sse_win64.obj"
-            )
-
-            list(APPEND FFTS_SOURCES
-              ${CMAKE_CURRENT_BINARY_DIR}/sse_win64.obj
-              src/sse_win64.s
-            )
-          else()
-            message(WARNING "YASM is required, enabling runtime dynamic code.")
-            set(ENABLE_RUNTIME_DYNAMIC_CODE ON)
-          endif(CMAKE_ASM-ATT_COMPILER_WORKS)
-        endif(NOT ENABLE_RUNTIME_DYNAMIC_CODE)
-      
         if(ENABLE_RUNTIME_DYNAMIC_CODE)
           add_definitions(-DSSE_DEFINE_CONSTANTS)
         endif(ENABLE_RUNTIME_DYNAMIC_CODE)
