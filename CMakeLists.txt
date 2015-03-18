@@ -224,16 +224,6 @@ elseif(HAVE_XMMINTRIN_H)
       list(APPEND FFTS_SOURCES
         src/codegen_sse.h
       )
-
-      if(MSVC)
-        if(ENABLE_RUNTIME_DYNAMIC_CODE)
-          add_definitions(-DSSE_DEFINE_CONSTANTS)
-        endif(ENABLE_RUNTIME_DYNAMIC_CODE)
-      else()
-        list(APPEND FFTS_SOURCES
-          src/sse.s
-        )
-      endif(MSVC)
     else()
       message(WARNING "Dynamic code is only supported with x64, disabling dynamic code.")
       set(DISABLE_DYNAMIC_CODE ON)
