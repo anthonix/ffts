@@ -38,7 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "arch/x64/x64-codegen.h"
 
 #include <assert.h>
-#include <string.h>
 
 static const FFTS_ALIGN(16) unsigned int sse_constants[20] = {
     /* 0.0, -0.0, 0.0, -0.0 */
@@ -741,12 +740,12 @@ generate_leaf_eo(insns_t **fp, uint32_t *offsets)
     insns_t *ins = *fp;
 
 #ifdef _M_X64
-    x64_sse_movaps_reg_memindex(ins, X64_XMM9,  X64_RDX, offsets[0], X64_RAX, 2);
-    x64_sse_movaps_reg_memindex(ins, X64_XMM7,  X64_RDX, offsets[2], X64_RAX, 2);
+    x64_sse_movaps_reg_memindex(ins, X64_XMM9, X64_RDX, offsets[0], X64_RAX, 2);
+    x64_sse_movaps_reg_memindex(ins, X64_XMM7, X64_RDX, offsets[2], X64_RAX, 2);
     x64_sse_movaps_reg_reg(ins, X64_XMM11, X64_XMM9);
-    x64_sse_movaps_reg_memindex(ins, X64_XMM5,  X64_RDX, offsets[3], X64_RAX, 2);
+    x64_sse_movaps_reg_memindex(ins, X64_XMM5, X64_RDX, offsets[3], X64_RAX, 2);
     x64_sse_movaps_reg_reg(ins, X64_XMM6, X64_XMM7);
-    x64_sse_movaps_reg_memindex(ins, X64_XMM4,  X64_RDX, offsets[1], X64_RAX, 2);
+    x64_sse_movaps_reg_memindex(ins, X64_XMM4, X64_RDX, offsets[1], X64_RAX, 2);
     x64_sse_subps_reg_reg(ins, X64_XMM7, X64_XMM5);
     x64_sse_addps_reg_reg(ins, X64_XMM11, X64_XMM4);
     x64_sse_subps_reg_reg(ins, X64_XMM9, X64_XMM4);

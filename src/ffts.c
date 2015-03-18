@@ -205,7 +205,9 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     V4SF MULI_SIGN;
     size_t n_luts;
     ffts_cpx_32f *w;
-    size_t i, n;
+    ffts_cpx_32f *tmp;
+    size_t i, j, m, n;
+    int stride;
 
     if (sign < 0) {
         MULI_SIGN = V4SF_LIT4(-0.0f, 0.0f, -0.0f, 0.0f);
@@ -246,19 +248,28 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     V4SF neg = (sign < 0) ? V4SF_LIT4(0.0f, 0.0f, 0.0f, 0.0f) : V4SF_LIT4(-0.0f, -0.0f, -0.0f, -0.0f);
 #endif
 
+    /* calculate factors */
+    m = leaf_N << (n_luts - 2);
+    tmp = FFTS_MALLOC(m * sizeof(ffts_cpx_32f), 32);
+
+    for (i = 0; i < m; i++) {
+        tmp[i][0] = W_re(4*m, i);
+        tmp[i][1] = W_im(4*m, i);
+    }
+
+	/* generate lookup tables */
+    stride = 1 << (n_luts - 1);
     for (i = 0; i < n_luts; i++) {
         p->ws_is[i] = w - (ffts_cpx_32f*) p->ws;
-        //fprintf(stderr, "LUT[%zu] = %d @ %08x - %zu\n", i, n, w, p->ws_is[i]);
 
         if (!i) {
             ffts_cpx_32f *w0 = FFTS_MALLOC(n/4 * sizeof(ffts_cpx_32f), 32);
             float *fw0 = (float*) w0;
             float *fw = (float*) w;
 
-            size_t j;
             for (j = 0; j < n/4; j++) {
-                w0[j][0] = W_re(n, j);
-                w0[j][1] = W_im(n, j);
+                w0[j][0] = tmp[j * stride][0];
+                w0[j][1] = tmp[j * stride][1];
             }
 
 #if defined(__arm__) && !defined(DYNAMIC_DISABLED)
@@ -301,14 +312,15 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 
             float *fw = (float *)w;
 
-            size_t j;
             for (j = 0; j < n/8; j++) {
-                w0[j][0] = W_re((float) n, (float) 2*j);
-                w0[j][1] = W_im((float) n, (float) 2*j);
-                w1[j][0] = W_re((float) n, (float) j);
-                w1[j][1] = W_im((float) n, (float) j);
-                w2[j][0] = W_re((float) n, (float) (j + (n/8)));
-                w2[j][1] = W_im((float) n, (float) (j + (n/8)));
+                w0[j][0] = tmp[2 * j * stride][0];
+                w0[j][1] = tmp[2 * j * stride][1];
+
+                w1[j][0] = tmp[j * stride][0];
+                w1[j][1] = tmp[j * stride][1];
+
+                w2[j][0] = tmp[(j + (n/8)) * stride][0];
+                w2[j][1] = tmp[(j + (n/8)) * stride][1];
             }
 
 #if defined(__arm__) && !defined(DYNAMIC_DISABLED)
@@ -374,6 +386,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         }
 
         n *= 2;
+        stride >>= 1;
     }
 
 #if defined(__arm__) && !defined(DYNAMIC_DISABLED)
@@ -387,6 +400,8 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         p->eo_ws = (void*)(w_data + 12);
     }
 #endif
+
+    FFTS_FREE(tmp);
 
     p->lastlut = w;
     p->n_luts = n_luts;
