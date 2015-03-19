@@ -136,6 +136,12 @@ if(NOT CMAKE_CROSSCOMPILING)
     if(HAVE_XMMINTRIN_H)
       add_definitions(-DHAVE_SSE)
     endif(HAVE_XMMINTRIN_H)
+    
+    # check if the platform has support for SSE2 SIMD extension
+    check_include_file(emmintrin.h HAVE_EMMINTRIN_H)
+    if(HAVE_EMMINTRIN_H)
+      add_definitions(-DHAVE_SSE2)
+    endif(HAVE_EMMINTRIN_H)
   endif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
 else()
   # Check if we can always use detection code above?
@@ -160,9 +166,11 @@ elseif(CMAKE_COMPILER_IS_GNUCC)
     list(APPEND FFTS_EXTRA_LIBRARIES m)
   endif(HAVE_LIBM)
 
-  if(HAVE_XMMINTRIN_H)
+  if(HAVE_EMMINTRIN_H)
+    add_definitions(-msse2)
+  elseif(HAVE_XMMINTRIN_H)
     add_definitions(-msse)
-  endif(HAVE_XMMINTRIN_H)
+  endif(HAVE_EMMINTRIN_H)
 endif(MSVC)
 
 include_directories(include)

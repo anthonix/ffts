@@ -37,8 +37,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef HAVE_NEON
 #include "neon.h"
 #include <arm_neon.h>
-#elif HAVE_SSE
-#include <xmmintrin.h>
+#elif HAVE_SSE2
+#include <emmintrin.h>
 #endif
 
 #define TSIZE 8
