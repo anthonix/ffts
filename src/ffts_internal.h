@@ -184,7 +184,7 @@ struct _ffts_plan_t {
 
 static FFTS_INLINE void *ffts_aligned_malloc(size_t size)
 {
-#if defined(_MSC_VER)
+#if defined(_WIN32)
     return _aligned_malloc(size, 32);
 #else
     return valloc(size);
