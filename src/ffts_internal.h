@@ -223,14 +223,4 @@ static __inline unsigned long ffts_ctzl(size_t N)
 #endif /* _WIN64 */
 #endif /* _MSC_VER */
 
-static FFTS_ALWAYS_INLINE float W_re(float N, float k)
-{
-    return cos(-2.0 * M_PI * k / N);
-}
-
-static FFTS_ALWAYS_INLINE float W_im(float N, float k)
-{
-    return sin(-2.0 * M_PI * k / N);
-}
-
 #endif /* FFTS_INTERNAL_H */
