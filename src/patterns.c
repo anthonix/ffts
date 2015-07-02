@@ -159,11 +159,12 @@ static void ffts_elaborate_offsets(ptrdiff_t *offsets, int leafN, int N, int iof
     }
 }
 
-static int ffts_compare_offsets(const void *a, const void *b)
+static int
+ffts_compare_offsets(const void *pa, const void *pb)
 {
-    ptrdiff_t diff = ((ptrdiff_t*) a)[0] - ((ptrdiff_t*) b)[0];
-    assert(diff > INT_MIN && diff < INT_MAX);
-    return (int) diff;
+    const ptrdiff_t a = *(const ptrdiff_t*) pa;
+    const ptrdiff_t b = *(const ptrdiff_t*) pb;
+    return (a > b) - (a < b);
 }
 
 ptrdiff_t *ffts_init_offsets(size_t N, size_t leaf_N)
