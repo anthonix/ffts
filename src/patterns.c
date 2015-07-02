@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "patterns.h"
+#include "ffts_internal.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -113,7 +114,7 @@ static void ffts_hardcodedleaf_is_rec(ptrdiff_t **is, int big_N, int N, int poff
 ptrdiff_t *ffts_init_is(size_t N, size_t leaf_N, int VL)
 {
     int i, i0, i1, i2;
-    int stride = (int) (log(N/leaf_N) / log(2));
+    int stride = ffts_ctzl(N/leaf_N);
     ptrdiff_t *is, *pis;
 
     is = malloc(N / VL * sizeof(*is));
