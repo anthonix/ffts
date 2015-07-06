@@ -194,7 +194,7 @@ static FFTS_INLINE void *ffts_aligned_malloc(size_t size)
 
 static FFTS_INLINE void ffts_aligned_free(void *p)
 {
-#if defined(_MSC_VER)
+#if defined(_WIN32)
     _aligned_free(p);
 #else
     free(p);
