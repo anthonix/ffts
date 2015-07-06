@@ -361,17 +361,17 @@ ffts_init_1d_real(size_t N, int sign)
 
     if (sign < 0) {
         for (i = 0; i < N/2; i++) {
-            p->A[2 * i + 0] = 0.5 * ( 1.0 - sin(2.0 * M_PI / (double) N * (double) i));
-            p->A[2 * i + 1] = 0.5 * (-1.0 * cos(2.0 * M_PI / (double) N * (double) i));
-            p->B[2 * i + 0] = 0.5 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i));
-            p->B[2 * i + 1] = 0.5 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i));
+            p->A[2 * i + 0] = (float) (0.5 * ( 1.0 - sin(2.0 * M_PI / (double) N * (double) i)));
+            p->A[2 * i + 1] = (float) (0.5 * (-1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+            p->B[2 * i + 0] = (float) (0.5 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i)));
+            p->B[2 * i + 1] = (float) (0.5 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
         }
     } else {
         for (i = 0; i < N/2; i++) {
-            p->A[2 * i + 0] = 1.0 * ( 1.0 - sin(2.0 * M_PI / (double) N * (double) i));
-            p->A[2 * i + 1] = 1.0 * (-1.0 * cos(2.0 * M_PI / (double) N * (double) i));
-            p->B[2 * i + 0] = 1.0 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i));
-            p->B[2 * i + 1] = 1.0 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i));
+            p->A[2 * i + 0] = (float) (1.0 * ( 1.0 - sin(2.0 * M_PI / (double) N * (double) i)));
+            p->A[2 * i + 1] = (float) (1.0 * (-1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+            p->B[2 * i + 0] = (float) (1.0 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i)));
+            p->B[2 * i + 1] = (float) (1.0 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
         }
     }
 
