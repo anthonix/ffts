@@ -68,10 +68,32 @@
 #define FFTS_INLINE inline
 #endif
 
-#if defined(_MSC_VER)
-#define FFTS_RESTRICT
-#else
+#if defined(__GNUC__)
 #define FFTS_RESTRICT __restrict
+#elif defined(_MSC_VER)
+#define FFTS_RESTRICT __restrict
+#else
+#define FFTS_RESTRICT
+#endif
+
+#if GCC_VERSION_AT_LEAST(4,5)
+#define FFTS_ASSUME(cond) do { if (!(cond)) __builtin_unreachable(); } while (0)
+#elif defined(_MSC_VER)
+#define FFTS_ASSUME(cond) __assume(cond)
+#else
+#define FFTS_ASSUME(cond)
+#endif
+
+#if GCC_VERSION_AT_LEAST(4,7)
+#define FFTS_ASSUME_ALIGNED_16(x) __builtin_assume_aligned(x, 16)
+#else
+#define FFTS_ASSUME_ALIGNED_16(x) x
+#endif
+
+#if GCC_VERSION_AT_LEAST(4,7)
+#define FFTS_ASSUME_ALIGNED_32(x) __builtin_assume_aligned(x, 32)
+#else
+#define FFTS_ASSUME_ALIGNED_32(x) x
 #endif
 
 #endif /* FFTS_ATTRIBUTES_H */

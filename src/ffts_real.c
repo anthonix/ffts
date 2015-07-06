@@ -63,13 +63,19 @@ ffts_free_1d_real(ffts_plan_t *p)
     free(p);
 }
 
-static void ffts_execute_1d_real(ffts_plan_t *p, const void *vin, void *vout)
+static void
+ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
 {
-    float *out = (float*) vout;
-    float *buf = (float*) p->buf;
-    float *A = p->A;
-    float *B = p->B;
-    size_t N = p->N;
+    float *const FFTS_RESTRICT out =
+        (float *const FFTS_RESTRICT) FFTS_ASSUME_ALIGNED_16(output);
+    float *const FFTS_RESTRICT buf =
+        (float *const FFTS_RESTRICT) FFTS_ASSUME_ALIGNED_32(p->buf);
+    const float *const FFTS_RESTRICT A =
+        (const float *const FFTS_RESTRICT) FFTS_ASSUME_ALIGNED_32(p->A);
+    const float *const FFTS_RESTRICT B =
+        (const float *const FFTS_RESTRICT) FFTS_ASSUME_ALIGNED_32(p->B);
+    const int N = (const int) p->N;
+    int i;
 
 #ifdef __ARM_NEON__
     float *p_buf0 = buf;
@@ -77,9 +83,10 @@ static void ffts_execute_1d_real(ffts_plan_t *p, const void *vin, void *vout)
     float *p_out = out;
 #endif
 
-    size_t i;
+    /* we know this */
+    FFTS_ASSUME(N/2 > 0);
 
-    p->plans[0]->transform(p->plans[0], vin, buf);
+    p->plans[0]->transform(p->plans[0], input, buf);
 
     buf[N + 0] = buf[0];
     buf[N + 1] = buf[1];
@@ -138,14 +145,19 @@ static void ffts_execute_1d_real(ffts_plan_t *p, const void *vin, void *vout)
     out[N + 1] = 0.0f;
 }
 
-static void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout)
+static void
+ffts_execute_1d_real_inv(ffts_plan_t *p, const void *input, void *output)
 {
-    float *out = (float*) vout;
-    float *in = (float*) vin;
-    float *buf = (float*) p->buf;
-    float *A = p->A;
-    float *B = p->B;
-    size_t N = p->N;
+    float *const FFTS_RESTRICT in =
+        (float *const FFTS_RESTRICT) FFTS_ASSUME_ALIGNED_16(input);
+    float *const FFTS_RESTRICT buf =
+        (float *const FFTS_RESTRICT) FFTS_ASSUME_ALIGNED_32(p->buf);
+    const float *const FFTS_RESTRICT A =
+        (const float *const FFTS_RESTRICT) FFTS_ASSUME_ALIGNED_32(p->A);
+    const float *const FFTS_RESTRICT B =
+        (const float *const FFTS_RESTRICT) FFTS_ASSUME_ALIGNED_32(p->B);
+    const int N = (const int) p->N;
+    int i;
 
 #ifdef __ARM_NEON__
     float *p_buf0 = in;
@@ -153,7 +165,8 @@ static void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout
     float *p_out = buf;
 #endif
 
-    size_t i;
+    /* we know this */
+    FFTS_ASSUME(N/2 > 0);
 
 #ifdef __ARM_NEON__
     for (i = 0; i < N/2; i += 2) {
@@ -205,7 +218,7 @@ static void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout
     }
 #endif
 
-    p->plans[0]->transform(p->plans[0], buf, out);
+    p->plans[0]->transform(p->plans[0], buf, output);
 }
 
 ffts_plan_t*
