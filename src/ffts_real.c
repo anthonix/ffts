@@ -4,6 +4,7 @@ This file is part of FFTS -- The Fastest Fourier Transform in the South
 
 Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
 Copyright (c) 2012, The University of Waikato
+Copyright (c) 2015, Jukka Ojanen <jukka.ojanen@kolumbus.fi>
 
 All rights reserved.
 
@@ -40,7 +41,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <xmmintrin.h>
 #endif
 
-static void ffts_free_1d_real(ffts_plan_t *p)
+static void
+ffts_free_1d_real(ffts_plan_t *p)
 {
     if (p->B) {
         ffts_aligned_free(p->B);
@@ -54,9 +56,8 @@ static void ffts_free_1d_real(ffts_plan_t *p)
         ffts_aligned_free(p->buf);
     }
 
-    if (p->plans) {
+    if (p->plans[0]) {
         ffts_free(p->plans[0]);
-        free(p->plans);
     }
 
     free(p);
@@ -207,12 +208,13 @@ static void ffts_execute_1d_real_inv(ffts_plan_t *p, const void *vin, void *vout
     p->plans[0]->transform(p->plans[0], buf, out);
 }
 
-ffts_plan_t *ffts_init_1d_real(size_t N, int sign)
+ffts_plan_t*
+ffts_init_1d_real(size_t N, int sign)
 {
     ffts_plan_t *p;
     size_t i;
 
-    p = (ffts_plan_t*) calloc(1, sizeof(*p));
+    p = (ffts_plan_t*) calloc(1, sizeof(*p) + sizeof(*p->plans));
     if (!p) {
         return NULL;
     }
@@ -226,11 +228,7 @@ ffts_plan_t *ffts_init_1d_real(size_t N, int sign)
     p->destroy = &ffts_free_1d_real;
     p->N       = N;
     p->rank    = 1;
-
-    p->plans = (ffts_plan_t**) malloc(1 * sizeof(*p->plans));
-    if (!p->plans) {
-        goto cleanup;
-    }
+    p->plans   = (ffts_plan_t**) &p[1];
 
     p->plans[0] = ffts_init_1d(N/2, sign);
     if (!p->plans[0]) {
