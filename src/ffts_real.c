@@ -134,10 +134,58 @@ ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
             : "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
         );
     }
+#elif HAVE_SSE
+    if (N < 8) {
+        for (i = 0; i < N/2; i++) {
+            out[2*i + 0] =
+                buf[    2*i + 0] * A[2*i + 0] - buf[    2*i + 1] * A[2*i + 1] +
+                buf[N - 2*i + 0] * B[2*i + 0] + buf[N - 2*i + 1] * B[2*i + 1];
+            out[2*i + 1] =
+                buf[    2*i + 1] * A[2*i + 0] + buf[    2*i + 0] * A[2*i + 1] +
+                buf[N - 2*i + 0] * B[2*i + 1] - buf[N - 2*i + 1] * B[2*i + 0];
+        }
+    } else {
+        const __m128 c0 = _mm_set_ps(0.0f, -0.0f, 0.0f, -0.0f);
+        __m128 t0 = _mm_load_ps(buf);
+
+        for (i = 0; i < N; i += 8) {
+            __m128 t1 = _mm_load_ps(buf + i);
+            __m128 t2 = _mm_load_ps(buf + N - i - 4);
+            __m128 t3 = _mm_load_ps(A + i);
+            __m128 t4 = _mm_load_ps(B + i);
+
+            _mm_store_ps(out + i, _mm_add_ps(_mm_add_ps(_mm_add_ps(
+                _mm_mul_ps(t1, _mm_shuffle_ps(t3, t3, _MM_SHUFFLE(2,2,0,0))),
+                _mm_mul_ps(_mm_shuffle_ps(t1, t1, _MM_SHUFFLE(2,3,0,1)),
+                _mm_xor_ps(_mm_shuffle_ps(t3, t3, _MM_SHUFFLE(3,3,1,1)), c0))),
+                _mm_mul_ps(_mm_shuffle_ps(t0, t2, _MM_SHUFFLE(2,2,0,0)), t4)),
+                _mm_mul_ps(_mm_shuffle_ps(t0, t2, _MM_SHUFFLE(3,3,1,1)),
+                _mm_shuffle_ps(_mm_xor_ps(t4, c0), _mm_xor_ps(t4, c0),
+                _MM_SHUFFLE(2,3,0,1)))));
+
+            t0 = _mm_load_ps(buf + N - i - 8);
+            t1 = _mm_load_ps(buf + i + 4);
+            t3 = _mm_load_ps(A + i + 4);
+            t4 = _mm_load_ps(B + i + 4);
+
+            _mm_store_ps(out + i + 4, _mm_add_ps(_mm_add_ps(_mm_add_ps(
+                _mm_mul_ps(t1, _mm_shuffle_ps(t3, t3, _MM_SHUFFLE(2,2,0,0))),
+                _mm_mul_ps(_mm_shuffle_ps(t1, t1, _MM_SHUFFLE(2,3,0,1)),
+                _mm_xor_ps(_mm_shuffle_ps(t3, t3, _MM_SHUFFLE(3,3,1,1)), c0))),
+                _mm_mul_ps(_mm_shuffle_ps(t2, t0, _MM_SHUFFLE(2,2,0,0)), t4)),
+                _mm_mul_ps(_mm_shuffle_ps(t2, t0, _MM_SHUFFLE(3,3,1,1)),
+                _mm_shuffle_ps(_mm_xor_ps(t4, c0), _mm_xor_ps(t4, c0),
+                _MM_SHUFFLE(2,3,0,1)))));
+        }
+    }
 #else
     for (i = 0; i < N/2; i++) {
-        out[2*i + 0] = buf[2*i + 0] * A[2*i] - buf[2*i + 1] * A[2*i + 1] + buf[N - 2*i] * B[2*i + 0] + buf[N - 2*i + 1] * B[2*i + 1];
-        out[2*i + 1] = buf[2*i + 1] * A[2*i] + buf[2*i + 0] * A[2*i + 1] + buf[N - 2*i] * B[2*i + 1] - buf[N - 2*i + 1] * B[2*i + 0];
+        out[2*i + 0] =
+            buf[    2*i + 0] * A[2*i + 0] - buf[    2*i + 1] * A[2*i + 1] +
+            buf[N - 2*i + 0] * B[2*i + 0] + buf[N - 2*i + 1] * B[2*i + 1];
+        out[2*i + 1] =
+            buf[    2*i + 1] * A[2*i + 0] + buf[    2*i + 0] * A[2*i + 1] +
+            buf[N - 2*i + 0] * B[2*i + 1] - buf[N - 2*i + 1] * B[2*i + 0];
     }
 #endif
 
@@ -211,10 +259,58 @@ ffts_execute_1d_real_inv(ffts_plan_t *p, const void *input, void *output)
             : "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
         );
     }
+#elif HAVE_SSE
+    if (N < 8) {
+        for (i = 0; i < N/2; i++) {
+            buf[2*i + 0] =
+                in[    2*i + 0] * A[2*i + 0] + in[    2*i + 1] * A[2*i + 1] +
+                in[N - 2*i + 0] * B[2*i + 0] - in[N - 2*i + 1] * B[2*i + 1];
+            buf[2*i + 1] =
+                in[    2*i + 1] * A[2*i + 0] - in[    2*i + 0] * A[2*i + 1] -
+                in[N - 2*i + 0] * B[2*i + 1] - in[N - 2*i + 1] * B[2*i + 0];
+        }
+    } else {
+        const __m128 c0 = _mm_set_ps(-0.0f, 0.0f, -0.0f, 0.0f);
+        __m128 t0 = _mm_loadl_pi(_mm_setzero_ps(), (const __m64*) &in[N]);
+
+        for (i = 0; i < N; i += 8) {
+            __m128 t1 = _mm_load_ps(in + i);
+            __m128 t2 = _mm_load_ps(in + N - i - 4);
+            __m128 t3 = _mm_load_ps(A + i);
+            __m128 t4 = _mm_load_ps(B + i);
+
+            _mm_store_ps(buf + i, _mm_add_ps(_mm_sub_ps(_mm_add_ps(
+                _mm_mul_ps(t1, _mm_shuffle_ps(t3, t3, _MM_SHUFFLE(2,2,0,0))),
+                _mm_mul_ps(_mm_shuffle_ps(t1, t1, _MM_SHUFFLE(2,3,0,1)),
+                _mm_xor_ps(_mm_shuffle_ps(t3, t3, _MM_SHUFFLE(3,3,1,1)), c0))),
+                _mm_mul_ps(_mm_shuffle_ps(t0, t2, _MM_SHUFFLE(3,3,1,1)),
+                _mm_shuffle_ps(t4, t4, _MM_SHUFFLE(2,3,0,1)))),
+                _mm_mul_ps(_mm_shuffle_ps(t0, t2, _MM_SHUFFLE(2,2,0,0)),
+                _mm_xor_ps(t4, c0))));
+
+            t0 = _mm_load_ps(in + N - i - 8);
+            t1 = _mm_load_ps(in + i + 4);
+            t3 = _mm_load_ps(A + i + 4);
+            t4 = _mm_load_ps(B + i + 4);
+
+            _mm_store_ps(buf + i + 4, _mm_add_ps(_mm_sub_ps(_mm_add_ps(
+                _mm_mul_ps(t1, _mm_shuffle_ps(t3, t3, _MM_SHUFFLE(2,2,0,0))),
+                _mm_mul_ps(_mm_shuffle_ps(t1, t1, _MM_SHUFFLE(2,3,0,1)),
+                _mm_xor_ps(_mm_shuffle_ps(t3, t3, _MM_SHUFFLE(3,3,1,1)), c0))),
+                _mm_mul_ps(_mm_shuffle_ps(t2, t0, _MM_SHUFFLE(3,3,1,1)),
+                _mm_shuffle_ps(t4, t4, _MM_SHUFFLE(2,3,0,1)))),
+                _mm_mul_ps(_mm_shuffle_ps(t2, t0, _MM_SHUFFLE(2,2,0,0)),
+                _mm_xor_ps(t4, c0))));
+        }
+    }
 #else
     for (i = 0; i < N/2; i++) {
-        buf[2*i + 0] = in[2*i + 0] * A[2*i] + in[2*i + 1] * A[2*i + 1] + in[N - 2*i] * B[2*i + 0] - in[N - 2*i + 1] * B[2*i + 1];
-        buf[2*i + 1] = in[2*i + 1] * A[2*i] - in[2*i + 0] * A[2*i + 1] - in[N - 2*i] * B[2*i + 1] - in[N - 2*i + 1] * B[2*i + 0];
+        buf[2*i + 0] =
+            in[    2*i + 0] * A[2*i + 0] + in[    2*i + 1] * A[2*i + 1] +
+            in[N - 2*i + 0] * B[2*i + 0] - in[N - 2*i + 1] * B[2*i + 1];
+        buf[2*i + 1] =
+            in[    2*i + 1] * A[2*i + 0] - in[    2*i + 0] * A[2*i + 1] -
+            in[N - 2*i + 0] * B[2*i + 1] - in[N - 2*i + 1] * B[2*i + 0];
     }
 #endif
 
