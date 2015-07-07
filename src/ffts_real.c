@@ -39,6 +39,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arm_neon.h>
 #elif HAVE_SSE
 #include <xmmintrin.h>
+
+/* check if have SSE3 intrinsics */
+#ifdef HAVE_PMMINTRIN_H
+#include <pmmintrin.h>
+#elif HAVE_INTRIN_H
+#include <intrin.h>
+#else
+/* avoid using negative zero as some configurations have problems with those */
+static const FFTS_ALIGN(16) unsigned int sign_mask[4] = {
+    0x80000000, 0, 0x80000000, 0
+};
+#endif
 #endif
 
 static void
@@ -88,8 +100,10 @@ ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
 
     p->plans[0]->transform(p->plans[0], input, buf);
 
+#ifndef HAVE_SSE
     buf[N + 0] = buf[0];
     buf[N + 1] = buf[1];
+#endif
 
 #ifdef __ARM_NEON__
     for (i = 0; i < N/2; i += 2) {
@@ -134,18 +148,67 @@ ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
             : "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
         );
     }
+#elif HAVE_SSE3
+    if (N < 8) {
+        const __m128 t0 = _mm_load_ps(buf);
+        const __m128 t1 = _mm_load_ps(A);
+        const __m128 t2 = _mm_load_ps(B);
+
+        _mm_store_ps(out, _mm_add_ps(_mm_addsub_ps(
+            _mm_mul_ps(t0, _mm_moveldup_ps(t1)),
+            _mm_mul_ps(_mm_shuffle_ps(t0, t0, _MM_SHUFFLE(2,3,0,1)),
+            _mm_movehdup_ps(t1))), _mm_addsub_ps(
+            _mm_mul_ps(_mm_shuffle_ps(t0, t0, _MM_SHUFFLE(3,3,1,1)),
+            _mm_shuffle_ps(t2, t2, _MM_SHUFFLE(2,3,0,1))),
+            _mm_mul_ps(_mm_shuffle_ps(t0, t0, _MM_SHUFFLE(2,2,0,0)), t2))));
+    } else {
+        __m128 t0 = _mm_load_ps(buf);
+
+        for (i = 0; i < N; i += 8) {
+            __m128 t1 = _mm_load_ps(buf + i);
+            __m128 t2 = _mm_load_ps(buf + N - i - 4);
+            __m128 t3 = _mm_load_ps(A + i);
+            __m128 t4 = _mm_load_ps(B + i);
+
+            _mm_store_ps(out + i, _mm_add_ps(_mm_addsub_ps(
+                _mm_mul_ps(t1, _mm_moveldup_ps(t3)),
+                _mm_mul_ps(_mm_shuffle_ps(t1, t1, _MM_SHUFFLE(2,3,0,1)),
+                _mm_movehdup_ps(t3))), _mm_addsub_ps(
+                _mm_mul_ps(_mm_shuffle_ps(t0, t2, _MM_SHUFFLE(3,3,1,1)),
+                _mm_shuffle_ps(t4, t4, _MM_SHUFFLE(2,3,0,1))),
+                _mm_mul_ps(_mm_shuffle_ps(t0, t2, _MM_SHUFFLE(2,2,0,0)), t4))));
+
+            t0 = _mm_load_ps(buf + N - i - 8);
+            t1 = _mm_load_ps(buf + i + 4);
+            t3 = _mm_load_ps(A + i + 4);
+            t4 = _mm_load_ps(B + i + 4);
+
+            _mm_store_ps(out + i + 4, _mm_add_ps(_mm_addsub_ps(
+                _mm_mul_ps(t1, _mm_moveldup_ps(t3)),
+                _mm_mul_ps(_mm_shuffle_ps(t1, t1, _MM_SHUFFLE(2,3,0,1)),
+                _mm_movehdup_ps(t3))), _mm_addsub_ps(
+                _mm_mul_ps(_mm_shuffle_ps(t2, t0, _MM_SHUFFLE(3,3,1,1)),
+                _mm_shuffle_ps(t4, t4, _MM_SHUFFLE(2,3,0,1))),
+                _mm_mul_ps(_mm_shuffle_ps(t2, t0, _MM_SHUFFLE(2,2,0,0)), t4))));
+        }
+    }
 #elif HAVE_SSE
     if (N < 8) {
-        for (i = 0; i < N/2; i++) {
-            out[2*i + 0] =
-                buf[    2*i + 0] * A[2*i + 0] - buf[    2*i + 1] * A[2*i + 1] +
-                buf[N - 2*i + 0] * B[2*i + 0] + buf[N - 2*i + 1] * B[2*i + 1];
-            out[2*i + 1] =
-                buf[    2*i + 1] * A[2*i + 0] + buf[    2*i + 0] * A[2*i + 1] +
-                buf[N - 2*i + 0] * B[2*i + 1] - buf[N - 2*i + 1] * B[2*i + 0];
-        }
+        const __m128 c0 = _mm_load_ps((const float*) sign_mask);
+        const __m128 t0 = _mm_load_ps(buf);
+        const __m128 t1 = _mm_load_ps(A);
+        const __m128 t2 = _mm_load_ps(B);
+
+        _mm_store_ps(out, _mm_add_ps(_mm_add_ps(_mm_add_ps(
+            _mm_mul_ps(t0, _mm_shuffle_ps(t1, t1, _MM_SHUFFLE(2,2,0,0))),
+            _mm_mul_ps(_mm_shuffle_ps(t0, t0, _MM_SHUFFLE(2,3,0,1)),
+            _mm_xor_ps(_mm_shuffle_ps(t1, t1, _MM_SHUFFLE(3,3,1,1)), c0))),
+            _mm_mul_ps(_mm_shuffle_ps(t0, t0, _MM_SHUFFLE(2,2,0,0)), t2)),
+            _mm_mul_ps(_mm_shuffle_ps(t0, t0, _MM_SHUFFLE(3,3,1,1)),
+            _mm_shuffle_ps(_mm_xor_ps(t2, c0), _mm_xor_ps(t2, c0),
+            _MM_SHUFFLE(2,3,0,1)))));
     } else {
-        const __m128 c0 = _mm_set_ps(0.0f, -0.0f, 0.0f, -0.0f);
+        const __m128 c0 = _mm_load_ps((const float*) sign_mask);
         __m128 t0 = _mm_load_ps(buf);
 
         for (i = 0; i < N; i += 8) {
@@ -278,7 +341,7 @@ ffts_execute_1d_real_inv(ffts_plan_t *p, const void *input, void *output)
             __m128 t2 = _mm_load_ps(in + N - i - 4);
             __m128 t3 = _mm_load_ps(A + i);
             __m128 t4 = _mm_load_ps(B + i);
-
+            
             _mm_store_ps(buf + i, _mm_add_ps(_mm_sub_ps(_mm_add_ps(
                 _mm_mul_ps(t1, _mm_shuffle_ps(t3, t3, _MM_SHUFFLE(2,2,0,0))),
                 _mm_mul_ps(_mm_shuffle_ps(t1, t1, _MM_SHUFFLE(2,3,0,1)),
@@ -361,10 +424,14 @@ ffts_init_1d_real(size_t N, int sign)
 
     if (sign < 0) {
         for (i = 0; i < N/2; i++) {
-            p->A[2 * i + 0] = (float) (0.5 * ( 1.0 - sin(2.0 * M_PI / (double) N * (double) i)));
-            p->A[2 * i + 1] = (float) (0.5 * (-1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+            p->A[2 * i + 0] = (float) ( 0.5 * ( 1.0 - sin(2.0 * M_PI / (double) N * (double) i)));
+            p->A[2 * i + 1] = (float) ( 0.5 * (-1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+#ifdef HAVE_SSE3
+            p->B[2 * i + 0] = (float) (-0.5 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i)));
+#else
             p->B[2 * i + 0] = (float) (0.5 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i)));
-            p->B[2 * i + 1] = (float) (0.5 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+#endif
+            p->B[2 * i + 1] = (float) ( 0.5 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
         }
     } else {
         for (i = 0; i < N/2; i++) {
