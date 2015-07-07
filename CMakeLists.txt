@@ -131,17 +131,35 @@ if(NOT CMAKE_CROSSCOMPILING)
 
     cmake_pop_check_state()
   else()
-    # check if the platform has support for SSE SIMD extension
+    # check if the platform has support for SSE intrinsics
     check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
     if(HAVE_XMMINTRIN_H)
       add_definitions(-DHAVE_SSE)
     endif(HAVE_XMMINTRIN_H)
     
-    # check if the platform has support for SSE2 SIMD extension
+    # check if the platform has support for SSE2 intrinsics
     check_include_file(emmintrin.h HAVE_EMMINTRIN_H)
     if(HAVE_EMMINTRIN_H)
       add_definitions(-DHAVE_SSE2)
     endif(HAVE_EMMINTRIN_H)
+    
+    # check if the platform has support for SSE3 intrinsics
+    check_include_file(pmmintrin.h HAVE_PMMINTRIN_H)
+    if(HAVE_PMMINTRIN_H)
+      add_definitions(-DHAVE_PMMINTRIN_H)
+      add_definitions(-DHAVE_SSE3)
+    else()
+      # check if the platform has specific intrinsics
+      check_include_file(intrin.h HAVE_INTRIN_H)
+      if(HAVE_INTRIN_H)
+        check_symbol_exists(_mm_addsub_ps intrin.h HAVE_DECL__MM_ADDSUB_PS)
+        if(HAVE_DECL__MM_ADDSUB_PS)
+          # assume that we have all SSE3 intrinsics
+          add_definitions(-DHAVE_INTRIN_H)
+          add_definitions(-DHAVE_SSE3)
+        endif(HAVE_DECL__MM_ADDSUB_PS)
+      endif(HAVE_INTRIN_H)
+    endif(HAVE_PMMINTRIN_H)
   endif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
 else()
   # Check if we can always use detection code above?
