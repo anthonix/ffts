@@ -477,27 +477,83 @@ ffts_init_1d_real(size_t N, int sign)
     }
 
     if (sign < 0) {
-        for (i = 0; i < N/2; i++) {
-            p->A[2 * i + 0] = (float) ( 0.5 * ( 1.0 - sin(2.0 * M_PI / (double) N * (double) i)));
-            p->A[2 * i + 1] = (float) ( 0.5 * (-1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+        /* peel off the first */
+        p->A[0] =  0.5f;
+        p->A[1] = -0.5f;
 #ifdef HAVE_SSE3
-            p->B[2 * i + 0] = (float) (-0.5 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i)));
+        p->B[0] = -0.5f;
 #else
-            p->B[2 * i + 0] = (float) ( 0.5 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i)));
+        p->B[0] =  0.5f;
+#endif        
+        p->B[1] =  0.5f;
+
+        for (i = 1; i < N/4; i++) {
+            float t0 = (float) (0.5 * (1.0 - sin(2.0 * M_PI / N * i)));
+            float t1 = (float) (0.5 * (1.0 * cos(2.0 * M_PI / N * i)));
+            float t2 = (float) (0.5 * (1.0 + sin(2.0 * M_PI / N * i)));
+
+            p->A[    2 * i + 0] =  t0;
+            p->A[N - 2 * i + 0] =  t0;
+            p->A[    2 * i + 1] = -t1;
+            p->A[N - 2 * i + 1] =  t1;
+
+#ifdef HAVE_SSE3
+            p->B[    2 * i + 0] = -t2;
+            p->B[N - 2 * i + 0] = -t2;
+#else
+            p->B[    2 * i + 0] =  t2;
+            p->B[N - 2 * i + 0] =  t2;
 #endif
-            p->B[2 * i + 1] = (float) ( 0.5 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+            p->B[    2 * i + 1] =  t1;
+            p->B[N - 2 * i + 1] = -t1;
         }
+
+        /* and the last */
+        p->A[2 * i + 0] =  0.0f;
+        p->A[2 * i + 1] =  0.0f;
+#ifdef HAVE_SSE3
+        p->B[2 * i + 0] = -1.0f;
+#else
+        p->B[2 * i + 0] =  1.0f;
+#endif
+        p->B[2 * i + 1] =  0.0f;
     } else {
-        for (i = 0; i < N/2; i++) {
-            p->A[2 * i + 0] = (float) (1.0 * ( 1.0 - sin(2.0 * M_PI / (double) N * (double) i)));
+        /* peel of the first */
+        p->A[0] =  1.0f;
 #ifdef HAVE_SSE3
-            p->A[2 * i + 1] = (float) (1.0 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+        p->A[1] =  1.0f;
 #else
-            p->A[2 * i + 1] = (float) (1.0 * (-1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+        p->A[1] = -1.0f;
 #endif
-            p->B[2 * i + 0] = (float) (1.0 * ( 1.0 + sin(2.0 * M_PI / (double) N * (double) i)));
-            p->B[2 * i + 1] = (float) (1.0 * ( 1.0 * cos(2.0 * M_PI / (double) N * (double) i)));
+        p->B[0] =  1.0f;
+        p->B[1] =  1.0f;
+
+        for (i = 1; i < N/4; i++) {
+            float t0 = (float) (1.0 * (1.0 - sin(2.0 * M_PI / N * i)));
+            float t1 = (float) (1.0 * (1.0 * cos(2.0 * M_PI / N * i)));
+            float t2 = (float) (1.0 * (1.0 + sin(2.0 * M_PI / N * i)));
+
+            p->A[    2 * i + 0] =  t0;
+            p->A[N - 2 * i + 0] =  t0;
+#ifdef HAVE_SSE3
+            p->A[    2 * i + 1] =  t1;
+            p->A[N - 2 * i + 1] = -t1;
+#else
+            p->A[    2 * i + 1] = -t1;
+            p->A[N - 2 * i + 1] =  t1;
+#endif
+
+            p->B[    2 * i + 0] =  t2;
+            p->B[N - 2 * i + 0] =  t2;
+            p->B[    2 * i + 1] =  t1;
+            p->B[N - 2 * i + 1] = -t1;
         }
+
+        /* and the last */
+        p->A[2 * i + 0] = 0.0f;
+        p->A[2 * i + 1] = 0.0f;
+        p->B[2 * i + 0] = 2.0f;
+        p->B[2 * i + 1] = 0.0f;
     }
 
     return p;
