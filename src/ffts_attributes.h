@@ -96,4 +96,16 @@
 #define FFTS_ASSUME_ALIGNED_32(x) x
 #endif
 
+#if defined(__GNUC__)
+#define FFTS_LIKELY(cond) __builtin_expect(!!(cond), 1)
+#else
+#define FFTS_LIKELY(cond) cond
+#endif
+
+#if defined(__GNUC__)
+#define FFTS_UNLIKELY(cond) __builtin_expect(!!(cond), 0)
+#else
+#define FFTS_UNLIKELY(cond) cond
+#endif
+
 #endif /* FFTS_ATTRIBUTES_H */
