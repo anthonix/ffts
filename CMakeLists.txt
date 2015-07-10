@@ -31,6 +31,7 @@ option(ENABLE_SHARED
   "Enable building a shared library." OFF
 )
 
+include(CheckCSourceCompiles)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
 include(CMakePushCheckState)
@@ -152,12 +153,20 @@ if(NOT CMAKE_CROSSCOMPILING)
       # check if the platform has specific intrinsics
       check_include_file(intrin.h HAVE_INTRIN_H)
       if(HAVE_INTRIN_H)
-        check_symbol_exists(_mm_addsub_ps intrin.h HAVE_DECL__MM_ADDSUB_PS)
-        if(HAVE_DECL__MM_ADDSUB_PS)
+        check_c_source_compiles("
+          #include<intrin.h>
+          int main(int argc, char** argv)
+          {
+           (void) argv;
+           (void) argc;
+           return _mm_movemask_ps(_mm_moveldup_ps(_mm_set_ss(1.0f)));
+          }" HAVE__MM_MOVELDUP_PS
+        )
+        if(HAVE__MM_MOVELDUP_PS)
           # assume that we have all SSE3 intrinsics
           add_definitions(-DHAVE_INTRIN_H)
           add_definitions(-DHAVE_SSE3)
-        endif(HAVE_DECL__MM_ADDSUB_PS)
+        endif(HAVE__MM_MOVELDUP_PS)
       endif(HAVE_INTRIN_H)
     endif(HAVE_PMMINTRIN_H)
   endif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
