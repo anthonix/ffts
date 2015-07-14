@@ -118,7 +118,7 @@ ffts_generate_cosine_sine_32f(ffts_cpx_32f *const table, int table_size)
     c[0] = 1.0;
     s[0] = 0.0;
 
-    /* generate sine and cosine table with maximum error less than 1 ULP */
+    /* generate sine and cosine tables with maximum error less than 1 ULP */
     for (i = 1; i < (table_size + 1)/2; i++) {
         c[1] = c[0] - ((alpha * c[0]) + (beta * s[0]));
         s[1] = s[0] - ((alpha * s[0]) - (beta * c[0]));
@@ -190,13 +190,13 @@ ffts_generate_cosine_sine_pow2_32f(ffts_cpx_32f *const table, int table_size)
         FFTS_ASSUME_ALIGNED_32(&cos_sin_pi_table[4 * offset]);
     hs = (const double*) &half_secant[2 * offset];
 
-    /* initialize from table */
+    /* initialize from lookup table */
     for (i = 0; i <= log_2; i++) {
         w[i][0] = ct[i][0];
         w[i][1] = ct[i][1];
     }
 
-    /* generate sine and cosine table with maximum error less than 0.5 ULP */
+    /* generate sine and cosine tables with maximum error less than 0.5 ULP */
     for (i = 1; i < table_size/2; i++) {
         /* calculate trailing zeros in index */
         log_2 = ffts_ctzl(i);
@@ -217,5 +217,129 @@ mid_point:
     table[i][1] = -0.70710677f;
 
 exit:
+    return 0;
+}
+
+int
+ffts_generate_table_1d_real_32f(struct _ffts_plan_t *const p,
+                                int sign,
+                                int invert)
+{
+    const ffts_cpx_64f *FFTS_RESTRICT ct;
+    const double *FFTS_RESTRICT hs;
+    ffts_cpx_64f FFTS_ALIGN(16) w[32];
+    int i, log_2, offset, N;
+    float *A, *B;
+
+    if (!p) {
+        return -1;
+    }
+
+    A = (float*) FFTS_ASSUME_ALIGNED_32(p->A);
+    B = (float*) FFTS_ASSUME_ALIGNED_32(p->B);
+    N = (int) p->N;
+
+    /* the first */
+    if (sign < 0) {
+        A[0] =  0.5f;
+        A[1] = -0.5f;
+        B[0] =  invert ? -0.5f : 0.5f;
+        B[1] =  0.5f;
+    } else {
+        /* peel of the first */
+        A[0] = 1.0f;
+        A[1] = invert ? 1.0f : -1.0f;
+        B[0] = 1.0f;
+        B[1] = 1.0f;
+    }
+
+    if (FFTS_UNLIKELY(N == 4)) {
+        i = 1;
+        goto last;
+    }
+
+    /* calculate table offset */
+    FFTS_ASSUME(N / 4 > 1);
+    log_2 = ffts_ctzl(N);
+    FFTS_ASSUME(log_2 > 2);
+    offset = 34 - log_2;
+    ct = (const ffts_cpx_64f*)
+        FFTS_ASSUME_ALIGNED_32(&cos_sin_pi_table[4 * offset]);
+    hs = (const double*) &half_secant[2 * offset];
+
+    /* initialize from lookup table */
+    for (i = 0; i <= log_2; i++) {
+        w[i][0] = ct[i][0];
+        w[i][1] = ct[i][1];
+    }
+
+    /* generate sine and cosine tables with maximum error less than 0.5 ULP */
+    if (sign < 0) {
+        for (i = 1; i < N/4; i++) {
+            float t0, t1, t2; 
+
+            /* calculate trailing zeros in index */
+            log_2 = ffts_ctzl(i);
+
+            t0 = (float) (0.5 * (1.0 - w[log_2][1]));
+            t1 = (float) (0.5 * w[log_2][0]);
+            t2 = (float) (0.5 * (1.0 + w[log_2][1]));
+
+            A[    2 * i + 0] =  t0;
+            A[N - 2 * i + 0] =  t0;
+            A[    2 * i + 1] = -t1;
+            A[N - 2 * i + 1] =  t1;
+
+            B[    2 * i + 0] =  invert ? -t2 : t2;
+            B[N - 2 * i + 0] =  invert ? -t2 : t2;
+            B[    2 * i + 1] =  t1;
+            B[N - 2 * i + 1] = -t1;
+
+            /* skip and find next trailing zero */
+            offset = (log_2 + 2 + ffts_ctzl(~i >> (log_2 + 2)));
+            w[log_2][0] = hs[log_2] * (w[log_2 + 1][0] + w[offset][0]);
+            w[log_2][1] = hs[log_2] * (w[log_2 + 1][1] + w[offset][1]);
+        }
+    } else {
+        for (i = 1; i < N/4; i++) {
+            float t0, t1, t2; 
+
+            /* calculate trailing zeros in index */
+            log_2 = ffts_ctzl(i);
+
+            t0 = (float) (1.0 - w[log_2][1]);
+            t1 = (float) w[log_2][0];
+            t2 = (float) (1.0 + w[log_2][1]);
+
+            A[    2 * i + 0] = t0;
+            A[N - 2 * i + 0] = t0;
+            A[    2 * i + 1] = invert ?  t1 : -t1;
+            A[N - 2 * i + 1] = invert ? -t1 :  t1;
+
+            B[    2 * i + 0] =  t2;
+            B[N - 2 * i + 0] =  t2;
+            B[    2 * i + 1] =  t1;
+            B[N - 2 * i + 1] = -t1;
+
+            /* skip and find next trailing zero */
+            offset = (log_2 + 2 + ffts_ctzl(~i >> (log_2 + 2)));
+            w[log_2][0] = hs[log_2] * (w[log_2 + 1][0] + w[offset][0]);
+            w[log_2][1] = hs[log_2] * (w[log_2 + 1][1] + w[offset][1]);
+        }
+    }
+
+last:
+    if (sign < 0) {
+        A[2 * i + 0] = 0.0f;
+        A[2 * i + 1] = 0.0f;
+        B[2 * i + 0] = invert ? -1.0f : 1.0f;
+        B[2 * i + 1] = 0.0f;
+    } else {
+        A[2 * i + 0] = 0.0f;
+        A[2 * i + 1] = 0.0f;
+        B[2 * i + 0] = 2.0f;
+        B[2 * i + 1] = 0.0f;
+    }
+
     return 0;
 }

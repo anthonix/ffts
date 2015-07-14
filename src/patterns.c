@@ -37,7 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <limits.h>
 #include <malloc.h>
-#include <math.h>
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>

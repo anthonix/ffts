@@ -40,7 +40,6 @@
 #include "types.h"
 
 #include <malloc.h>
-#include <math.h>
 #include <stddef.h>
 
 #ifdef HAVE_STDINT_H

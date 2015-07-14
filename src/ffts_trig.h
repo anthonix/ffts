@@ -45,4 +45,9 @@ ffts_generate_cosine_sine_32f(ffts_cpx_32f *const table, int table_size);
 int
 ffts_generate_cosine_sine_pow2_32f(ffts_cpx_32f *const table, int table_size);
 
+int
+ffts_generate_table_1d_real_32f(struct _ffts_plan_t *const p,
+                                int sign,
+                                int invert);
+
 #endif /* FFTS_TRIG_H */
