@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ffts_internal.h"
 #include "ffts_static.h"
+#include "ffts_trig.h"
 #include "macros.h"
 #include "patterns.h"
 
@@ -199,58 +200,6 @@ void ffts_free_1d(ffts_plan_t *p)
     free(p);
 }
 
-static void
-ffts_generate_cosine_sine_32f(ffts_cpx_32f *const table, int table_size)
-{
-    double alpha, beta;
-    double c[2], s[2];
-    int i;
-
-    double x = 1.0 / table_size;
-    double z = x * x;
-
-    /* polynomial approximations calculated using Sollya */
-
-    /* alpha = 2 * sin(M_PI_4 / m) * sin(M_PI_4 / m) */
-    alpha = x * (1.1107207345394952717884501203293686870741139540138 +
-        z * (-0.114191397993514079911985272577099412137126013186879 +
-        z * 3.52164670852685621720746817665316575239342815885835e-3));
-    alpha = alpha * alpha;
-
-    /* beta = sin(M_PI_2 / m) */
-    beta = x * (1.57079632679489455959753740899031981825828552246094 +
-        z * (-0.64596409735041482313988581154262647032737731933593 +
-        z * 7.9690915468332887416913479228242067620158195495605e-2));
-
-    /* cos(0) = 1.0, sin(0) = 0.0 */
-    c[0] = 1.0;
-    s[0] = 0.0;
-
-    table[             0][0] =  1.0f;
-    table[             0][1] =  0.0f;
-    table[table_size - 1][1] = -1.0f;
-    table[table_size - 1][0] = -0.0f;
-
-    /* generate sine and cosine table with maximum error less than 1 ULP */
-    for (i = 1; i < table_size/2; i += 2) {
-        c[1] = c[0] - ((alpha * c[0]) + (beta * s[0]));
-        s[1] = s[0] - ((alpha * s[0]) - (beta * c[0]));
-
-        table[i          + 0][0] = (float)  c[1];
-        table[i          + 0][1] = (float) -s[1];
-        table[table_size - i][0] = (float)  s[1];
-        table[table_size - i][1] = (float) -c[1];
-
-        c[0] = c[1] - ((alpha * c[1]) + (beta * s[1]));
-        s[0] = s[1] - ((alpha * s[1]) - (beta * c[1]));
-
-        table[i              + 1][0] = (float)  c[0];
-        table[i              + 1][1] = (float) -s[0];
-        table[table_size - i - 1][0] = (float)  s[0];
-        table[table_size - i - 1][1] = (float) -c[0];
-    }
-}
-
 static int
 ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 {
@@ -304,7 +253,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     m = leaf_N << (n_luts - 2);
     tmp = FFTS_MALLOC(m * sizeof(ffts_cpx_32f), 32);
 
-    ffts_generate_cosine_sine_32f(tmp, m);
+    ffts_generate_cosine_sine_pow2_32f(tmp, m);
 
     /* generate lookup tables */
     stride = 1 << (n_luts - 1);

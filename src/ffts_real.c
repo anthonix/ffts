@@ -650,7 +650,7 @@ ffts_init_1d_real(size_t N, int sign)
         p->B[0] = -0.5f;
 #else
         p->B[0] =  0.5f;
-#endif        
+#endif
         p->B[1] =  0.5f;
 
         for (i = 1; i < N/4; i++) {

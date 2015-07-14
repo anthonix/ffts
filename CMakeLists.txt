@@ -218,6 +218,8 @@ set(FFTS_SOURCES
   src/ffts_real.c
   src/ffts_real_nd.c
   src/ffts_real_nd.h
+  src/ffts_trig.c
+  src/ffts_trig.h
   src/ffts_static.c
   src/ffts_static.h
   src/macros.h
