@@ -223,7 +223,6 @@ set(FFTS_SOURCES
   src/ffts_static.c
   src/ffts_static.h
   src/macros.h
-  src/patterns.c
   src/patterns.h
   src/types.h
 )
