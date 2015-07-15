@@ -39,8 +39,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #endif
 
-#include "ffts_internal.h"
-
 #include <stddef.h>
 
 #ifdef HAVE_STDLIB_H
