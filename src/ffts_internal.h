@@ -35,7 +35,6 @@
 #define FFTS_INTERNAL_H
 
 //#include "config.h"
-//#include "codegen.h"
 #include "ffts_attributes.h"
 #include "types.h"
 

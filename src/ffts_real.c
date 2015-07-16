@@ -110,7 +110,7 @@ ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
 #endif
 
 #ifdef __ARM_NEON__
-    for (i = 0; i < N/2; i += 2) {
+    for (i = 0; i < N; i += 4) {
         __asm__ __volatile__ (
             "vld1.32 {q8},  [%[pa]]!\n\t"
             "vld1.32 {q9},  [%[pb]]!\n\t"
@@ -146,9 +146,8 @@ ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
             "vadd.f32 q13, q13, q15\n\t"
             "vadd.f32 q12, q12, q13\n\t"
             "vst1.32 {q12}, [%[pout]]!\n\t"
-            : [pa] "+r" (A), [pb] "+r" (B), [buf0] "+r" (p_buf0), [buf1] "+r" (p_buf1),
-            [pout] "+r" (p_out)
-            :
+            : [buf0] "+r" (p_buf0), [buf1] "+r" (p_buf1), [pout] "+r" (p_out)
+            : [pa] "r" (A), [pb] "r" (B) 
             : "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
         );
     }
@@ -403,9 +402,8 @@ ffts_execute_1d_real_inv(ffts_plan_t *p, const void *input, void *output)
             "vsub.f32 q13, q13, q15\n\t"
             "vadd.f32 q12, q12, q13\n\t"
             "vst1.32 {q12}, [%[pout]]!\n\t"
-            : [pa] "+r" (A), [pb] "+r" (B), [buf0] "+r" (p_buf0), [buf1] "+r" (p_buf1),
-            [pout] "+r" (p_out)
-            :
+            : [buf0] "+r" (p_buf0), [buf1] "+r" (p_buf1), [pout] "+r" (p_out)
+            : [pa] "r" (A), [pb] "r" (B)
             : "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
         );
     }
