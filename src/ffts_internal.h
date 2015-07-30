@@ -38,7 +38,10 @@
 #include "ffts_attributes.h"
 #include "types.h"
 
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
+
 #include <stddef.h>
 
 #ifdef HAVE_STDINT_H

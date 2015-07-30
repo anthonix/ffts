@@ -39,11 +39,16 @@ include(CMakePushCheckState)
 add_definitions(-DFFTS_CMAKE_GENERATED)
 
 # check existence of various headers
+check_include_file(malloc.h   HAVE_MALLOC_H)
 check_include_file(stdint.h   HAVE_STDINT_H)
 check_include_file(stdlib.h   HAVE_STDLIB_H)
 check_include_file(string.h   HAVE_STRING_H)
 check_include_file(sys/mman.h HAVE_SYS_MMAN_H)
 check_include_file(unistd.h   HAVE_UNISTD_H)
+
+if(HAVE_MALLOC_H)
+  add_definitions(-DHAVE_MALLOC_H)
+endif(HAVE_MALLOC_H)
 
 if(HAVE_STDINT_H)
   add_definitions(-DHAVE_STDINT_H)
