@@ -119,8 +119,8 @@ static FFTS_INLINE int ffts_flush_instruction_cache(void *start, size_t length)
 #elif __GNUC__
     __clear_cache((long) start, (long) start + length);
 #endif
-    return 0;
 #endif
+    return 0;
 #endif
 }
 
