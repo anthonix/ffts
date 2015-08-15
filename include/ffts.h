@@ -49,6 +49,8 @@ extern "C"
 struct _ffts_plan_t;
 typedef struct _ffts_plan_t ffts_plan_t;
 
+// Complex data is stored in the interleaved format (i.e, the real and imaginary 
+// parts composing each element of complex data are stored adjacently in memory)
 ffts_plan_t *ffts_init_1d(size_t N, int sign);
 ffts_plan_t *ffts_init_2d(size_t N1, size_t N2, int sign);
 ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign);
