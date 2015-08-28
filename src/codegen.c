@@ -9,14 +9,14 @@
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
- 	* Redistributions of source code must retain the above copyright
- 		notice, this list of conditions and the following disclaimer.
- 	* Redistributions in binary form must reproduce the above copyright
- 		notice, this list of conditions and the following disclaimer in the
- 		documentation and/or other materials provided with the distribution.
- 	* Neither the name of the organization nor the
-	  names of its contributors may be used to endorse or promote products
- 		derived from this software without specific prior written permission.
+    * Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+    * Neither the name of the organization nor the
+      names of its contributors may be used to endorse or promote products
+        derived from this software without specific prior written permission.
 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -199,7 +199,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     generate_leaf_init(&fp, loop_count);
 
     if (ffts_ctzl(N) & 1) {
-		generate_leaf_ee(&fp, offsets, p->i1 ? 6 : 0);
+        generate_leaf_ee(&fp, offsets, p->i1 ? 6 : 0);
 
         if (p->i1) {
             loop_count += 4 * p->i1;
@@ -209,14 +209,14 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
         loop_count += 4;
         generate_leaf_oe(&fp, offsets_o);
     } else {
-		generate_leaf_ee(&fp, offsets, N >= 256 ? 2 : 8);
+        generate_leaf_ee(&fp, offsets, N >= 256 ? 2 : 8);
 
         loop_count += 4;
         generate_leaf_eo(&fp, offsets);
 
         if (p->i1) {
             loop_count += 4 * p->i1;
-			generate_leaf_oo(&fp, loop_count, offsets_o, N >= 256 ? 4 : 7);
+            generate_leaf_oo(&fp, loop_count, offsets_o, N >= 256 ? 4 : 7);
         }
     }
 
@@ -309,7 +309,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
 #ifdef __arm__
 #ifdef HAVE_NEON
-    if(__builtin_ctzl(N) & 1) {
+    if (ffts_ctzl(N) & 1) {
         ADDI(&fp, 2, 7, 0);
         ADDI(&fp, 7, 9, 0);
         ADDI(&fp, 9, 2, 0);
@@ -535,9 +535,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             if(pps[0] - pN) ADDI(&fp, 1, 1, pps[0] - pN);
         }
 
-        if(p->ws_is[__builtin_ctzl(pps[0]/leaf_N)-1]*8 - pLUT)
-            ADDI(&fp, 2, 2, p->ws_is[__builtin_ctzl(pps[0]/leaf_N)-1]*8 - pLUT);
-
+        if (p->ws_is[ffts_ctzl(pps[0]/leaf_N)-1]*8 - pLUT) {
+            ADDI(&fp, 2, 2, p->ws_is[ffts_ctzl(pps[0]/leaf_N)-1]*8 - pLUT);
+        }
 
         if(pps[0] == 2 * leaf_N) {
             *fp = BL(fp+2, x_4_addr);
@@ -574,7 +574,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
         pAddr = pps[1] * 4;
         pN = pps[0];
-        pLUT = p->ws_is[__builtin_ctzl(pps[0]/leaf_N)-1]*8;//LUT_offset(pps[0], leafN);
+        pLUT = p->ws_is[ffts_ctzl(pps[0]/leaf_N)-1]*8;//LUT_offset(pps[0], leafN);
         //	fprintf(stderr, "LUT offset for %d is %d\n", pN, pLUT);
         count += 4;
         pps += 2;
@@ -594,7 +594,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
     //fprintf(stderr, "\n");
     //for(int i=0;i<count;i++)
 
-    fprintf(stderr, "size of transform %u = %d\n", N, (fp - x_8_addr) * sizeof(*fp));
+    //fprintf(stderr, "size of transform %u = %d\n", N, (fp - x_8_addr) * sizeof(*fp));
 
     free(ps);
 
