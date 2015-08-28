@@ -34,7 +34,6 @@ option(ENABLE_SHARED
 include(CheckCSourceCompiles)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
-include(CMakePushCheckState)
 
 add_definitions(-DFFTS_CMAKE_GENERATED)
 
@@ -76,49 +75,43 @@ if(NOT CMAKE_CROSSCOMPILING)
     # Determinate what floating-point hardware
     # (or hardware emulation) is available
     #
-    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
 
     # Try to execute quietly without messages
     set(CMAKE_REQUIRED_QUIET 1)
 
     # Test compilation with -mfpu=neon
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfpu=neon")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon")
     check_symbol_exists(exit stdlib.h NEON_AVAILABLE)
     if(NOT NEON_AVAILABLE)
-      cmake_reset_check_state()
-
       # Test compilation with -mfpu=vfp
-      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfpu=vfp")
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=vfp")
       check_symbol_exists(exit stdlib.h VFP_AVAILABLE)
       if(NOT VFP_AVAILABLE)
         message(WARNING "FFTS is using 'soft' FPU")
       else()
         message("FFTS is using 'vfp' FPU")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp")
-        
         set(ENABLE_NEON 0)
         set(ENABLE_VFP 1)
       endif(NOT SOFTFP_AVAILABLE)
     else()
       message("FFTS is using 'neon' FPU")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon")
-      
       set(ENABLE_NEON 1)
       set(ENABLE_VFP 0)
     endif(NOT NEON_AVAILABLE)
 
     # Determinate float ABI if NEON or VFP is used
     if(NEON_AVAILABLE OR VFP_AVAILABLE)
-      cmake_push_check_state()
+      set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
 
       # Test compilation with -mfloat-abi=hard
-      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfloat-abi=hardfp")
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfloat-abi=hard")
       check_symbol_exists(exit stdlib.h HARDFP_AVAILABLE)
       if(NOT HARDFP_AVAILABLE)
-        cmake_reset_check_state()
-
-        # Test compilation with -mfloat-abi=hard
-        set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfloat-abi=softfp")
+        # Test compilation with -mfloat-abi=softfp
+        set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfloat-abi=softfp")
         check_symbol_exists(exit stdlib.h SOFTFP_AVAILABLE)
         if(NOT SOFTFP_AVAILABLE)
           # Most likely development libraries are missing
@@ -131,11 +124,7 @@ if(NOT CMAKE_CROSSCOMPILING)
         message(WARNING "FFTS is using 'hard' float ABI")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")
       endif(NOT HARDFP_AVAILABLE)
-
-      cmake_pop_check_state()
     endif(NEON_AVAILABLE OR VFP_AVAILABLE)
-
-    cmake_pop_check_state()
   else()
     # check if the platform has support for SSE intrinsics
     check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
