@@ -32,8 +32,8 @@ option(ENABLE_SHARED
 )
 
 include(CheckCSourceCompiles)
+include(CheckCSourceRuns)
 include(CheckIncludeFile)
-include(CheckSymbolExists)
 
 add_definitions(-DFFTS_CMAKE_GENERATED)
 
@@ -72,72 +72,148 @@ endif(HAVE_UNISTD_H)
 # Determinate if we are cross-compiling
 if(NOT CMAKE_CROSSCOMPILING)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
-    # Determinate what floating-point hardware
-    # (or hardware emulation) is available
-    #
+    # Determinate ARM architecture
     set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
 
     # Try to execute quietly without messages
     set(CMAKE_REQUIRED_QUIET 1)
 
-    # Test compilation with -mfpu=neon
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon")
-    check_symbol_exists(exit stdlib.h NEON_AVAILABLE)
-    if(NOT NEON_AVAILABLE)
-      # Test compilation with -mfpu=vfp
+    # The test for ARM architecture
+    set(TEST_SOURCE_CODE "int main() { return 0; }")
+
+    # GCC documentation says "native" is only supported on Linux, but let's try
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -march=native")
+    check_c_source_runs("${TEST_SOURCE_CODE}" GCC_MARCH_NATIVE_FLAG_SUPPORTED)
+
+    if(NOT GCC_MARCH_NATIVE_FLAG_SUPPORTED)
+      # Fallback trying generic ARMv7
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -march=armv7")
+      check_c_source_runs("${TEST_SOURCE_CODE}" GCC_MARCH_ARMV7_FLAG_SUPPORTED)
+
+      if(NOT GCC_MARCH_ARMV7_FLAG_SUPPORTED)
+        # Fallback trying generic ARMv6
+        set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -march=armv6")
+        check_c_source_runs("${TEST_SOURCE_CODE}" GCC_MARCH_ARMV6_FLAG_SUPPORTED)
+
+        if(NOT GCC_MARCH_ARMV6_FLAG_SUPPORTED)
+          message(WARNING "FFTS failed to determinate ARM architecture")
+          set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_SAVE})
+        else()
+          message("FFTS is build using 'march=armv6'")
+          set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv6")
+        endif(NOT GCC_MARCH_ARMV6_FLAG_SUPPORTED)
+      else()
+        message("FFTS is build using 'march=armv7'")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv7")
+      endif(NOT GCC_MARCH_ARMV7_FLAG_SUPPORTED)
+    else()
+       message("FFTS is build using 'march=native'")
+       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
+    endif(NOT GCC_MARCH_NATIVE_FLAG_SUPPORTED)
+
+    # Determinate what floating-point hardware (or hardware emulation) is available
+    set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
+
+    # The test for ARM NEON support
+    set(TEST_SOURCE_CODE "
+      #include <arm_neon.h>
+      int main()
+      {
+       float32x4_t v;
+       float zeros[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+       v = vld1q_f32(zeros);
+       return 0;
+      }"
+    )
+
+    # Test running with -mfpu=neon
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon -mfloat-abi=softfp")
+    check_c_source_runs("${TEST_SOURCE_CODE}" NEON_SUPPORTED)
+
+    if(NOT NEON_SUPPORTED)
+      # Fallback using VFP if NEON is not supported
+      if(ENABLE_NEON)
+        message(FATAL_ERROR "FFTS cannot enable NEON on this platform")
+      endif(ENABLE_NEON)
+
+      # Test for ARM VFP support
+      set(TEST_SOURCE_CODE "
+        double sum(double a, double b)
+        {
+         return a + b;
+        }
+        int main()
+        {
+         double s1, s2, v1 = 1.0, v2 = 2.0, v3 = 1.0e-322;
+         s1 = sum(v1, v2);
+         s2 = sum(v3, v3);
+         return 0;
+        }"
+      )
+
+      # Test running with -mfpu=vfp
       set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=vfp")
-      check_symbol_exists(exit stdlib.h VFP_AVAILABLE)
-      if(NOT VFP_AVAILABLE)
+      check_c_source_runs("${TEST_SOURCE_CODE}" VFP_SUPPORTED)
+
+      if(NOT VFP_SUPPORTED)
+        # Fallback using emulation if VFP is not supported
+        if(ENABLE_VFP)
+          message(FATAL_ERROR "FFTS cannot enable VFP on this platform")
+        endif(ENABLE_VFP)
+
         message(WARNING "FFTS is using 'soft' FPU")
       else()
         message("FFTS is using 'vfp' FPU")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp")
-        set(ENABLE_NEON 0)
-        set(ENABLE_VFP 1)
-      endif(NOT SOFTFP_AVAILABLE)
+        set(ENABLE_VFP ON)
+      endif(NOT VFP_SUPPORTED)
     else()
       message("FFTS is using 'neon' FPU")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon")
-      set(ENABLE_NEON 1)
-      set(ENABLE_VFP 0)
-    endif(NOT NEON_AVAILABLE)
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon")
+      set(ENABLE_NEON ON)
+    endif(NOT NEON_SUPPORTED)
 
     # Determinate float ABI if NEON or VFP is used
-    if(NEON_AVAILABLE OR VFP_AVAILABLE)
+    if(NEON_SUPPORTED OR VFP_SUPPORTED)
       set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
 
-      # Test compilation with -mfloat-abi=hard
+      # Test running with -mfloat-abi=hard
       set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfloat-abi=hard")
-      check_symbol_exists(exit stdlib.h HARDFP_AVAILABLE)
-      if(NOT HARDFP_AVAILABLE)
-        # Test compilation with -mfloat-abi=softfp
+
+      # Use the same test as before
+      check_c_source_runs("${TEST_SOURCE_CODE}" HARDFP_SUPPORTED)
+
+      if(NOT HARDFP_SUPPORTED)
+        # Test running with -mfloat-abi=softfp
         set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfloat-abi=softfp")
-        check_symbol_exists(exit stdlib.h SOFTFP_AVAILABLE)
-        if(NOT SOFTFP_AVAILABLE)
+        check_c_source_runs("${TEST_SOURCE_CODE}" SOFTFP_SUPPORTED)
+  
+        if(NOT SOFTFP_SUPPORTED)
           # Most likely development libraries are missing
           message(WARNING "FFTS is using 'soft' float ABI")
         else()
           message("FFTS is using 'softfp' float ABI")
           set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=softfp")
-        endif(NOT SOFTFP_AVAILABLE)
+        endif(NOT SOFTFP_SUPPORTED)
       else()
-        message(WARNING "FFTS is using 'hard' float ABI")
+        message("FFTS is using 'hard' float ABI")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")
-      endif(NOT HARDFP_AVAILABLE)
-    endif(NEON_AVAILABLE OR VFP_AVAILABLE)
+      endif(NOT HARDFP_SUPPORTED)
+    endif(NEON_SUPPORTED OR VFP_SUPPORTED)
   else()
     # check if the platform has support for SSE intrinsics
     check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
     if(HAVE_XMMINTRIN_H)
       add_definitions(-DHAVE_SSE)
     endif(HAVE_XMMINTRIN_H)
-    
+
     # check if the platform has support for SSE2 intrinsics
     check_include_file(emmintrin.h HAVE_EMMINTRIN_H)
     if(HAVE_EMMINTRIN_H)
       add_definitions(-DHAVE_SSE2)
     endif(HAVE_EMMINTRIN_H)
-    
+
     # check if the platform has support for SSE3 intrinsics
     check_include_file(pmmintrin.h HAVE_PMMINTRIN_H)
     if(HAVE_PMMINTRIN_H)
@@ -165,7 +241,7 @@ if(NOT CMAKE_CROSSCOMPILING)
     endif(HAVE_PMMINTRIN_H)
   endif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
 else()
-  # Check if we can always use detection code above?
+  # TODO: Add detections for compiler support and headers
 endif(NOT CMAKE_CROSSCOMPILING)
 
 # compiler settings
