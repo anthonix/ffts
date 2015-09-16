@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "ffts_trig.h"
+#include "ffts_dd.h"
 
 /* 1/(2*cos(pow(2,-p)*pi)) */
 static const FFTS_ALIGN(16) unsigned int half_secant[132] = {
@@ -285,6 +286,151 @@ mid_point:
 exit:
     return 0;
 }
+
+#if HAVE_SSE2
+int
+ffts_generate_cosine_sine_pow2_64f(ffts_cpx_64f *const table, int table_size)
+{
+    static const __m128d sign_swap = { 0.0, -0.0 };
+    const struct ffts_dd2_t *FFTS_RESTRICT ct;
+    const double *FFTS_RESTRICT hs;
+    struct ffts_dd2_t FFTS_ALIGN(16) w[32];
+    struct ffts_dd2_t FFTS_ALIGN(16) h[32];
+    int i, log_2, offset;
+
+    /* size must be a power of two */
+    if (!table || !table_size || (table_size & (table_size - 1))) {
+        return -1;
+    }
+
+    /* the first */
+    table[0][0] =   1.0;
+    table[0][1] =  -0.0;
+
+    if (FFTS_UNLIKELY(table_size == 1)) {
+        goto exit;
+    }
+
+    if (FFTS_UNLIKELY(table_size == 2)) {
+        /* skip over */
+        i = 1;
+        goto mid_point;
+    }
+
+    /* calculate table offset */
+    FFTS_ASSUME(table_size/2 > 1);
+    log_2 = ffts_ctzl(table_size);
+    FFTS_ASSUME(log_2 > 1);
+    offset = 32 - log_2;
+    ct = (const struct ffts_dd2_t*)
+        FFTS_ASSUME_ALIGNED_32(&cos_sin_pi_table[8 * offset]);
+    hs = (const double*) &half_secant[4 * offset];
+
+    /* initialize from lookup table */
+    for (i = 0; i <= log_2; i++) {
+        w[i] = ct[i];
+
+        /* duplicate the high and low parts */
+        h[i].hi = _mm_set1_pd(hs[2*i + 0]);
+        h[i].lo = _mm_set1_pd(hs[2*i + 1]);
+    }
+
+    /* generate sine and cosine tables with maximum error less than 0.5 ULP */
+    for (i = 1; i < table_size/2; i++) {
+        /* calculate trailing zeros in index */
+        log_2 = ffts_ctzl(i);
+
+        /* result of ffts_dd_mul_dd is normalized */
+        _mm_store_pd((double*) &table[i + 0],
+            _mm_or_pd(w[log_2].hi, sign_swap));
+        _mm_store_pd((double*) &table[table_size - i],
+            _mm_or_pd(_mm_shuffle_pd(w[log_2].hi, w[log_2].hi, 1), sign_swap));
+
+        /* skip and find next trailing zero */
+        offset = (log_2 + 2 + ffts_ctzl(~i >> (log_2 + 2)));
+        w[log_2] = ffts_dd2_mul_dd2(h[log_2],
+            ffts_dd2_add_dd2_unnormalized(w[log_2 + 1], w[offset]));
+    }
+
+mid_point:
+    table[i][0] =  0.707106781186547524;
+    table[i][1] = -0.707106781186547524;
+
+exit:
+    return 0;
+}
+#else
+int
+ffts_generate_cosine_sine_pow2_64f(ffts_cpx_64f *const table, int table_size)
+{
+    const struct ffts_dd_t *FFTS_RESTRICT ct;
+    const struct ffts_dd_t *FFTS_RESTRICT hs;
+    struct ffts_dd_t FFTS_ALIGN(16) w[32][2];
+    int i, log_2, offset;
+
+    /* size must be a power of two */
+    if (!table || !table_size || (table_size & (table_size - 1))) {
+        return -1;
+    }
+
+    /* the first */
+    table[0][0] =  1.0;
+    table[0][1] = -0.0;
+
+    if (FFTS_UNLIKELY(table_size == 1)) {
+        goto exit;
+    }
+
+    if (FFTS_UNLIKELY(table_size == 2)) {
+        /* skip over */
+        i = 1;
+        goto mid_point;
+    }
+
+    /* calculate table offset */
+    FFTS_ASSUME(table_size/2 > 1);
+    log_2 = ffts_ctzl(table_size);
+    FFTS_ASSUME(log_2 > 1);
+    offset = 32 - log_2;
+    ct = (const struct ffts_dd_t*)
+        FFTS_ASSUME_ALIGNED_32(&cos_sin_pi_table[8 * offset]);
+    hs = (const struct ffts_dd_t*) &half_secant[4 * offset];
+
+    /* initialize from lookup table */
+    for (i = 0; i <= log_2; i++) {
+        w[i][0].hi = ct[2*i + 0].hi;
+        w[i][0].lo = ct[2*i + 1].hi;
+        w[i][1].hi = ct[2*i + 0].lo;
+        w[i][1].lo = ct[2*i + 1].lo;
+    }
+
+    /* generate sine and cosine tables with maximum error less than 0.5 ULP */
+    for (i = 1; i < table_size/2; i++) {
+        /* calculate trailing zeros in index */
+        log_2 = ffts_ctzl(i);
+
+        /* result of ffts_dd_mul_dd is normalized */
+        table[i          + 0][0] =  w[log_2][0].hi;
+        table[i          + 0][1] = -w[log_2][1].hi;
+        table[table_size - i][0] =  w[log_2][1].hi;
+        table[table_size - i][1] = -w[log_2][0].hi;
+
+        /* skip and find next trailing zero */
+        offset = (log_2 + 2 + ffts_ctzl(~i >> (log_2 + 2)));
+        w[log_2][0] = ffts_dd_mul_dd(hs[log_2],
+            ffts_dd_add_dd_unnormalized(w[log_2 + 1][0], w[offset][0]));
+        w[log_2][1] = ffts_dd_mul_dd(hs[log_2],
+            ffts_dd_add_dd_unnormalized(w[log_2 + 1][1], w[offset][1]));
+    }
+
+mid_point:
+    table[i][0] =  0.707106781186547524;
+    table[i][1] = -0.707106781186547524;
+
+exit:
+    return 0;
+}
+#endif
 
 int
 ffts_generate_table_1d_real_32f(struct _ffts_plan_t *const p,
