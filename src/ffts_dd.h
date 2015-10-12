@@ -142,12 +142,12 @@ ffts_dd_split(double a)
 
 #if HAVE_SSE2
 static FFTS_INLINE struct ffts_dd2_t
-ffts_dd2_add_dd2_unnormalized(const struct ffts_dd2_t a,
-                              const struct ffts_dd2_t b);
+ffts_dd2_add_dd2_unnormalized(const struct ffts_dd2_t *const FFTS_RESTRICT a,
+                              const struct ffts_dd2_t *const FFTS_RESTRICT b);
 
 static FFTS_INLINE struct ffts_dd2_t
-ffts_dd2_mul_dd2_unnormalized(const struct ffts_dd2_t a,
-                              const struct ffts_dd2_t b);
+ffts_dd2_mul_dd2_unnormalized(const struct ffts_dd2_t *const FFTS_RESTRICT a,
+                              const struct ffts_dd2_t *const FFTS_RESTRICT b);
 
 static FFTS_INLINE struct ffts_dd2_t
 ffts_dd2_split(__m128d a);
@@ -162,23 +162,23 @@ ffts_dd2_add(__m128d a, __m128d b)
 }
 
 static FFTS_INLINE struct ffts_dd2_t
-ffts_dd2_add_dd2(const struct ffts_dd2_t a,
-                 const struct ffts_dd2_t b)
+ffts_dd2_add_dd2(const struct ffts_dd2_t *const FFTS_RESTRICT a,
+                 const struct ffts_dd2_t *const FFTS_RESTRICT b)
 {
     struct ffts_dd2_t t1 = ffts_dd2_add_dd2_unnormalized(a, b);
     return ffts_dd2_add(t1.hi, t1.lo);
 }
 
 static FFTS_INLINE struct ffts_dd2_t
-ffts_dd2_add_dd2_unnormalized(const struct ffts_dd2_t a,
-                              const struct ffts_dd2_t b)
+ffts_dd2_add_dd2_unnormalized(const struct ffts_dd2_t *const FFTS_RESTRICT a,
+                              const struct ffts_dd2_t *const FFTS_RESTRICT b)
 {
     struct ffts_dd2_t dd2;
     __m128d e1;
-    dd2.hi = _mm_add_pd(a.hi, b.hi);
-    e1 = _mm_sub_pd(dd2.hi, a.hi);
-    dd2.lo = _mm_add_pd(_mm_add_pd(_mm_sub_pd(a.hi, _mm_sub_pd(dd2.hi, e1)),
-        _mm_sub_pd(b.hi, e1)), _mm_add_pd(a.lo, b.lo));
+    dd2.hi = _mm_add_pd(a->hi, b->hi);
+    e1 = _mm_sub_pd(dd2.hi, a->hi);
+    dd2.lo = _mm_add_pd(_mm_add_pd(_mm_sub_pd(a->hi, _mm_sub_pd(dd2.hi, e1)),
+        _mm_sub_pd(b->hi, e1)), _mm_add_pd(a->lo, b->lo));
     return dd2;
 }
 
@@ -198,20 +198,20 @@ ffts_dd2_mul(const __m128d a, const __m128d b)
 }
 
 static FFTS_INLINE struct ffts_dd2_t
-ffts_dd2_mul_dd2(const struct ffts_dd2_t a,
-                 const struct ffts_dd2_t b)
+ffts_dd2_mul_dd2(const struct ffts_dd2_t *const FFTS_RESTRICT a,
+                 const struct ffts_dd2_t *const FFTS_RESTRICT b)
 {
     struct ffts_dd2_t dd2 = ffts_dd2_mul_dd2_unnormalized(a, b);
     return ffts_dd2_add(dd2.hi, dd2.lo);
 }
 
 static FFTS_INLINE struct ffts_dd2_t
-ffts_dd2_mul_dd2_unnormalized(const struct ffts_dd2_t a,
-                              const struct ffts_dd2_t b)
+ffts_dd2_mul_dd2_unnormalized(const struct ffts_dd2_t *const FFTS_RESTRICT a,
+                              const struct ffts_dd2_t *const FFTS_RESTRICT b)
 {
-    struct ffts_dd2_t dd2 = ffts_dd2_mul(a.hi, b.hi);
+    struct ffts_dd2_t dd2 = ffts_dd2_mul(a->hi, b->hi);
     dd2.lo = _mm_add_pd(dd2.lo, _mm_add_pd(
-        _mm_mul_pd(a.hi, b.lo), _mm_mul_pd(a.lo, b.hi)));
+        _mm_mul_pd(a->hi, b->lo), _mm_mul_pd(a->lo, b->hi)));
     return dd2;
 }
 

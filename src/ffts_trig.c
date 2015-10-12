@@ -300,6 +300,7 @@ ffts_generate_cosine_sine_pow2_64f(ffts_cpx_64f *const table, int table_size)
     const double *FFTS_RESTRICT hs;
     struct ffts_dd2_t FFTS_ALIGN(16) w[32];
     struct ffts_dd2_t FFTS_ALIGN(16) h[32];
+    struct ffts_dd2_t FFTS_ALIGN(16) sum;
     int i, log_2, offset;
 
     /* size must be a power of two */
@@ -352,8 +353,8 @@ ffts_generate_cosine_sine_pow2_64f(ffts_cpx_64f *const table, int table_size)
 
         /* skip and find next trailing zero */
         offset = (log_2 + 2 + ffts_ctzl(~i >> (log_2 + 2)));
-        w[log_2] = ffts_dd2_mul_dd2(h[log_2],
-            ffts_dd2_add_dd2_unnormalized(w[log_2 + 1], w[offset]));
+        sum = ffts_dd2_add_dd2_unnormalized(&w[log_2 + 1], &w[offset]);
+        w[log_2] = ffts_dd2_mul_dd2(&h[log_2], &sum);
     }
 
 mid_point:
