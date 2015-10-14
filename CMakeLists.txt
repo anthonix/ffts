@@ -276,7 +276,7 @@ elseif(CMAKE_COMPILER_IS_GNUCC)
     add_definitions(-msse2)
   elseif(HAVE_XMMINTRIN_H)
     add_definitions(-msse)
-  endif(HAVE_EMMINTRIN_H)
+  endif(HAVE_PMMINTRIN_H)
 endif(MSVC)
 
 include_directories(include)
