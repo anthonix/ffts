@@ -1,0 +1,3 @@
+language: c
+script:
+  - mkdir build && cd build && cmake .. && cmake --build .
