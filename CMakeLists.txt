@@ -209,27 +209,49 @@ if(NOT CMAKE_CROSSCOMPILING)
       endif(NOT HARDFP_SUPPORTED)
     endif(NEON_SUPPORTED OR VFP_SUPPORTED)
   else()
+    set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
+
+    # enable SSE code generation
+    if(CMAKE_COMPILER_IS_GNUCC)
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -msse")
+    endif(CMAKE_COMPILER_IS_GNUCC)
+
     # check if the platform has support for SSE intrinsics
     check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
     if(HAVE_XMMINTRIN_H)
       add_definitions(-DHAVE_SSE)
+      set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
     endif(HAVE_XMMINTRIN_H)
+
+    # enable SSE2 code generation
+    if(CMAKE_COMPILER_IS_GNUCC)
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -msse2")
+    endif(CMAKE_COMPILER_IS_GNUCC)
 
     # check if the platform has support for SSE2 intrinsics
     check_include_file(emmintrin.h HAVE_EMMINTRIN_H)
     if(HAVE_EMMINTRIN_H)
       add_definitions(-DHAVE_SSE2)
+      set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
     endif(HAVE_EMMINTRIN_H)
+
+    # enable SSE3 code generation
+    if(CMAKE_COMPILER_IS_GNUCC)
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -msse3")
+    endif(CMAKE_COMPILER_IS_GNUCC)
 
     # check if the platform has support for SSE3 intrinsics
     check_include_file(pmmintrin.h HAVE_PMMINTRIN_H)
     if(HAVE_PMMINTRIN_H)
       add_definitions(-DHAVE_PMMINTRIN_H)
       add_definitions(-DHAVE_SSE3)
+      set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
     else()
       # check if the platform has specific intrinsics
       check_include_file(intrin.h HAVE_INTRIN_H)
       if(HAVE_INTRIN_H)
+        add_definitions(-DHAVE_INTRIN_H)
+
         check_c_source_compiles("
           #include<intrin.h>
           int main(int argc, char** argv)
@@ -239,9 +261,9 @@ if(NOT CMAKE_CROSSCOMPILING)
            return _mm_movemask_ps(_mm_moveldup_ps(_mm_set_ss(1.0f)));
           }" HAVE__MM_MOVELDUP_PS
         )
+
         if(HAVE__MM_MOVELDUP_PS)
           # assume that we have all SSE3 intrinsics
-          add_definitions(-DHAVE_INTRIN_H)
           add_definitions(-DHAVE_SSE3)
         endif(HAVE__MM_MOVELDUP_PS)
       endif(HAVE_INTRIN_H)
@@ -263,7 +285,7 @@ elseif(CMAKE_COMPILER_IS_GNUCC)
   # enable all warnings
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 
-  # some systems need libm for some of the math functions to work
+  # some systems need libm for the math functions to work
   check_library_exists(m pow "" HAVE_LIBM)
   if(HAVE_LIBM)
     list(APPEND CMAKE_REQUIRED_LIBRARIES m)
