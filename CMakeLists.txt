@@ -130,7 +130,7 @@ if(NOT CMAKE_CROSSCOMPILING)
     )
 
     # Test running with -mfpu=neon
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon -mfloat-abi=softfp")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon -mfloat-abi=hard")
     check_c_source_runs("${TEST_SOURCE_CODE}" NEON_SUPPORTED)
 
     if(NOT NEON_SUPPORTED)

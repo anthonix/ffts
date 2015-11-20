@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
             printf("%d %d %f %f\n", i, sign, output[2*i], output[2*i+1]);
         ffts_free(p);
 
-#ifdef HAVE_NEON
+#ifdef HAVE_SSE
         _mm_free(input);
         _mm_free(output);
 #else
