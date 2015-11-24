@@ -129,16 +129,34 @@ if(NOT CMAKE_CROSSCOMPILING)
       }"
     )
 
-    # Test running with -mfpu=neon
+    # Test running with -mfpu=neon and -mfloat-abi=hard
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon -mfloat-abi=hard")
-    check_c_source_runs("${TEST_SOURCE_CODE}" NEON_SUPPORTED)
+    check_c_source_runs("${TEST_SOURCE_CODE}" NEON_HARDFP_SUPPORTED)
 
-    if(NOT NEON_SUPPORTED)
-      # Fallback using VFP if NEON is not supported
-      if(ENABLE_NEON)
-        message(FATAL_ERROR "FFTS cannot enable NEON on this platform")
-      endif(ENABLE_NEON)
+    if(NOT NEON_HARDFP_SUPPORTED)
+      # Test running with -mfpu=neon and -mfloat-abi=softfp
+      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon -mfloat-abi=softfp")
+      check_c_source_runs("${TEST_SOURCE_CODE}" NEON_SOFTFP_SUPPORTED)
+      
+      if(NOT NEON_SOFTFP_SUPPORTED)
+        if(ENABLE_NEON)
+          message(FATAL_ERROR "FFTS cannot enable NEON on this platform")
+        endif(ENABLE_NEON)
+      else()
+        message("FFTS is using 'neon' FPU and 'softfp' float ABI")
+        set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -mfpu=neon -mfloat-abi=softfp")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon -mfloat-abi=softfp")
+        set(ENABLE_NEON ON)
+      endif(NOT NEON_SOFTFP_SUPPORTED)
+    else()
+      message("FFTS is using 'neon' FPU and 'hard' float ABI")
+      set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -mfpu=neon -mfloat-abi=hard")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon -mfloat-abi=hard")
+      set(ENABLE_NEON ON)
+    endif(NOT NEON_HARDFP_SUPPORTED)
 
+    # Fallback using VFP if NEON is not supported
+    if(NOT NEON_HARDFP_SUPPORTED AND NOT NEON_SOFTFP_SUPPORTED)
       # Test for ARM VFP support
       set(TEST_SOURCE_CODE "
         double sum(double a, double b)
@@ -169,19 +187,9 @@ if(NOT CMAKE_CROSSCOMPILING)
         message("FFTS is using 'vfp' FPU")
         set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -mfpu=vfp")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfp")
+        set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
         set(ENABLE_VFP ON)
       endif(NOT VFP_SUPPORTED)
-    else()
-      message("FFTS is using 'neon' FPU")
-      set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -mfpu=neon")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=neon")
-      set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfpu=neon")
-      set(ENABLE_NEON ON)
-    endif(NOT NEON_SUPPORTED)
-
-    # Determinate float ABI if NEON or VFP is used
-    if(NEON_SUPPORTED OR VFP_SUPPORTED)
-      set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
 
       # Test running with -mfloat-abi=hard
       set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfloat-abi=hard")
@@ -193,7 +201,7 @@ if(NOT CMAKE_CROSSCOMPILING)
         # Test running with -mfloat-abi=softfp
         set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -mfloat-abi=softfp")
         check_c_source_runs("${TEST_SOURCE_CODE}" SOFTFP_SUPPORTED)
-  
+
         if(NOT SOFTFP_SUPPORTED)
           # Most likely development libraries are missing
           message(WARNING "FFTS is using 'soft' float ABI")
@@ -207,7 +215,7 @@ if(NOT CMAKE_CROSSCOMPILING)
         set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -mfloat-abi=hard")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")
       endif(NOT HARDFP_SUPPORTED)
-    endif(NEON_SUPPORTED OR VFP_SUPPORTED)
+    endif(NOT NEON_HARDFP_SUPPORTED AND NOT NEON_SOFTFP_SUPPORTED)
   else()
     set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
 
