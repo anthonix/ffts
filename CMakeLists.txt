@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(ffts C ASM)
 
@@ -414,18 +414,7 @@ else()
 endif(DISABLE_DYNAMIC_CODE)
 
 if(GENERATE_POSITION_INDEPENDENT_CODE)
-  if(CMAKE_VERSION VERSION_LESS "2.8.9")
-    check_c_compiler_flag(-fPIC HAVE_GCC_PIC)
-    if(HAVE_GCC_PIC)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -DPIC")
-      check_c_compiler_flag(-fPIE HAVE_GCC_PIE)
-      if(HAVE_GCC_PIE)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fPIE -DPIE")
-      endif(HAVE_GCC_PIE)
-    endif(HAVE_GCC_PIC)
-  else()
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-  endif(CMAKE_VERSION VERSION_LESS "2.8.9")
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif(GENERATE_POSITION_INDEPENDENT_CODE)
 
 if(ENABLE_SHARED)
