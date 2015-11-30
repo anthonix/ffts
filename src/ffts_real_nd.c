@@ -218,7 +218,8 @@ static void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *in, void *out)
     }
 }
 
-ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign)
+FFTS_API ffts_plan_t*
+ffts_init_nd_real(int rank, size_t *Ns, int sign)
 {
     int i;
     size_t vol = 1;
@@ -327,7 +328,8 @@ cleanup:
     return NULL;
 }
 
-ffts_plan_t *ffts_init_2d_real(size_t N1, size_t N2, int sign)
+FFTS_API ffts_plan_t*
+ffts_init_2d_real(size_t N1, size_t N2, int sign)
 {
     size_t Ns[2];
 

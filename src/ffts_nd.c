@@ -281,7 +281,8 @@ static void ffts_execute_nd(ffts_plan_t *p, const void *in, void *out)
     }
 }
 
-ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign)
+FFTS_API ffts_plan_t*
+ffts_init_nd(int rank, size_t *Ns, int sign)
 {
     ffts_plan_t *p;
     size_t vol;
@@ -354,7 +355,8 @@ cleanup:
     return NULL;
 }
 
-ffts_plan_t *ffts_init_2d(size_t N1, size_t N2, int sign)
+FFTS_API ffts_plan_t*
+ffts_init_2d(size_t N1, size_t N2, int sign)
 {
     size_t Ns[2];
 

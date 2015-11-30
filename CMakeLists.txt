@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 2.8)
 
 project(ffts C ASM)
 
+# TODO: to support AutoConfigure building, this should came from "template" file
+set(FFTS_MAJOR 0)
+set(FFTS_MINOR 9)
+set(FFTS_MICRO 0)
+
+set(FFTS_VERSION "ffts-${FFTS_MAJOR}.${FFTS_MINOR}.${FFTS_MICRO}")
+
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -27,15 +34,25 @@ option(ENABLE_RUNTIME_DYNAMIC_CODE
   "Enables the runtime generation of dynamic machine code." ON
 )
 
+option(GENERATE_POSITION_INDEPENDENT_CODE
+  "Generate position independent code" OFF
+)
+
 option(ENABLE_SHARED
   "Enable building a shared library." OFF
+)
+
+option(ENABLE_STATIC
+  "Enable building a static library." ON
 )
 
 include(CheckCSourceCompiles)
 include(CheckCSourceRuns)
 include(CheckIncludeFile)
 
-add_definitions(-DFFTS_CMAKE_GENERATED)
+# Ensure defined when building FFTS (as opposed to using it from
+# another project). Used to export functions from Windows DLL.
+add_definitions(-DFFTS_BUILD)
 
 # check existence of various headers
 check_include_file(malloc.h   HAVE_MALLOC_H)
@@ -286,12 +303,23 @@ if(MSVC)
   # enable all warnings but also disable some..
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 /wd4127")
 
+  # mark debug versions
+  set(CMAKE_DEBUG_POSTFIX "d")
+
   add_definitions(-D_USE_MATH_DEFINES)
 elseif(CMAKE_COMPILER_IS_GNUCC)
+  include(CheckCCompilerFlag)
   include(CheckLibraryExists)
 
   # enable all warnings
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+
+  # check if we can control visibility of symbols
+  check_c_compiler_flag(-fvisibility=hidden HAVE_GCC_VISIBILITY)
+  if(HAVE_GCC_VISIBILITY)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+    add_definitions(-DHAVE_GCC_VISIBILITY)
+  endif(HAVE_GCC_VISIBILITY)
 
   # some systems need libm for the math functions to work
   check_library_exists(m pow "" HAVE_LIBM)
@@ -385,16 +413,61 @@ else()
   )
 endif(DISABLE_DYNAMIC_CODE)
 
-add_library(ffts_static
-  ${FFTS_HEADERS}
-  ${FFTS_SOURCES}
-)
+if(GENERATE_POSITION_INDEPENDENT_CODE)
+  if(CMAKE_VERSION VERSION_LESS "2.8.9")
+    check_c_compiler_flag(-fPIC HAVE_GCC_PIC)
+    if(HAVE_GCC_PIC)
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -DPIC")
+      check_c_compiler_flag(-fPIE HAVE_GCC_PIE)
+      if(HAVE_GCC_PIE)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fPIE -DPIE")
+      endif(HAVE_GCC_PIE)
+    endif(HAVE_GCC_PIC)
+  else()
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  endif(CMAKE_VERSION VERSION_LESS "2.8.9")
+endif(GENERATE_POSITION_INDEPENDENT_CODE)
 
-add_executable(ffts_test
-  tests/test.c
-)
+if(ENABLE_SHARED)
+  add_library(ffts_shared SHARED
+    ${FFTS_HEADERS}
+    ${FFTS_SOURCES}
+  )
 
-target_link_libraries(ffts_test
-  ffts_static
-  ${FFTS_EXTRA_LIBRARIES}
-)
+  # On unix-like platforms the library is called "libffts.so" and on Windows "ffts.dll"
+  set_target_properties(ffts_shared PROPERTIES
+    DEFINE_SYMBOL FFTS_SHARED
+    OUTPUT_NAME ffts
+    VERSION ${FFTS_MAJOR}.${FFTS_MINOR}.${FFTS_MICRO}
+  )
+endif(ENABLE_SHARED)
+
+if(ENABLE_STATIC)
+  add_library(ffts_static STATIC
+    ${FFTS_HEADERS}
+    ${FFTS_SOURCES}
+  )
+
+  if(UNIX)
+    # On unix-like platforms the library is called "libffts.a"
+    set_target_properties(ffts_static PROPERTIES OUTPUT_NAME ffts)
+  endif(UNIX)
+endif(ENABLE_STATIC)
+
+if(ENABLE_STATIC OR ENABLE_SHARED)
+  add_executable(ffts_test
+    tests/test.c
+  )
+
+  # link with static library by default
+  if(ENABLE_STATIC)
+    add_library(ffts ALIAS ffts_static)
+  else()
+    add_library(ffts ALIAS ffts_shared)
+  endif(ENABLE_STATIC)
+
+  target_link_libraries(ffts_test
+    ffts
+    ${FFTS_EXTRA_LIBRARIES}
+  )
+endif(ENABLE_STATIC OR ENABLE_SHARED)

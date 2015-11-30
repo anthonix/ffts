@@ -149,7 +149,8 @@ static FFTS_INLINE void ffts_vmem_free(void *addr, size_t length)
 #endif
 }
 
-void ffts_execute(ffts_plan_t *p, const void *in, void *out)
+FFTS_API void
+ffts_execute(ffts_plan_t *p, const void *in, void *out)
 {
     /* TODO: Define NEEDS_ALIGNED properly instead */
 #if defined(HAVE_SSE) || defined(HAVE_NEON)
@@ -165,7 +166,8 @@ void ffts_execute(ffts_plan_t *p, const void *in, void *out)
     p->transform(p, (const float*) in, (float*) out);
 }
 
-void ffts_free(ffts_plan_t *p)
+FFTS_API void
+ffts_free(ffts_plan_t *p)
 {
     if (p) {
         p->destroy(p);
@@ -409,7 +411,7 @@ cleanup:
     return -1;
 }
 
-ffts_plan_t*
+FFTS_API ffts_plan_t*
 ffts_init_1d(size_t N, int sign)
 {
     const size_t leaf_N = 8;

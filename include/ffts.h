@@ -42,27 +42,54 @@
 extern "C" {
 #endif
 
+#if (defined(_WIN32) || defined(WIN32)) && defined(FFTS_SHARED)
+#  ifdef FFTS_BUILD
+#    define FFTS_API __declspec(dllexport)
+#  else
+#    define FFTS_API __declspec(dllimport)
+#  endif
+#else
+#  if (__GNUC__ >= 4) || defined(HAVE_GCC_VISIBILITY)
+#    define FFTS_API __attribute__ ((visibility("default")))
+#  else
+#    define FFTS_API
+#  endif
+#endif
+
 #define POSITIVE_SIGN 1
 #define NEGATIVE_SIGN -1
 
 struct _ffts_plan_t;
 typedef struct _ffts_plan_t ffts_plan_t;
 
-ffts_plan_t *ffts_init_1d(size_t N, int sign);
-ffts_plan_t *ffts_init_2d(size_t N1, size_t N2, int sign);
-ffts_plan_t *ffts_init_nd(int rank, size_t *Ns, int sign);
+FFTS_API ffts_plan_t*
+ffts_init_1d(size_t N, int sign);
+
+FFTS_API ffts_plan_t*
+ffts_init_2d(size_t N1, size_t N2, int sign);
+
+FFTS_API ffts_plan_t*
+ffts_init_nd(int rank, size_t *Ns, int sign);
 
 /* For real transforms, sign == -1 implies a real-to-complex forwards tranform,
    and sign == 1 implies a complex-to-real backwards transform.
    The output of a real-to-complex transform is N/2+1 complex numbers,
    where the redundant outputs have been omitted.
 */
-ffts_plan_t *ffts_init_1d_real(size_t N, int sign);
-ffts_plan_t *ffts_init_2d_real(size_t N1, size_t N2, int sign);
-ffts_plan_t *ffts_init_nd_real(int rank, size_t *Ns, int sign);
+FFTS_API ffts_plan_t*
+ffts_init_1d_real(size_t N, int sign);
 
-void ffts_execute(ffts_plan_t *p, const void *input, void *output);
-void ffts_free(ffts_plan_t *p);
+FFTS_API ffts_plan_t*
+ffts_init_2d_real(size_t N1, size_t N2, int sign);
+
+FFTS_API ffts_plan_t*
+ffts_init_nd_real(int rank, size_t *Ns, int sign);
+
+FFTS_API void
+ffts_execute(ffts_plan_t *p, const void *input, void *output);
+
+FFTS_API void
+ffts_free(ffts_plan_t *p);
 
 #ifdef __cplusplus
 }

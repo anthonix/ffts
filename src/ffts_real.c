@@ -599,7 +599,7 @@ ffts_execute_1d_real_inv(ffts_plan_t *p, const void *input, void *output)
     p->plans[0]->transform(p->plans[0], buf, output);
 }
 
-ffts_plan_t*
+FFTS_API ffts_plan_t*
 ffts_init_1d_real(size_t N, int sign)
 {
     ffts_plan_t *p;
