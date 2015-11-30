@@ -7,6 +7,6 @@ addons:
     packages:
       - cmake
     sources:
-      - kalakris-cmake
+      - kubuntu-backports
 script:
   - mkdir build && cd build && cmake .. && cmake --build .
