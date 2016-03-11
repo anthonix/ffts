@@ -36,6 +36,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ffts_internal.h"
 #include "macros.h"
 
+#if defined(HAVE_NEON)
+#include "neon.h"
+#endif
+
 #include <assert.h>
 
 static const FFTS_ALIGN(16) float ffts_constants_small_32f[24] = {
@@ -945,6 +949,28 @@ ffts_static_firstpass_even_32f(float *FFTS_RESTRICT out,
 static void
 ffts_static_rec_f_32f(ffts_plan_t *p, float *data, size_t N)
 {
+#if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
+    if (N > 16) {
+        size_t N1 = N >> 1;
+        size_t N2 = N >> 2;
+        size_t N3 = N >> 3;
+        float *ws = ((float *)(p->ws)) + (p->ws_is[ffts_ctzl(N)-4] << 1);
+
+        ffts_static_rec_f_32f(p, data, N2);
+        ffts_static_rec_f_32f(p, data + N1, N3);
+        ffts_static_rec_f_32f(p, data + N1 + N2, N3);
+        ffts_static_rec_f_32f(p, data + N, N2);
+        ffts_static_rec_f_32f(p, data + N + N1, N2);
+
+        if (N == p->N) {
+            neon_static_x8_t_f(data, N, ws);
+        } else {
+            neon_static_x8_f(data, N, ws); 
+        }
+    } else if (N == 16) {
+        neon_static_x4_f(data, N, p->ws);
+    }
+#else
     const float *ws = (float*) p->ws;
 
     if (N > 128) {
@@ -983,11 +1009,34 @@ ffts_static_rec_f_32f(ffts_plan_t *p, float *data, size_t N)
         assert(N == 16);
         V4SF_X_4(0, data, N, ws);
     }
+#endif
 }
 
 static void
 ffts_static_rec_i_32f(ffts_plan_t *p, float *data, size_t N)
 {
+#if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
+    if (N > 16) {
+        size_t N1 = N >> 1;
+        size_t N2 = N >> 2;
+        size_t N3 = N >> 3;
+        float *ws = ((float *)(p->ws)) + (p->ws_is[ffts_ctzl(N)-4] << 1);
+
+        ffts_static_rec_i_32f(p, data, N2);
+        ffts_static_rec_i_32f(p, data + N1, N3);
+        ffts_static_rec_i_32f(p, data + N1 + N2, N3);
+        ffts_static_rec_i_32f(p, data + N, N2);
+        ffts_static_rec_i_32f(p, data + N + N1, N2);
+
+        if (N == p->N) {
+            neon_static_x8_t_i(data, N, ws);
+        } else {
+            neon_static_x8_i(data, N, ws); 
+        }
+    } else if(N==16) {
+        neon_static_x4_i(data, N, p->ws);
+    }
+#else
     float *ws = (float*) p->ws;
 
     if (N > 128) {
@@ -1026,28 +1075,51 @@ ffts_static_rec_i_32f(ffts_plan_t *p, float *data, size_t N)
         assert(N == 16);
         V4SF_X_4(1, data, N, ws);
     }
+#endif
 }
 
 void
 ffts_static_transform_f_32f(ffts_plan_t *p, const void *in, void *out)
 {
-    if (ffts_ctzl(p->N) & 1) {
-        ffts_static_firstpass_odd_32f((float*) out, (const float*) in, p, 0);
-    } else {
-        ffts_static_firstpass_even_32f((float*) out, (const float*) in, p, 0);
-    }
+    const float *din = (const float*) in;
+    float *dout = (float*) out;
 
-    ffts_static_rec_f_32f(p, (float*) out, p->N);
+#if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
+    if (ffts_ctzl(p->N) & 1) {
+        neon_static_o_f(p, din, dout);
+    } else {
+        neon_static_e_f(p, din, dout);
+    }
+#else
+    if (ffts_ctzl(p->N) & 1) {
+        ffts_static_firstpass_odd_32f(dout, din, p, 0);
+    } else {
+        ffts_static_firstpass_even_32f(dout, din, p, 0);
+    }
+#endif
+
+    ffts_static_rec_f_32f(p, dout, p->N);
 }
 
 void
 ffts_static_transform_i_32f(ffts_plan_t *p, const void *in, void *out)
 {
-    if (ffts_ctzl(p->N) & 1) {
-        ffts_static_firstpass_odd_32f((float*) out, (const float*) in, p, 1);
-    } else {
-        ffts_static_firstpass_even_32f((float*) out, (const float*) in, p, 1);
-    }
+    const float *din = (const float*) in;
+    float *dout = (float*) out;
 
-    ffts_static_rec_i_32f(p, (float*) out, p->N);
+#if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
+    if (ffts_ctzl(p->N) & 1) {
+        neon_static_o_i(p, din, dout);
+    } else {
+        neon_static_e_i(p, din, dout);
+    }
+#else
+    if (ffts_ctzl(p->N) & 1) {
+        ffts_static_firstpass_odd_32f(dout, din, p, 1);
+    } else {
+        ffts_static_firstpass_even_32f(dout, din, p, 1);
+    }
+#endif
+
+    ffts_static_rec_i_32f(p, dout, p->N);
 }

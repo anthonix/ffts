@@ -55,7 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #endif
 
-#if defined(__arm__) && !defined(DYNAMIC_DISABLED)
+#if defined(HAVE_NEON)
 static const FFTS_ALIGN(64) float w_data[16] = {
      0.70710678118654757273731092936941f,
      0.70710678118654746171500846685376f,
@@ -227,7 +227,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     if (n_luts) {
         size_t lut_size;
 
-#if defined(__arm__) && !defined(DYNAMIC_DISABLED)
+#if defined(__arm__) && !defined(HAVE_NEON)
         lut_size = leaf_N * (((1 << n_luts) - 2) * 3 + 1) * sizeof(ffts_cpx_32f) / 2;
 #else
         lut_size = leaf_N * (((1 << n_luts) - 2) * 3 + 1) * sizeof(ffts_cpx_32f);
@@ -272,7 +272,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 w0[j][1] = tmp[j * stride][1];
             }
 
-#if defined(__arm__) && !defined(DYNAMIC_DISABLED)
+#if defined(__arm__)
 #ifdef HAVE_NEON
             for (j = 0; j < n/4; j += 4) {
                 V4SF2 temp0 = V4SF2_LD(fw0 + j*2);
@@ -323,7 +323,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
                 w2[j][1] = tmp[(j + (n/8)) * stride][1];
             }
 
-#if defined(__arm__) && !defined(DYNAMIC_DISABLED)
+#if defined(__arm__)
 #ifdef HAVE_NEON
             for (j = 0; j < n/8; j += 4) {
                 V4SF2 temp0, temp1, temp2;
@@ -389,11 +389,11 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         stride >>= 1;
     }
 
-#if defined(__arm__) && !defined(DYNAMIC_DISABLED)
+#if defined(HAVE_NEON)
     if (sign < 0) {
-        p->oe_ws = (void*)(&w_data[4]);
+        p->oe_ws = (void*)(w_data + 4);
         p->ee_ws = (void*)(w_data);
-        p->eo_ws = (void*)(&w_data[4]);
+        p->eo_ws = (void*)(w_data + 4);
     } else {
         p->oe_ws = (void*)(w_data + 12);
         p->ee_ws = (void*)(w_data + 8);
