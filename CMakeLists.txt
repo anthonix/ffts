@@ -30,10 +30,6 @@ option(DISABLE_DYNAMIC_CODE
   "Disables the use of dynamic machine code generation." OFF
 )
 
-option(ENABLE_RUNTIME_DYNAMIC_CODE
-  "Enables the runtime generation of dynamic machine code." ON
-)
-
 option(GENERATE_POSITION_INDEPENDENT_CODE
   "Generate position independent code" OFF
 )
