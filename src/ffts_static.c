@@ -980,11 +980,9 @@ ffts_static_rec_f_32f(const ffts_plan_t *p, float *data, size_t N)
         neon_static_x4_f(data + 96, 16, ws);
 
         neon_static_x8_f(data, 64, ws + (p->ws_is[2] << 1));
-    } else if (N == 32) {
-        neon_static_x8_f(data, 32, ws + (p->ws_is[1] << 1));
     } else {
-        assert(N == 16);
-        neon_static_x4_f(data, 16, ws);
+        assert(N == 32);
+        neon_static_x8_f(data, 32, ws + (p->ws_is[1] << 1));
     }
 #else
     if (N > 128) {
@@ -1015,11 +1013,9 @@ ffts_static_rec_f_32f(const ffts_plan_t *p, float *data, size_t N)
         V4SF_X_4(0, data + 96, 16, ws);
 
         V4SF_X_8(0, data, 64, ws + (p->ws_is[2] << 1));
-    } else if (N == 32) {
-        V4SF_X_8(0, data, 32, ws + (p->ws_is[1] << 1));
     } else {
-        assert(N == 16);
-        V4SF_X_4(0, data, 16, ws);
+        assert(N == 32);
+        V4SF_X_8(0, data, 32, ws + (p->ws_is[1] << 1));
     }
 #endif
 }
@@ -1058,11 +1054,9 @@ ffts_static_rec_i_32f(const ffts_plan_t *p, float *data, size_t N)
         neon_static_x4_i(data + 96, 16, ws);
 
         neon_static_x8_i(data, 64, ws + (p->ws_is[2] << 1));
-    } else if (N == 32) {
-        neon_static_x8_i(data, 32, ws + (p->ws_is[1] << 1));
     } else {
-		assert(N == 16);
-        neon_static_x4_i(data, 16, ws);
+        assert(N == 32);
+        neon_static_x8_i(data, 32, ws + (p->ws_is[1] << 1));
     }
 #else
     if (N > 128) {
@@ -1093,11 +1087,9 @@ ffts_static_rec_i_32f(const ffts_plan_t *p, float *data, size_t N)
         V4SF_X_4(1, data + 96, 16, ws);
 
         V4SF_X_8(1, data, 64, ws + (p->ws_is[2] << 1));
-    } else if (N == 32) {
-        V4SF_X_8(1, data, 32, ws + (p->ws_is[1] << 1));
     } else {
-        assert(N == 16);
-        V4SF_X_4(1, data, 16, ws);
+        assert(N == 32);
+        V4SF_X_8(1, data, 32, ws + (p->ws_is[1] << 1));
     }
 #endif
 }
@@ -1120,7 +1112,7 @@ ffts_static_transform_f_32f(ffts_plan_t *p, const void *in, void *out)
         neon_static_e_f(p, din, dout);
     }
 
-    if (N > 64) {
+    if (N > 128) {
         const size_t N1 = N >> 1;
         const size_t N2 = N >> 2;
         const size_t N3 = N >> 3;
@@ -1130,6 +1122,14 @@ ffts_static_transform_f_32f(ffts_plan_t *p, const void *in, void *out)
         ffts_static_rec_f_32f(p, dout     + N1 + N2, N3);
         ffts_static_rec_f_32f(p, dout + N          , N2);
         ffts_static_rec_f_32f(p, dout + N + N1     , N2);
+    } else if (N == 128) {
+        const float *ws1 = ws + (p->ws_is[1] << 1);
+
+        neon_static_x8_f(dout      , 32, ws1);
+        neon_static_x4_f(dout +  64, 16, ws);
+        neon_static_x4_f(dout +  96, 16, ws);
+        neon_static_x8_f(dout + 128, 32, ws1);
+        neon_static_x8_f(dout + 192, 32, ws1);
     } else if (N == 64) {
         neon_static_x4_f(dout     , 16, ws);
         neon_static_x4_f(dout + 64, 16, ws);
@@ -1166,7 +1166,7 @@ ffts_static_transform_i_32f(ffts_plan_t *p, const void *in, void *out)
         neon_static_e_i(p, din, dout);
     }
 
-    if (N > 64) {
+    if (N > 128) {
         const size_t N1 = N >> 1;
         const size_t N2 = N >> 2;
         const size_t N3 = N >> 3;
@@ -1176,6 +1176,14 @@ ffts_static_transform_i_32f(ffts_plan_t *p, const void *in, void *out)
         ffts_static_rec_i_32f(p, dout     + N1 + N2, N3);
         ffts_static_rec_i_32f(p, dout + N          , N2);
         ffts_static_rec_i_32f(p, dout + N + N1     , N2);
+    } else if (N == 128) {
+        const float *ws1 = ws + (p->ws_is[1] << 1);
+
+        neon_static_x8_i(dout      , 32, ws1);
+        neon_static_x4_i(dout +  64, 16, ws);
+        neon_static_x4_i(dout +  96, 16, ws);
+        neon_static_x8_i(dout + 128, 32, ws1);
+        neon_static_x8_i(dout + 192, 32, ws1);
     } else if (N == 64) {
         neon_static_x4_i(dout     , 16, ws);
         neon_static_x4_i(dout + 64, 16, ws);
