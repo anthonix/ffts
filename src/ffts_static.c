@@ -947,36 +947,31 @@ ffts_static_firstpass_even_32f(float *FFTS_RESTRICT out,
 }
 
 static void
-ffts_static_rec_f_32f(ffts_plan_t *p, float *data, size_t N)
+ffts_static_rec_f_32f(const ffts_plan_t *p, float *data, size_t N)
 {
+    const float *ws = (const float*) p->ws;
+
 #if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
     if (N > 16) {
-        size_t N1 = N >> 1;
-        size_t N2 = N >> 2;
-        size_t N3 = N >> 3;
-        float *ws = ((float *)(p->ws)) + (p->ws_is[ffts_ctzl(N)-4] << 1);
+        const size_t N1 = N >> 1;
+        const size_t N2 = N >> 2;
+        const size_t N3 = N >> 3;
 
-        ffts_static_rec_f_32f(p, data, N2);
-        ffts_static_rec_f_32f(p, data + N1, N3);
-        ffts_static_rec_f_32f(p, data + N1 + N2, N3);
-        ffts_static_rec_f_32f(p, data + N, N2);
-        ffts_static_rec_f_32f(p, data + N + N1, N2);
+        ffts_static_rec_f_32f(p, data              , N2);
+        ffts_static_rec_f_32f(p, data     + N1     , N3);
+        ffts_static_rec_f_32f(p, data     + N1 + N2, N3);
+        ffts_static_rec_f_32f(p, data + N          , N2);
+        ffts_static_rec_f_32f(p, data + N + N1     , N2);
 
-        if (N == p->N) {
-            neon_static_x8_t_f(data, N, ws);
-        } else {
-            neon_static_x8_f(data, N, ws); 
-        }
+        neon_static_x8_f(data, N, ws + (p->ws_is[ffts_ctzl(N) - 4] << 1));
     } else if (N == 16) {
-        neon_static_x4_f(data, N, p->ws);
+        neon_static_x4_f(data, N, ws);
     }
 #else
-    const float *ws = (float*) p->ws;
-
     if (N > 128) {
-        size_t N1 = N >> 1;
-        size_t N2 = N >> 2;
-        size_t N3 = N >> 3;
+        const size_t N1 = N >> 1;
+        const size_t N2 = N >> 2;
+        const size_t N3 = N >> 3;
 
         ffts_static_rec_f_32f(p, data              , N2);
         ffts_static_rec_f_32f(p, data +     N1     , N3);
@@ -1013,36 +1008,31 @@ ffts_static_rec_f_32f(ffts_plan_t *p, float *data, size_t N)
 }
 
 static void
-ffts_static_rec_i_32f(ffts_plan_t *p, float *data, size_t N)
+ffts_static_rec_i_32f(const ffts_plan_t *p, float *data, size_t N)
 {
+    const float *ws = (const float*) p->ws;
+
 #if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
     if (N > 16) {
-        size_t N1 = N >> 1;
-        size_t N2 = N >> 2;
-        size_t N3 = N >> 3;
-        float *ws = ((float *)(p->ws)) + (p->ws_is[ffts_ctzl(N)-4] << 1);
+        const size_t N1 = N >> 1;
+        const size_t N2 = N >> 2;
+        const size_t N3 = N >> 3;
 
-        ffts_static_rec_i_32f(p, data, N2);
-        ffts_static_rec_i_32f(p, data + N1, N3);
-        ffts_static_rec_i_32f(p, data + N1 + N2, N3);
-        ffts_static_rec_i_32f(p, data + N, N2);
-        ffts_static_rec_i_32f(p, data + N + N1, N2);
+        ffts_static_rec_i_32f(p, data              , N2);
+        ffts_static_rec_i_32f(p, data     + N1     , N3);
+        ffts_static_rec_i_32f(p, data     + N1 + N2, N3);
+        ffts_static_rec_i_32f(p, data + N          , N2);
+        ffts_static_rec_i_32f(p, data + N + N1     , N2);
 
-        if (N == p->N) {
-            neon_static_x8_t_i(data, N, ws);
-        } else {
-            neon_static_x8_i(data, N, ws); 
-        }
-    } else if(N==16) {
-        neon_static_x4_i(data, N, p->ws);
+        neon_static_x8_i(data, N, ws + (p->ws_is[ffts_ctzl(N) - 4] << 1));
+    } else if (N == 16) {
+        neon_static_x4_i(data, N, ws);
     }
 #else
-    float *ws = (float*) p->ws;
-
     if (N > 128) {
-        size_t N1 = N >> 1;
-        size_t N2 = N >> 2;
-        size_t N3 = N >> 3;
+        const size_t N1 = N >> 1;
+        const size_t N2 = N >> 2;
+        const size_t N3 = N >> 3;
 
         ffts_static_rec_i_32f(p, data              , N2);
         ffts_static_rec_i_32f(p, data +     N1     , N3);
@@ -1084,21 +1074,38 @@ ffts_static_transform_f_32f(ffts_plan_t *p, const void *in, void *out)
     const float *din = (const float*) in;
     float *dout = (float*) out;
 
+    const size_t N = p->N;
+    const int N_log_2 = ffts_ctzl(N);
+
 #if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
-    if (ffts_ctzl(p->N) & 1) {
+    const size_t N1 = N >> 1;
+    const size_t N2 = N >> 2;
+    const size_t N3 = N >> 3;
+
+    const float *ws = ((const float*) p->ws) + (p->ws_is[N_log_2 - 4] << 1);
+
+    if (N_log_2 & 1) {
         neon_static_o_f(p, din, dout);
     } else {
         neon_static_e_f(p, din, dout);
     }
+
+    ffts_static_rec_f_32f(p, dout              , N2);
+    ffts_static_rec_f_32f(p, dout     + N1     , N3);
+    ffts_static_rec_f_32f(p, dout     + N1 + N2, N3);
+    ffts_static_rec_f_32f(p, dout + N          , N2);
+    ffts_static_rec_f_32f(p, dout + N + N1     , N2);
+
+    neon_static_x8_t_f(dout, N, ws);
 #else
-    if (ffts_ctzl(p->N) & 1) {
+    if (N_log_2 & 1) {
         ffts_static_firstpass_odd_32f(dout, din, p, 0);
     } else {
         ffts_static_firstpass_even_32f(dout, din, p, 0);
     }
-#endif
 
-    ffts_static_rec_f_32f(p, dout, p->N);
+    ffts_static_rec_f_32f(p, dout, N);
+#endif
 }
 
 void
@@ -1107,19 +1114,36 @@ ffts_static_transform_i_32f(ffts_plan_t *p, const void *in, void *out)
     const float *din = (const float*) in;
     float *dout = (float*) out;
 
+    const size_t N = p->N;
+    const int N_log_2 = ffts_ctzl(N);
+
 #if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
-    if (ffts_ctzl(p->N) & 1) {
+    const size_t N1 = N >> 1;
+    const size_t N2 = N >> 2;
+    const size_t N3 = N >> 3;
+
+    const float *ws = ((const float*) p->ws) + (p->ws_is[N_log_2 - 4] << 1);
+
+    if (N_log_2 & 1) {
         neon_static_o_i(p, din, dout);
     } else {
         neon_static_e_i(p, din, dout);
     }
+
+    ffts_static_rec_i_32f(p, dout              , N2);
+    ffts_static_rec_i_32f(p, dout     + N1     , N3);
+    ffts_static_rec_i_32f(p, dout     + N1 + N2, N3);
+    ffts_static_rec_i_32f(p, dout + N          , N2);
+    ffts_static_rec_i_32f(p, dout + N + N1     , N2);
+
+    neon_static_x8_t_i(dout, N, ws);
 #else
-    if (ffts_ctzl(p->N) & 1) {
+    if (N_log_2 & 1) {
         ffts_static_firstpass_odd_32f(dout, din, p, 1);
     } else {
         ffts_static_firstpass_even_32f(dout, din, p, 1);
     }
-#endif
 
-    ffts_static_rec_i_32f(p, dout, p->N);
+    ffts_static_rec_i_32f(p, dout, N);
+#endif
 }
