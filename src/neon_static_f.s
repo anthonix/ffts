@@ -652,59 +652,57 @@ _neon_ee_o_loop2_exit:
 	vldmia	sp!, {d8-d15}
 	pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}
 
-	.align	4
+  .align 4
 #ifdef __APPLE__
-	.globl	_neon_static_x4_f
+  .globl _neon_static_x4_f
 _neon_static_x4_f:
 #else
-	.globl	neon_static_x4_f
+  .globl neon_static_x4_f
 neon_static_x4_f:
 #endif
-@	add r3, r0, #0
-  push	{r4, r5, r6, lr}
-  vstmdb	sp!, {d8-d15}
+  add       r3, r0, #64
+  vpush     {q4-q7}
 
-	vld1.32 {q8,q9}, [r0, :128]
-	add r4, r0, r1, lsl #1
-	vld1.32 {q10,q11}, [r4, :128]
-	add r5, r0, r1, lsl #2
-	vld1.32 {q12,q13}, [r5, :128]
-	add r6, r4, r1, lsl #2
-	vld1.32 {q14,q15}, [r6, :128]
-	vld1.32 {q2,q3}, [r2, :128]
-	
-	vmul.f32	q0, q13, q3
-	vmul.f32	q5, q12, q2
-	vmul.f32	q1, q14, q2
-	vmul.f32	q4, q14, q3
-	vmul.f32	q14, q12, q3
-	vmul.f32	q13, q13, q2
-	vmul.f32	q12, q15, q3
-	vmul.f32	q2, q15, q2
-	vsub.f32	q0, q5, q0
-	vadd.f32	q13, q13, q14
-	vadd.f32	q12, q12, q1
-	vsub.f32	q1, q2, q4
-	vadd.f32	q15, q0, q12
-	vsub.f32	q12, q0, q12
-	vadd.f32	q14, q13, q1
-	vsub.f32	q13, q13, q1
-	vadd.f32	q0, q8, q15
-	vadd.f32	q1, q9, q14
-	vadd.f32	q2, q10, q13  @
-	vsub.f32	q4, q8, q15
-	vsub.f32	q3, q11, q12  @
-	vst1.32 {q0,q1}, [r0, :128]
-	vsub.f32	q5, q9, q14
-	vsub.f32	q6, q10, q13  @
-	vadd.f32	q7, q11, q12  @
-	vst1.32 {q2,q3}, [r4, :128]
-	vst1.32 {q4,q5}, [r5, :128]
-	vst1.32 {q6,q7}, [r6, :128]
-	vldmia	sp!, {d8-d15}
-	pop	{r4, r5, r6, pc}
+  vld1.32   {q2,  q3},  [r1, :128]
+  vld1.32   {q12, q13}, [r3, :128]!
+  mov       r2, r0
+  vmul.f32  q0,  q13, q3
+  vld1.32   {q14, q15}, [r3, :128]
+  vmul.f32  q5,  q12, q2
+  vld1.32   {q8,  q9},  [r0, :128]!
+  vmul.f32  q1,  q14, q2
+  vld1.32   {q10, q11}, [r0, :128]
+  vmul.f32  q4,  q14, q3
+  vmul.f32  q14, q12, q3
+  vmul.f32  q13, q13, q2
+  vmul.f32  q12, q15, q3
+  vmul.f32  q2,  q15, q2
+  vsub.f32  q0,  q5,  q0
+  vadd.f32  q13, q13, q14
+  vadd.f32  q12, q12, q1
+  vsub.f32  q1,  q2,  q4
+  vadd.f32  q15, q0,  q12
+  vsub.f32  q12, q0,  q12
+  vadd.f32  q14, q13, q1
+  vsub.f32  q13, q13, q1
+  vadd.f32  q0,  q8,  q15
+  vadd.f32  q1,  q9,  q14
+  vadd.f32  q2,  q10, q13
+  vsub.f32  q4,  q8,  q15
+  vsub.f32  q3,  q11, q12
 
+  vst1.32   {q0, q1}, [r2, :128]!
 
+  vsub.f32  q5,  q9,  q14
+  vsub.f32  q6,  q10, q13
+  vadd.f32  q7,  q11, q12
+
+  vst1.32   {q2, q3}, [r2, :128]!
+  vst1.32   {q4, q5}, [r2, :128]!
+  vst1.32   {q6, q7}, [r2, :128]
+
+  vpop      {q4-q7}
+  bx        lr
 
 	.align 4
 #ifdef __APPLE__
