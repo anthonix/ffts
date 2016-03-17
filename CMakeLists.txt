@@ -367,8 +367,7 @@ if(ENABLE_NEON)
 
   if(DISABLE_DYNAMIC_CODE)
     list(APPEND FFTS_SOURCES
-      src/neon_static_f.s
-      src/neon_static_i.s
+      src/neon_static.s
     )
   endif(DISABLE_DYNAMIC_CODE)
 
