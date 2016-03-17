@@ -60,7 +60,7 @@ neon_static_e_f:
   add       r9,  r10,  lr, lsl #2
 
   vld1.32   {d16, d17}, [r3, :128]
-_neon_ee_loop:
+1:
   vld2.32   {q15}, [r10, :128]!
   vld2.32   {q13}, [r8,  :128]!
   vld2.32   {q14}, [r7,  :128]!
@@ -124,7 +124,7 @@ _neon_ee_loop:
   vtrn.32   q5,  q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_ee_loop
+  bne       1b
 
   ldr       r11,   [r0, #12]
   vld2.32   {q9},  [r5, :128]!
@@ -195,9 +195,9 @@ _neon_ee_loop:
   vswp      d1,  d2
   vswp      d5,  d6
   vstmia    r3!, {q0-q3}
-  beq       _neon_ee_loop2_exit
+  beq       4f
 
-_neon_oo_loop:
+2:
   vld2.32   {q8},  [r6, :128]!
   vld2.32   {q9},  [r5, :128]!
   vld2.32   {q10}, [r4, :128]!
@@ -239,12 +239,12 @@ _neon_oo_loop:
   vtrn.32   q5, q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_oo_loop
+  bne       2b
 
   ldr       r3,  [r0, #16]  @ p->ee_ws
   ldr       r11, [r0, #32]  @ p->i1
   vld1.32   {d16, d17}, [r3, :128]
-_neon_ee_loop2:
+3:
   vld2.32   {q15}, [r5,  :128]!
   vld2.32   {q13}, [r4,  :128]!
   vld2.32   {q14}, [r1,  :128]!
@@ -308,9 +308,9 @@ _neon_ee_loop2:
   vtrn.32   q5,  q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_ee_loop2
+  bne       3b
 
-_neon_ee_loop2_exit:
+4:
   vpop      {q4-q7}
   pop       {r4-r12, pc}
 
@@ -341,7 +341,7 @@ neon_static_e_i:
   add       r9,  r10,  lr, lsl #2
 
   vld1.32   {d16, d17}, [r3, :128]
-_neon_ee_loop:
+1:
   vld2.32   {q15}, [r10, :128]!
   vld2.32   {q13}, [r8,  :128]!
   vld2.32   {q14}, [r7,  :128]!
@@ -405,7 +405,7 @@ _neon_ee_loop:
   vtrn.32   q5,  q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_ee_loop
+  bne       1b
 
   ldr       r11,   [r0, #12]
   vld2.32   {q9},  [r5, :128]!
@@ -476,9 +476,9 @@ _neon_ee_loop:
   vswp      d1,  d2
   vswp      d5,  d6
   vstmia    r3!, {q0-q3}
-  beq       _neon_ee_loop2_exit
+  beq       4f
 
-_neon_oo_loop:
+2:
   vld2.32   {q8},  [r6, :128]!
   vld2.32   {q9},  [r5, :128]!
   vld2.32   {q10}, [r4, :128]!
@@ -520,12 +520,12 @@ _neon_oo_loop:
   vtrn.32   q5, q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_oo_loop
+  bne       2b
 
   ldr       r3,  [r0, #16]  @ p->ee_ws
   ldr       r11, [r0, #32]  @ p->i1
   vld1.32   {d16, d17}, [r3, :128]
-_neon_ee_loop2:
+3:
   vld2.32   {q15}, [r5,  :128]!
   vld2.32   {q13}, [r4,  :128]!
   vld2.32   {q14}, [r1,  :128]!
@@ -589,9 +589,9 @@ _neon_ee_loop2:
   vtrn.32   q5,  q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_ee_loop2
+  bne       3b
 
-_neon_ee_loop2_exit:
+4:
   vpop      {q4-q7}
   pop       {r4-r12, pc}
 
@@ -622,7 +622,7 @@ neon_static_o_f:
   add       r9,  r10,  lr, lsl #2
 
   vld1.32   {d16, d17}, [r3, :128]
-_neon_ee_o_loop:
+1:
   vld2.32   {q15}, [r10, :128]!
   vld2.32   {q13}, [r8,  :128]!
   vld2.32   {q14}, [r7,  :128]!
@@ -686,12 +686,12 @@ _neon_ee_o_loop:
   vtrn.32   q5,  q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_ee_o_loop
+  bne       1b
 
   ldr       r11, [r0, #32]  @ p->i1
   cmp       r11, #0
-  beq       _neon_oo_o_loop_exit
-_neon_oo_o_loop:
+  beq       3f
+2:
   vld2.32   {q8}, [r6, :128]!
   vld2.32   {q9}, [r5, :128]!
   vld2.32   {q10}, [r4, :128]!
@@ -733,9 +733,9 @@ _neon_oo_o_loop:
   vtrn.32   q5,  q7
   vst2.32   {q4,q5}, [r3, :128]!
   vst2.32   {q6,q7}, [lr, :128]!
-  bne       _neon_oo_o_loop
+  bne       2b
 
-_neon_oo_o_loop_exit:
+3:
   ldr       r11,   [r0, #8]
   vld1.32   {q8},  [r5, :128]!
   vld1.32   {q10}, [r6, :128]!
@@ -811,10 +811,10 @@ _neon_oo_o_loop_exit:
   vswp      d9,  d10
   vswp      d13, d14
   vstmia    lr!, {q4-q7}
-  beq       _neon_ee_o_loop2_exit
+  beq       5f
 
   vld1.32   {d16, d17}, [r3, :128]
-_neon_ee_o_loop2:
+4:
   vld2.32   {q15}, [r5,  :128]!
   vld2.32   {q13}, [r4,  :128]!
   vld2.32   {q14}, [r1,  :128]!
@@ -878,9 +878,9 @@ _neon_ee_o_loop2:
   vtrn.32   q5,  q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_ee_o_loop2
+  bne       4b
 
-_neon_ee_o_loop2_exit:
+5:
   vpop      {q4-q7}
   pop       {r4-r12, pc}
 
@@ -911,7 +911,7 @@ neon_static_o_i:
   add       r9,  r10,  lr, lsl #2
 
   vld1.32   {d16, d17}, [r3, :128]
-_neon_ee_o_loop:
+1:
   vld2.32   {q15}, [r10, :128]!
   vld2.32   {q13}, [r8,  :128]!
   vld2.32   {q14}, [r7,  :128]!
@@ -975,12 +975,12 @@ _neon_ee_o_loop:
   vtrn.32   q5,  q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_ee_o_loop
+  bne       1b
 
   ldr       r11, [r0, #32]  @ p->i1
   cmp       r11, #0
-  beq       _neon_oo_o_loop_exit
-_neon_oo_o_loop:
+  beq       3f
+2:
   vld2.32   {q8}, [r6, :128]!
   vld2.32   {q9}, [r5, :128]!
   vld2.32   {q10}, [r4, :128]!
@@ -1022,9 +1022,9 @@ _neon_oo_o_loop:
   vtrn.32   q5,  q7
   vst2.32   {q4,q5}, [r3, :128]!
   vst2.32   {q6,q7}, [lr, :128]!
-  bne       _neon_oo_o_loop
+  bne       2b
 
-_neon_oo_o_loop_exit:
+3:
   ldr       r11,   [r0, #8]
   vld1.32   {q8},  [r5, :128]!
   vld1.32   {q10}, [r6, :128]!
@@ -1100,10 +1100,10 @@ _neon_oo_o_loop_exit:
   vswp      d9,  d10
   vswp      d13, d14
   vstmia    lr!, {q4-q7}
-  beq       _neon_ee_o_loop2_exit
+  beq       5f
 
   vld1.32   {d16, d17}, [r3, :128]
-_neon_ee_o_loop2:
+4:
   vld2.32   {q15}, [r5,  :128]!
   vld2.32   {q13}, [r4,  :128]!
   vld2.32   {q14}, [r1,  :128]!
@@ -1167,9 +1167,9 @@ _neon_ee_o_loop2:
   vtrn.32   q5,  q7
   vst2.32   {q4, q5}, [r3, :128]!
   vst2.32   {q6, q7}, [lr, :128]!
-  bne       _neon_ee_o_loop2
+  bne       4b
 
-_neon_ee_o_loop2_exit:
+5:
   vpop      {q4-q7}
   pop       {r4-r12, pc}
 
@@ -1296,7 +1296,7 @@ neon_static_x8_f:
   add       r7,  r6, r1          @ data5
   add       r12, r8, r1          @ data7
 
-neon_x8_loop:
+1:
   vld1.32   {q2,  q3},  [r2,  :128]!
   subs      r1,  r1,  #32
   vld1.32   {q14, q15}, [r5,  :128]
@@ -1393,7 +1393,7 @@ neon_x8_loop:
   vadd.f32  q7,  q11, q14
   vst1.32   {q4,  q5},  [r7,  :128]!
   vst1.32   {q6,  q7},  [r12, :128]!
-  bne       neon_x8_loop
+  bne       1b
 
   vpop      {q4-q7}
   pop       {r4-r8, pc}
@@ -1417,7 +1417,7 @@ neon_static_x8_i:
   add       r7,  r6, r1          @ data5
   add       r12, r8, r1          @ data7
 
-neon_x8_loop:
+1:
   vld1.32   {q2,  q3},  [r2,  :128]!
   subs      r1,  r1,  #32
   vld1.32   {q14, q15}, [r5,  :128]
@@ -1514,7 +1514,7 @@ neon_x8_loop:
   vsub.f32  q7,  q11, q14
   vst1.32   {q4,  q5},  [r7,  :128]!
   vst1.32   {q6,  q7},  [r12, :128]!
-  bne       neon_x8_loop
+  bne       1b
 
   vpop      {q4-q7}
   pop       {r4-r8, pc}
@@ -1538,7 +1538,7 @@ neon_static_x8_t_f:
   add       r7,  r6, r1          @ data5
   add       r12, r8, r1          @ data7
 
-neon_x8_t_loop:
+1:
   vld1.32   {q2,  q3},  [r2,  :128]!
   subs      r1,  r1,  #32
   vld1.32   {q14, q15}, [r5,  :128]
@@ -1635,7 +1635,7 @@ neon_x8_t_loop:
   vadd.f32  q7,  q11, q14
   vst2.32   {q4,  q5},  [r7,  :128]!
   vst2.32   {q6,  q7},  [r12, :128]!
-  bne       neon_x8_t_loop
+  bne       1b
 
   vpop      {q4-q7}
   pop       {r4-r8, pc}
@@ -1659,7 +1659,7 @@ neon_static_x8_t_i:
   add       r7,  r6, r1          @ data5
   add       r12, r8, r1          @ data7
 
-neon_x8_t_loop:
+1:
   vld1.32   {q2,  q3},  [r2, :128]!
   subs      r1,  r1,  #32
   vld1.32   {q14, q15}, [r5, :128]
@@ -1756,7 +1756,7 @@ neon_x8_t_loop:
   vsub.f32  q7,  q11, q14
   vst2.32   {q4,  q5},  [r7, :128]!
   vst2.32   {q6,  q7},  [r12,:128]!
-  bne       neon_x8_t_loop
+  bne       1b
 
   vpop      {q4-q7}
   pop       {r4-r8, pc}
