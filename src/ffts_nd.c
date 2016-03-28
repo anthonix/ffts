@@ -92,74 +92,17 @@ static void ffts_free_nd(ffts_plan_t *p)
 static void ffts_transpose(uint64_t *in, uint64_t *out, int w, int h, uint64_t *buf)
 {
 #ifdef HAVE_NEON
-    size_t i, j, k;
-    int linebytes = 8 * w;
+#if 0
+    neon_transpose(in, out, w, h);
+#else
+    size_t i, j;
 
     for (j = 0; j < h; j += 8) {
         for (i = 0; i < w; i += 8) {
-            neon_transpose_to_buf(in + j*w + i, buf, w);
-
-            uint64_t *p = out + i*h + j;
-            uint64_t *pbuf = buf;
-            uint64_t *ptemp;
-
-            __asm__ __volatile__(
-                "mov %[ptemp], %[p]\n\t"
-                "add %[p], %[p], %[w], lsl #3\n\t"
-                "vld1.32 {q8,q9}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q10,q11}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q12,q13}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q14,q15}, [%[pbuf], :128]!\n\t"
-                "vst1.32 {q8,q9}, [%[ptemp], :128]!\n\t"
-                "vst1.32 {q10,q11}, [%[ptemp], :128]!\n\t"
-                "mov %[ptemp], %[p]\n\t"
-                "add %[p], %[p], %[w], lsl #3\n\t"
-                "vst1.32 {q12,q13}, [%[ptemp], :128]!\n\t"
-                "vst1.32 {q14,q15}, [%[ptemp], :128]!\n\t"
-                "mov %[ptemp], %[p]\n\t"
-                "add %[p], %[p], %[w], lsl #3\n\t"
-                "vld1.32 {q8,q9}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q10,q11}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q12,q13}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q14,q15}, [%[pbuf], :128]!\n\t"
-                "vst1.32 {q8,q9}, [%[ptemp], :128]!\n\t"
-                "vst1.32 {q10,q11}, [%[ptemp], :128]!\n\t"
-                "mov %[ptemp], %[p]\n\t"
-                "add %[p], %[p], %[w], lsl #3\n\t"
-                "vst1.32 {q12,q13}, [%[ptemp], :128]!\n\t"
-                "vst1.32 {q14,q15}, [%[ptemp], :128]!\n\t"
-                "mov %[ptemp], %[p]\n\t"
-                "add %[p], %[p], %[w], lsl #3\n\t"
-                "vld1.32 {q8,q9}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q10,q11}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q12,q13}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q14,q15}, [%[pbuf], :128]!\n\t"
-                "vst1.32 {q8,q9}, [%[ptemp], :128]!\n\t"
-                "vst1.32 {q10,q11}, [%[ptemp], :128]!\n\t"
-                "mov %[ptemp], %[p]\n\t"
-                "add %[p], %[p], %[w], lsl #3\n\t"
-                "vst1.32 {q12,q13}, [%[ptemp], :128]!\n\t"
-                "vst1.32 {q14,q15}, [%[ptemp], :128]!\n\t"
-                "mov %[ptemp], %[p]\n\t"
-                "add %[p], %[p], %[w], lsl #3\n\t"
-                "vld1.32 {q8,q9}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q10,q11}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q12,q13}, [%[pbuf], :128]!\n\t"
-                "vld1.32 {q14,q15}, [%[pbuf], :128]!\n\t"
-                "vst1.32 {q8,q9}, [%[ptemp], :128]!\n\t"
-                "vst1.32 {q10,q11}, [%[ptemp], :128]!\n\t"
-                "mov %[ptemp], %[p]\n\t"
-                "vst1.32 {q12,q13}, [%[ptemp], :128]!\n\t"
-                "vst1.32 {q14,q15}, [%[ptemp], :128]!\n\t"
-
-                : [p] "+r" (p), [pbuf] "+r" (pbuf), [ptemp] "+r" (ptemp)
-                : [w] "r" (w)
-                : "memory", "q8", "q9", "q10", "q11"
-            );
-
-            /* out[i*h + j] = in[j*w + i]; */
+            neon_transpose_to_buf(in + j*w + i, out + i*h + j, w);
         }
     }
+#endif
 #else
 #ifdef HAVE_SSE
     uint64_t FFTS_ALIGN(64) tmp[TSIZE*TSIZE];
