@@ -638,11 +638,11 @@ neon_end:
 
   .align 4
 #ifdef __APPLE__
-  .globl _neon_transpose
-_neon_transpose:
+  .globl _neon_transpose4
+_neon_transpose4:
 #else
-  .globl neon_transpose
-neon_transpose:
+  .globl neon_transpose4
+neon_transpose4:
 #endif
   push    {r4-r6, lr}
   mov     r5, r3
@@ -676,11 +676,11 @@ neon_transpose:
 
   .align 4
 #ifdef __APPLE__
-  .globl _neon_transpose_to_buf
-_neon_transpose_to_buf:
+  .globl _neon_transpose8
+_neon_transpose8:
 #else
-  .globl neon_transpose_to_buf
-neon_transpose_to_buf:
+  .globl neon_transpose8
+neon_transpose8:
 #endif
   push    {r4-r8, lr}
   vpush   {q4-q7}

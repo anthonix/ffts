@@ -92,13 +92,13 @@ ffts_transpose(uint64_t *in, uint64_t *out, int w, int h)
 {
 #ifdef HAVE_NEON
 #if 0
-    neon_transpose(in, out, w, h);
+    neon_transpose4(in, out, w, h);
 #else
     size_t i, j;
 
     for (j = 0; j < h; j += 8) {
         for (i = 0; i < w; i += 8) {
-            neon_transpose_to_buf(in + j*w + i, out + i*h + j, w);
+            neon_transpose8(in + j*w + i, out + i*h + j, w, h);
         }
     }
 #endif
