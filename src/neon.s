@@ -682,26 +682,151 @@ _neon_transpose8:
   .globl neon_transpose8
 neon_transpose8:
 #endif
-  push    {r4-r8, lr}
+  push    {r4-r12, lr}
   vpush   {q4-q7}
 
-  @ initialize and preload (TODO: optimize)
+  @ initialize
+  lsl     r2, r2, #3
+  mul     lr, r2, r3
+  lsl     r3, r3, #5
+  add     r4, r0, r2
+  lsl     ip, r2, #1
+  add     r5, r1, r3, lsr #2
+  add     r6, r1, r3, lsr #1
+  add     r7, r5, r3, lsr #1
+  sub     lr, r3, lr
+  sub     ip, ip, #64
+  sub     r8, r3, #48
+  add     lr, lr, #16
+1:
+  @ process all but the last one
+  subs    r11, r2, #64
+
+  @ prefetch next rows 0-5
   pld     [r0]
-  add     r4, r0, r2, lsl #3
-  lsl     ip, r2, #4
   pld     [r4]
-  pld     [r0, ip]
-  add     r6, r1, r2, lsl #3
-  pld     [r4, ip]
-  add     r7, r6, r2, lsl #3
-  pld     [r0, ip, lsl #1]
-  pld     [r0, ip, lsl #2]
-  add     r8, r7, r2, lsl #3
-  pld     [r4, ip, lsl #1]
-  pld     [r4, ip, lsl #2]
-  sub     ip, ip, #32
-  lsl     r3, ip, #1
-  add     r3, r3, #16
+  pld     [r0, r2, lsl #1]
+  pld     [r4, r2, lsl #1]
+  pld     [r0, r2, lsl #2]
+  pld     [r4, r2, lsl #2]
+
+  @ if there is only the last one
+  beq     3f
+2:
+  @ matrix 0&2 row 0-1
+  vld1.32 {q0, q1}, [r0, :128]!
+  vld1.32 {q2, q3}, [r4, :128]!
+  vswp    d1, d4
+  vswp    d3, d6
+  vst1.32 {q0}, [r1, :128]!
+  vst1.32 {q2}, [r5, :128]!
+  vst1.32 {q1}, [r6, :128]!
+  vst1.32 {q3}, [r7, :128]!
+
+  @ matrix 1&3 row 0-1
+  vld1.32 {q4, q5}, [r0, :128]!
+  vld1.32 {q6, q7}, [r4, :128]!
+  vswp    d9,  d12
+  vswp    d11, d14
+
+  @ prefetch next rows 0-1
+  pld     [r0]
+  pld     [r4]
+  add     r9,  r0, ip
+  add     r10, r4, ip
+
+  @ matrix 0&2, row 2-3
+  vld1.32 {q0, q1}, [r9,  :128]!
+  vld1.32 {q2, q3}, [r10, :128]!
+  vswp    d1, d4
+  vswp    d3, d6
+  vst1.32 {q0}, [r1, :128]!
+  vst1.32 {q2}, [r5, :128]!
+  vst1.32 {q1}, [r6, :128]!
+  vst1.32 {q3}, [r7, :128]!
+
+  @ matrix 1&3, row 2-3
+  vld1.32 {q8,  q9},  [r9,  :128]!
+  vld1.32 {q10, q11}, [r10, :128]!
+  vswp    d17, d20
+  vswp    d19, d22
+
+  @ prefetch next rows 2-3
+  pld     [r9]
+  pld     [r10]
+  add     r9,  r9,  ip
+  add     r10, r10, ip
+
+  @ matrix 0&2, row 4-5
+  vld1.32 {q0, q1}, [r9,  :128]!
+  vld1.32 {q2, q3}, [r10, :128]!
+  vswp    d1, d4
+  vswp    d3, d6
+  vst1.32 {q0}, [r1, :128]!
+  vst1.32 {q2}, [r5, :128]!
+  vst1.32 {q1}, [r6, :128]!
+  vst1.32 {q3}, [r7, :128]!
+
+  @ matrix 1&3, row 4-5
+  vld1.32 {q12, q13}, [r9,  :128]!
+  vld1.32 {q14, q15}, [r10, :128]!
+  vswp    d25, d28
+  vswp    d27, d30
+
+  @ prefetch next rows 4-5
+  pld     [r9]
+  pld     [r10]
+  add     r9,  r9,  ip
+  add     r10, r10, ip
+
+  @ matrix 0&2, row 6-7
+  vld1.32 {q0, q1}, [r9,  :128]!
+  vld1.32 {q2, q3}, [r10, :128]!
+  vswp    d1, d4
+  vswp    d3, d6
+  vst1.32 {q0}, [r1, :128], r8
+  vst1.32 {q2}, [r5, :128], r8
+  vst1.32 {q1}, [r6, :128], r8
+  vst1.32 {q3}, [r7, :128], r8
+
+  @ matrix 1&3, row 6-7
+  vld1.32 {q0, q1}, [r9,  :128]!
+  vld1.32 {q2, q3}, [r10, :128]!
+  vswp    d1, d4
+  vswp    d3, d6
+
+  @ prefetch next rows 6-7
+  pld     [r9]
+  pld     [r10]
+
+  subs    r11, r11, #64
+
+  @ these could be replaced with VSTM, but that requires swaps
+  vst1.32 {q4},  [r1, :128]!
+  vst1.32 {q8},  [r1, :128]!
+  vst1.32 {q12}, [r1, :128]!
+  vst1.32 {q0},  [r1, :128], r8
+
+  vst1.32 {q6},  [r5, :128]!
+  vst1.32 {q10}, [r5, :128]!
+  vst1.32 {q14}, [r5, :128]!
+  vst1.32 {q2},  [r5, :128], r8
+
+  vst1.32 {q5},  [r6, :128]!
+  vst1.32 {q9},  [r6, :128]!
+  vst1.32 {q13}, [r6, :128]!
+  vst1.32 {q1},  [r6, :128], r8
+
+  vst1.32 {q7},  [r7, :128]!
+  vst1.32 {q11}, [r7, :128]!
+  vst1.32 {q15}, [r7, :128]!
+  vst1.32 {q3},  [r7, :128], r8
+
+  @ process all but the last on row
+  bne     2b
+3:
+  @ process the last one
+  subs    r3, r3, #256
 
   @ matrix 0&2 row 0-1
   vld1.32 {q0, q1}, [r0, :128]!
@@ -709,84 +834,97 @@ neon_transpose8:
   vswp    d1, d4
   vswp    d3, d6
   vst1.32 {q0}, [r1, :128]!
-  vst1.32 {q2}, [r6, :128]!
-  vst1.32 {q1}, [r7, :128]!
-  vst1.32 {q3}, [r8, :128]!
+  vst1.32 {q2}, [r5, :128]!
+  vst1.32 {q1}, [r6, :128]!
+  vst1.32 {q3}, [r7, :128]!
 
   @ matrix 1&3 row 0-1
-  vld1.32 {q4, q5}, [r0, :128], ip
-  vld1.32 {q6, q7}, [r4, :128], ip
+  vld1.32 {q4, q5}, [r0, :128]!
+  vld1.32 {q6, q7}, [r4, :128]!
   vswp    d9,  d12
   vswp    d11, d14
+  add     r9,  r0, ip
+  add     r10, r4, ip
 
   @ matrix 0&2, row 2-3
-  vld1.32 {q0, q1}, [r0, :128]!
-  vld1.32 {q2, q3}, [r4, :128]!
+  vld1.32 {q0, q1}, [r9,  :128]!
+  vld1.32 {q2, q3}, [r10, :128]!
   vswp    d1, d4
   vswp    d3, d6
   vst1.32 {q0}, [r1, :128]!
-  vst1.32 {q2}, [r6, :128]!
-  vst1.32 {q1}, [r7, :128]!
-  vst1.32 {q3}, [r8, :128]!
+  vst1.32 {q2}, [r5, :128]!
+  vst1.32 {q1}, [r6, :128]!
+  vst1.32 {q3}, [r7, :128]!
 
   @ matrix 1&3, row 2-3
-  vld1.32 {q8,  q9},  [r0, :128], ip
-  vld1.32 {q10, q11}, [r4, :128], ip
+  vld1.32 {q8,  q9},  [r9,  :128]!
+  vld1.32 {q10, q11}, [r10, :128]!
   vswp    d17, d20
   vswp    d19, d22
+  add     r9,  r9,  ip
+  add     r10, r10, ip
 
   @ matrix 0&2, row 4-5
-  vld1.32 {q0, q1}, [r0, :128]!
-  vld1.32 {q2, q3}, [r4, :128]!
+  vld1.32 {q0, q1}, [r9,  :128]!
+  vld1.32 {q2, q3}, [r10, :128]!
   vswp    d1, d4
   vswp    d3, d6
   vst1.32 {q0}, [r1, :128]!
-  vst1.32 {q2}, [r6, :128]!
-  vst1.32 {q1}, [r7, :128]!
-  vst1.32 {q3}, [r8, :128]!
+  vst1.32 {q2}, [r5, :128]!
+  vst1.32 {q1}, [r6, :128]!
+  vst1.32 {q3}, [r7, :128]!
 
   @ matrix 1&3, row 4-5
-  vld1.32 {q12, q13}, [r0, :128], ip
-  vld1.32 {q14, q15}, [r4, :128], ip
+  vld1.32 {q12, q13}, [r9,  :128]!
+  vld1.32 {q14, q15}, [r10, :128]!
   vswp    d25, d28
   vswp    d27, d30
+  add     r9,  r9,  ip
+  add     r10, r10, ip
 
   @ matrix 0&2, row 6-7
-  vld1.32 {q0, q1}, [r0, :128]!
-  vld1.32 {q2, q3}, [r4, :128]!
+  vld1.32 {q0, q1}, [r9,  :128]!
+  vld1.32 {q2, q3}, [r10, :128]!
   vswp    d1, d4
   vswp    d3, d6
-  vst1.32 {q0}, [r1, :128], r3
-  vst1.32 {q2}, [r6, :128], r3
-  vst1.32 {q1}, [r7, :128], r3
-  vst1.32 {q3}, [r8, :128], r3
+  vst1.32 {q0}, [r1, :128], r8
+  vst1.32 {q2}, [r5, :128], r8
+  vst1.32 {q1}, [r6, :128], r8
+  vst1.32 {q3}, [r7, :128], r8
 
   @ matrix 1&3, row 6-7
-  vld1.32 {q0, q1}, [r0, :128]
-  vld1.32 {q2, q3}, [r4, :128]
+  vld1.32 {q0, q1}, [r9,  :128]!
+  vld1.32 {q2, q3}, [r10, :128]!
   vswp    d1, d4
   vswp    d3, d6
+
+  @ next row starts right after
+  mov     r0, r10
+  add     r4, r10, r2
 
   @ these could be replaced with VSTM, but that requires swaps
   vst1.32 {q4},  [r1, :128]!
   vst1.32 {q8},  [r1, :128]!
   vst1.32 {q12}, [r1, :128]!
-  vst1.32 {q0},  [r1, :128]
+  vst1.32 {q0},  [r1, :128], lr
 
-  vst1.32 {q6},  [r6, :128]!
-  vst1.32 {q10}, [r6, :128]!
-  vst1.32 {q14}, [r6, :128]!
-  vst1.32 {q2},  [r6, :128]
+  vst1.32 {q6},  [r5, :128]!
+  vst1.32 {q10}, [r5, :128]!
+  vst1.32 {q14}, [r5, :128]!
+  vst1.32 {q2},  [r5, :128], lr
 
-  vst1.32 {q5},  [r7, :128]!
-  vst1.32 {q9},  [r7, :128]!
-  vst1.32 {q13}, [r7, :128]!
-  vst1.32 {q1},  [r7, :128]
+  vst1.32 {q5},  [r6, :128]!
+  vst1.32 {q9},  [r6, :128]!
+  vst1.32 {q13}, [r6, :128]!
+  vst1.32 {q1},  [r6, :128], lr
 
-  vst1.32 {q7},  [r8, :128]!
-  vst1.32 {q11}, [r8, :128]!
-  vst1.32 {q15}, [r8, :128]!
-  vst1.32 {q3},  [r8, :128]
+  vst1.32 {q7},  [r7, :128]!
+  vst1.32 {q11}, [r7, :128]!
+  vst1.32 {q15}, [r7, :128]!
+  vst1.32 {q3},  [r7, :128], lr
+
+  @ process all columns
+  bne     1b
 
   vpop    {q4-q7}
-  pop     {r4-r8, pc}
+  pop     {r4-r12, pc}

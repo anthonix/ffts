@@ -94,13 +94,7 @@ ffts_transpose(uint64_t *in, uint64_t *out, int w, int h)
 #if 0
     neon_transpose4(in, out, w, h);
 #else
-    size_t i, j;
-
-    for (j = 0; j < h; j += 8) {
-        for (i = 0; i < w; i += 8) {
-            neon_transpose8(in + j*w + i, out + i*h + j, w, h);
-        }
-    }
+    neon_transpose8(in, out, w, h);
 #endif
 #else
 #ifdef HAVE_SSE
