@@ -56,12 +56,22 @@ extern "C" {
 #  endif
 #endif
 
-#define POSITIVE_SIGN 1
-#define NEGATIVE_SIGN -1
+/* The direction of the transform
+   (i.e, the sign of the exponent in the transform.)
+*/
+#define FFTS_FORWARD (-1)
+#define FFTS_BACKWARD (+1)
 
 struct _ffts_plan_t;
 typedef struct _ffts_plan_t ffts_plan_t;
 
+/* Complex data is stored in the interleaved format
+   (i.e, the real and imaginary parts composing each
+   element of complex data are stored adjacently in memory)
+
+   The multi-dimensional arrays passed are expected to be
+   stored as a single contiguous block in row-major order
+*/
 FFTS_API ffts_plan_t*
 ffts_init_1d(size_t N, int sign);
 
@@ -71,8 +81,10 @@ ffts_init_2d(size_t N1, size_t N2, int sign);
 FFTS_API ffts_plan_t*
 ffts_init_nd(int rank, size_t *Ns, int sign);
 
-/* For real transforms, sign == -1 implies a real-to-complex forwards tranform,
-   and sign == 1 implies a complex-to-real backwards transform.
+/* For real transforms, sign == FFTS_FORWARD implies a real-to-complex
+   forwards tranform, and sign == FFTS_BACKWARD implies a complex-to-real
+   backwards transform.
+
    The output of a real-to-complex transform is N/2+1 complex numbers,
    where the redundant outputs have been omitted.
 */
