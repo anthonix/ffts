@@ -48,16 +48,14 @@ static void
 ffts_free_nd(ffts_plan_t *p)
 {
     if (p->plans) {
-        int i;
+        int i, j;
 
         for (i = 0; i < p->rank; i++) {
             ffts_plan_t *plan = p->plans[i];
 
             if (plan) {
-                int k;
-
-                for (k = 0; k < i; k++) {
-                    if (p->Ms[i] == p->Ms[k]) {
+                for (j = 0; j < i; j++) {
+                    if (p->Ns[i] == p->Ns[j]) {
                         plan = NULL;
                         break;
                     }
@@ -201,20 +199,20 @@ ffts_execute_nd(ffts_plan_t *p, const void *in, void *out)
     size_t j;
 
     plan = p->plans[0];
-    for (j = 0; j < p->Ns[0]; j++) {
-        plan->transform(plan, din + (j * p->Ms[0]), buf + (j * p->Ms[0]));
+    for (j = 0; j < p->Ms[0]; j++) {
+        plan->transform(plan, din + (j * p->Ns[0]), buf + (j * p->Ns[0]));
     }
 
-    ffts_transpose(buf, dout, p->Ms[0], p->Ns[0]);
+    ffts_transpose(buf, dout, p->Ns[0], p->Ms[0]);
 
     for (i = 1; i < p->rank; i++) {
         plan = p->plans[i];
 
-        for (j = 0; j < p->Ns[i]; j++) {
-            plan->transform(plan, dout + (j * p->Ms[i]), buf + (j * p->Ms[i]));
+        for (j = 0; j < p->Ms[i]; j++) {
+            plan->transform(plan, dout + (j * p->Ns[i]), buf + (j * p->Ns[i]));
         }
 
-        ffts_transpose(buf, dout, p->Ms[i], p->Ns[i]);
+        ffts_transpose(buf, dout, p->Ns[i], p->Ms[i]);
     }
 }
 
@@ -222,8 +220,16 @@ FFTS_API ffts_plan_t*
 ffts_init_nd(int rank, size_t *Ns, int sign)
 {
     ffts_plan_t *p;
-    size_t vol;
-    int i;
+    size_t vol = 1;
+    int i, j;
+
+    if (!Ns) {
+        return NULL;
+    }
+
+    if (rank == 1) {
+         return ffts_init_1d(Ns[0], sign);
+    }
 
     p = calloc(1, sizeof(*p));
     if (!p) {
@@ -244,10 +250,11 @@ ffts_init_nd(int rank, size_t *Ns, int sign)
         goto cleanup;
     }
 
-    vol = p->Ns[0] = Ns[0];
-    for (i = 1; i < rank; i++) {
-        p->Ns[i] = Ns[i];
-        vol *= Ns[i];
+    /* reverse the order */
+    for (i = 0; i < rank; i++) {
+        size_t N = Ns[rank - i - 1];
+        p->Ns[i] = N;
+        vol *= N;
     }
 
     p->buf = ffts_aligned_malloc(2 * vol * sizeof(float));
@@ -261,19 +268,17 @@ ffts_init_nd(int rank, size_t *Ns, int sign)
     }
 
     for (i = 0; i < rank; i++) {
-        int k;
-
         p->Ms[i] = vol / p->Ns[i];
 
-        for (k = 0; k < i; k++) {
-            if (p->Ms[k] == p->Ms[i]) {
-                p->plans[i] = p->plans[k];
+        for (j = 0; j < i; j++) {
+            if (p->Ns[i] == p->Ns[j]) {
+                p->plans[i] = p->plans[j];
                 break;
             }
         }
 
         if (!p->plans[i]) {
-            p->plans[i] = ffts_init_1d(p->Ms[i], sign);
+            p->plans[i] = ffts_init_1d(p->Ns[i], sign);
             if (!p->plans) {
                 goto cleanup;
             }
@@ -292,7 +297,7 @@ ffts_init_2d(size_t N1, size_t N2, int sign)
 {
     size_t Ns[2];
 
-    Ns[0] = N1;
-    Ns[1] = N2;
+    Ns[0] = N1; /* x */
+    Ns[1] = N2; /* y */
     return ffts_init_nd(2, Ns, sign);
 }
