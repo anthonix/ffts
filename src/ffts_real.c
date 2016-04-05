@@ -641,9 +641,9 @@ ffts_init_1d_real(size_t N, int sign)
     }
 
 #ifdef HAVE_SSE3
-	ffts_generate_table_1d_real_32f(p, sign, 1);
+    ffts_generate_table_1d_real_32f(p, sign, 1);
 #else
-	ffts_generate_table_1d_real_32f(p, sign, 0);
+    ffts_generate_table_1d_real_32f(p, sign, 0);
 #endif
 
     return p;

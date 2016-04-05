@@ -34,15 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ffts_nd.h"
 #include "ffts_internal.h"
-
-#ifdef HAVE_NEON
-#include "neon.h"
-#include <arm_neon.h>
-#elif HAVE_SSE2
-#include <emmintrin.h>
-#endif
-
-#define TSIZE 8
+#include "ffts_transpose.h"
 
 static void
 ffts_free_nd(ffts_plan_t *p)
@@ -83,108 +75,6 @@ ffts_free_nd(ffts_plan_t *p)
     }
 
     free(p);
-}
-
-static void
-ffts_transpose(uint64_t *in, uint64_t *out, int w, int h)
-{
-#ifdef HAVE_NEON
-#if 0
-    neon_transpose4(in, out, w, h);
-#else
-    neon_transpose8(in, out, w, h);
-#endif
-#else
-#ifdef HAVE_SSE
-    uint64_t FFTS_ALIGN(64) tmp[TSIZE*TSIZE];
-    int tx, ty;
-    /* int x; */
-    int y;
-    int tw = w / TSIZE;
-    int th = h / TSIZE;
-
-    for (ty = 0; ty < th; ty++) {
-        for (tx = 0; tx < tw; tx++) {
-            uint64_t *ip0 = in + w*TSIZE*ty + tx * TSIZE;
-            uint64_t *op0 = tmp; /* out + h*TSIZE*tx + ty*TSIZE; */
-
-            /* copy/transpose to tmp */
-            for (y = 0; y < TSIZE; y += 2) {
-                /* for (x=0;x<TSIZE;x+=2) {
-                   op[x*TSIZE] = ip[x];
-                */
-                __m128d q0 = _mm_load_pd((double*)(ip0 + 0*w));
-                __m128d q1 = _mm_load_pd((double*)(ip0 + 1*w));
-                __m128d q2 = _mm_load_pd((double*)(ip0 + 2*w));
-                __m128d q3 = _mm_load_pd((double*)(ip0 + 3*w));
-                __m128d q4 = _mm_load_pd((double*)(ip0 + 4*w));
-                __m128d q5 = _mm_load_pd((double*)(ip0 + 5*w));
-                __m128d q6 = _mm_load_pd((double*)(ip0 + 6*w));
-                __m128d q7 = _mm_load_pd((double*)(ip0 + 7*w));
-
-                __m128d t0 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(0, 0));
-                __m128d t1 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(1, 1));
-                __m128d t2 = _mm_shuffle_pd(q2, q3, _MM_SHUFFLE2(0, 0));
-                __m128d t3 = _mm_shuffle_pd(q2, q3, _MM_SHUFFLE2(1, 1));
-                __m128d t4 = _mm_shuffle_pd(q4, q5, _MM_SHUFFLE2(0, 0));
-                __m128d t5 = _mm_shuffle_pd(q4, q5, _MM_SHUFFLE2(1, 1));
-                __m128d t6 = _mm_shuffle_pd(q6, q7, _MM_SHUFFLE2(0, 0));
-                __m128d t7 = _mm_shuffle_pd(q6, q7, _MM_SHUFFLE2(1, 1));
-
-                ip0 += 2;
-                /* _mm_store_pd((double *)(op0 + y*h + x), t0);
-                   _mm_store_pd((double *)(op0 + y*h + x + h), t1);
-                   */
-
-                _mm_store_pd((double*)(op0 + 0        ), t0);
-                _mm_store_pd((double*)(op0 + 0 + TSIZE), t1);
-                _mm_store_pd((double*)(op0 + 2        ), t2);
-                _mm_store_pd((double*)(op0 + 2 + TSIZE), t3);
-                _mm_store_pd((double*)(op0 + 4        ), t4);
-                _mm_store_pd((double*)(op0 + 4 + TSIZE), t5);
-                _mm_store_pd((double*)(op0 + 6        ), t6);
-                _mm_store_pd((double*)(op0 + 6 + TSIZE), t7);
-                /* } */
-
-                op0 += 2*TSIZE;
-            }
-
-            op0 = out + h*tx*TSIZE + ty*TSIZE;
-            ip0 = tmp;
-            for (y = 0; y < TSIZE; y += 1) {
-                /* memcpy(op0, ip0, TSIZE * sizeof(*ip0)); */
-
-                __m128d q0 = _mm_load_pd((double*)(ip0 + 0));
-                __m128d q1 = _mm_load_pd((double*)(ip0 + 2));
-                __m128d q2 = _mm_load_pd((double*)(ip0 + 4));
-                __m128d q3 = _mm_load_pd((double*)(ip0 + 6));
-
-                _mm_store_pd((double*)(op0 + 0), q0);
-                _mm_store_pd((double*)(op0 + 2), q1);
-                _mm_store_pd((double*)(op0 + 4), q2);
-                _mm_store_pd((double*)(op0 + 6), q3);
-
-                op0 += h;
-                ip0 += TSIZE;
-            }
-        }
-    }
-    /*
-    size_t i,j;
-    for(i=0;i<w;i+=2) {
-    for(j=0;j<h;j+=2) {
-    //		out[i*h + j] = in[j*w + i];
-    __m128d q0 = _mm_load_pd((double *)(in + j*w + i));
-    __m128d q1 = _mm_load_pd((double *)(in + j*w + i + w));
-    __m128d t0 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(0, 0));
-    __m128d t1 = _mm_shuffle_pd(q0, q1, _MM_SHUFFLE2(1, 1));
-    _mm_store_pd((double *)(out + i*h + j), t0);
-    _mm_store_pd((double *)(out + i*h + j + h), t1);
-    }
-    }
-    */
-#endif
-#endif
 }
 
 static void

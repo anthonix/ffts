@@ -1,78 +1,65 @@
 /*
 
- This file is part of FFTS -- The Fastest Fourier Transform in the South
+This file is part of FFTS -- The Fastest Fourier Transform in the South
 
- Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato
+Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
+Copyright (c) 2012, The University of Waikato
 
- All rights reserved.
+All rights reserved.
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
- 	* Redistributions of source code must retain the above copyright
- 		notice, this list of conditions and the following disclaimer.
- 	* Redistributions in binary form must reproduce the above copyright
- 		notice, this list of conditions and the following disclaimer in the
- 		documentation and/or other materials provided with the distribution.
- 	* Neither the name of the organization nor the
-	  names of its contributors may be used to endorse or promote products
- 		derived from this software without specific prior written permission.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+* Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+* Neither the name of the organization nor the
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
 
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL ANTHONY M. BLAKE BE LIABLE FOR ANY
- DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL ANTHONY M. BLAKE BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
 #include "ffts_real_nd.h"
 #include "ffts_real.h"
 #include "ffts_internal.h"
+#include "ffts_transpose.h"
 
-#ifdef __ARM_NEON__
-#include "neon.h"
-#endif
-
-#ifdef HAVE_NEON
-#include <arm_neon.h>
-#elif HAVE_SSE
-#include <xmmintrin.h>
-#endif
-
-#include <stdio.h>
-
-static void ffts_free_nd_real(ffts_plan_t *p)
+static void
+ffts_free_nd_real(ffts_plan_t *p)
 {
     if (p->plans) {
-        int i;
+        int i, j;
 
         for (i = 0; i < p->rank; i++) {
             ffts_plan_t *plan = p->plans[i];
 
-            if (plan) {
-                int j;
+			if (plan) {
+				for (j = 0; j < i; j++) {
+					if (p->Ns[i] == p->Ns[j]) {
+						plan = NULL;
+						break;
+					}
+				}
 
-                for (j = i + 1; j < p->rank; j++) {
-                    if (plan == p->plans[j]) {
-                        p->plans[j] = NULL;
-                    }
-                }
-
-                ffts_free(plan);
-            }
+				if (plan) {
+					ffts_free(plan);
+				}
+			}
         }
 
         free(p->plans);
-    }
-
-    if (p->transpose_buf) {
-        ffts_aligned_free(p->transpose_buf);
     }
 
     if (p->buf) {
@@ -90,59 +77,8 @@ static void ffts_free_nd_real(ffts_plan_t *p)
     free(p);
 }
 
-static void ffts_scalar_transpose(uint64_t *src, uint64_t *dst, int w, int h, uint64_t *buf)
-{
-    const int bw = 1;
-    const int bh = 8;
-    int i = 0, j = 0;
-
-    for (; i <= h - bh; i += bh) {
-        for (j = 0; j <= w - bw; j += bw) {
-            uint64_t const *ib = &src[w*i + j];
-            uint64_t *ob = &dst[h*j + i];
-
-            uint64_t s_0_0 = ib[0*w + 0];
-            uint64_t s_1_0 = ib[1*w + 0];
-            uint64_t s_2_0 = ib[2*w + 0];
-            uint64_t s_3_0 = ib[3*w + 0];
-            uint64_t s_4_0 = ib[4*w + 0];
-            uint64_t s_5_0 = ib[5*w + 0];
-            uint64_t s_6_0 = ib[6*w + 0];
-            uint64_t s_7_0 = ib[7*w + 0];
-
-            ob[0*h + 0] = s_0_0;
-            ob[0*h + 1] = s_1_0;
-            ob[0*h + 2] = s_2_0;
-            ob[0*h + 3] = s_3_0;
-            ob[0*h + 4] = s_4_0;
-            ob[0*h + 5] = s_5_0;
-            ob[0*h + 6] = s_6_0;
-            ob[0*h + 7] = s_7_0;
-        }
-    }
-
-    if (i < h) {
-        int i1;
-
-        for (i1 = 0; i1 < w; i1++) {
-            for (j = i; j < h; j++) {
-                dst[i1*h + j] = src[j*w + i1];
-            }
-        }
-    }
-
-    if (j < w) {
-        int j1;
-
-        for (i = j; i < w; i++) {
-            for (j1 = 0; j1 < h; j1++) {
-                dst[i*h + j1] = src[j1*w + i];
-            }
-        }
-    }
-}
-
-static void ffts_execute_nd_real(ffts_plan_t *p, const void *in, void *out)
+static void
+ffts_execute_nd_real(ffts_plan_t *p, const void *in, void *out)
 {
     const size_t Ms0 = p->Ms[0];
     const size_t Ns0 = p->Ns[0];
@@ -150,7 +86,6 @@ static void ffts_execute_nd_real(ffts_plan_t *p, const void *in, void *out)
     uint32_t *din = (uint32_t*) in;
     uint64_t *buf = p->buf;
     uint64_t *dout = (uint64_t*) out;
-    uint64_t *transpose_buf = (uint64_t*) p->transpose_buf;
 
     ffts_plan_t *plan;
     int i;
@@ -161,7 +96,7 @@ static void ffts_execute_nd_real(ffts_plan_t *p, const void *in, void *out)
         plan->transform(plan, din + (j * Ms0), buf + (j * (Ms0 / 2 + 1)));
     }
 
-    ffts_scalar_transpose(buf, dout, Ms0 / 2 + 1, Ns0, transpose_buf);
+    ffts_transpose(buf, dout, Ms0 / 2 + 1, Ns0);
 
     for (i = 1; i < p->rank; i++) {
         const size_t Ms = p->Ms[i];
@@ -173,11 +108,12 @@ static void ffts_execute_nd_real(ffts_plan_t *p, const void *in, void *out)
             plan->transform(plan, dout + (j * Ms), buf + (j * Ms));
         }
 
-        ffts_scalar_transpose(buf, dout, Ms, Ns, transpose_buf);
+        ffts_transpose(buf, dout, Ms, Ns);
     }
 }
 
-static void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *in, void *out)
+static void
+ffts_execute_nd_real_inv(ffts_plan_t *p, const void *in, void *out)
 {
     const size_t Ms0 = p->Ms[0];
     const size_t Ms1 = p->Ms[1];
@@ -187,7 +123,6 @@ static void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *in, void *out)
     uint64_t *din = (uint64_t*) in;
     uint64_t *buf = p->buf;
     uint64_t *buf2;
-    uint64_t *transpose_buf = (uint64_t*) p->transpose_buf;
     float    *doutr = (float*) out;
 
     ffts_plan_t *plan;
@@ -203,14 +138,14 @@ static void ffts_execute_nd_real_inv(ffts_plan_t *p, const void *in, void *out)
 
     buf2 = buf + vol;
 
-    ffts_scalar_transpose(din, buf, Ms0, Ns0, transpose_buf);
+    ffts_transpose(din, buf, Ms0, Ns0);
 
     plan = p->plans[0];
     for (j = 0; j < Ms0; j++) {
         plan->transform(plan, buf + (j * Ns0), buf2 + (j * Ns0));
     }
 
-    ffts_scalar_transpose(buf2, buf, Ns0, Ms0, transpose_buf);
+    ffts_transpose(buf2, buf, Ns0, Ms0);
 
     plan = p->plans[1];
     for (j = 0; j < Ms1; j++) {
@@ -264,11 +199,6 @@ ffts_init_nd_real(int rank, size_t *Ns, int sign)
 
     p->buf = ffts_aligned_malloc(bufsize * sizeof(float));
     if (!p->buf) {
-        goto cleanup;
-    }
-
-    p->transpose_buf = ffts_aligned_malloc(2 * 8 * 8 * sizeof(float));
-    if (!p->transpose_buf) {
         goto cleanup;
     }
 

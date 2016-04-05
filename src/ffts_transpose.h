@@ -31,20 +31,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef FFTS_ND_H
-#define FFTS_ND_H
+#ifndef FFTS_TRANSPOSE_H
+#define FFTS_TRANSPOSE_H
 
 #if defined (_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
 #endif
 
-#include "ffts.h"
-#include <stddef.h>
+#include "ffts_internal.h"
 
-ffts_plan_t*
-ffts_init_nd(int rank, size_t *Ns, int sign);
+void
+ffts_transpose(uint64_t *in, uint64_t *out, int w, int h);
 
-ffts_plan_t*
-ffts_init_2d(size_t N1, size_t N2, int sign);
-
-#endif /* FFTS_ND_H */
+#endif /* FFTS_TRANSPOSE_H */
