@@ -794,8 +794,11 @@ ffts_small_forward8_64f(ffts_plan_t *p, const void *in, void *out)
 {
     const double *din = (const double*) in;
     double *dout = (double*) out;
-    V4SF r0_1, r2_3, r4_5, r6_7;
-    double *LUT8 = (double*) p->ws + p->ws_is[0];
+//  V4SF r0_1, r2_3, r4_5, r6_7;
+//  double *LUT8 = (double*) p->ws + p->ws_is[0];
+    (void) p;
+    (void) din;
+    (void) dout;
 
 #if MACROS_READY
     L_4_2(0, din, din+8, din+4, din+12, &r0_1, &r2_3, &r4_5, &r6_7);
@@ -825,8 +828,12 @@ ffts_small_backward8_64f(ffts_plan_t *p, const void *in, void *out)
 {
     const double *din = (const double*) in;
     double *dout = (double*) out;
-    V4SF r0_1, r2_3, r4_5, r6_7;
-    double *LUT8 = (double*) p->ws + p->ws_is[0];
+//  V4SF r0_1, r2_3, r4_5, r6_7;
+//  double *LUT8 = (double*) p->ws + p->ws_is[0];
+    (void) p;
+    (void) din;
+    (void) dout;
+
 
 #if MACROS_READY
     L_4_2(1, din, din+8, din+4, din+12, &r0_1, &r2_3, &r4_5, &r6_7);
@@ -860,8 +867,11 @@ ffts_small_forward16_64f(ffts_plan_t *p, const void *in, void *out)
 {
     const double *din = (const double*) in;
     double *dout = (double*) out;
-    double *LUT8 = (double*) p->ws;
-    V4SF r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
+//  double *LUT8 = (double*) p->ws;
+//  V4SF r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
+    (void) p;
+    (void) din;
+    (void) dout;
 
 #ifdef MACROS_READY
     L_4_4(0, din+0, din+16, din+8, din+24, &r0_1, &r2_3, &r8_9, &r10_11);
@@ -899,8 +909,11 @@ ffts_small_backward16_64f(ffts_plan_t *p, const void *in, void *out)
 {
     const double *din = (const double*) in;
     double *dout = (double*) out;
-    double *LUT8 = (double*) p->ws;
-    V4SF r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
+//  double *LUT8 = (double*) p->ws;
+//  V4SF r0_1, r2_3, r4_5, r6_7, r8_9, r10_11, r12_13, r14_15;
+    (void) p;
+    (void) din;
+    (void) dout;
 
 #ifdef MACROS_READY
     L_4_4(1, din+0, din+16, din+8, din+24, &r0_1, &r2_3, &r8_9, &r10_11);
