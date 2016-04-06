@@ -437,10 +437,12 @@ generate_leaf_init(insns_t **fp, uint32_t loop_count)
     x86_clear_reg(ins, X86_EAX);
 
     /* set "pointer" to offsets */
-    x64_mov_reg_membase(ins, X64_R9, X64_RCX, 0x0, 8);
+    x64_mov_reg_membase(ins, X64_R9, X64_RCX,
+        offsetof(struct _ffts_plan_t, offsets), 8);
 
     /* set "pointer" to constants */
-    x64_mov_reg_membase(ins, X64_RSI, X64_RCX, 0xE0, 8);
+    x64_mov_reg_membase(ins, X64_RSI, X64_RCX,
+        offsetof(struct _ffts_plan_t, constants), 8);
     
     /* use XMM3 for sign change */
     x64_sse_movaps_reg_membase(ins, X64_XMM3, X64_RSI, 0);
@@ -454,10 +456,12 @@ generate_leaf_init(insns_t **fp, uint32_t loop_count)
     x86_clear_reg(ins, X86_EAX);
 
     /* set "pointer" to offsets */
-    x64_mov_reg_membase(ins, X64_R8, X64_RDI, 0x0, 8);
+    x64_mov_reg_membase(ins, X64_R8, X64_RDI,
+        offsetof(struct _ffts_plan_t, offsets), 8);
 
     /* set "pointer" to constants */
-    x64_mov_reg_membase(ins, X64_R9, X64_RDI, 0xE0, 8);
+    x64_mov_reg_membase(ins, X64_R9, X64_RDI,
+        offsetof(struct _ffts_plan_t, constants), 8);
 
     /* align loop/jump destination */
     ffts_align_mem16(&ins, 9);
