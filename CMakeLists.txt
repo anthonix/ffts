@@ -82,11 +82,13 @@ if(HAVE_UNISTD_H)
   add_definitions(-DHAVE_UNISTD_H)
 endif(HAVE_UNISTD_H)
 
+# backup flags
+set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
+
 # Determinate if we are cross-compiling
 if(NOT CMAKE_CROSSCOMPILING)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
     # Determinate ARM architecture
-    set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
 
     # Try to execute quietly without messages
     set(CMAKE_REQUIRED_QUIET 1)
@@ -230,8 +232,6 @@ if(NOT CMAKE_CROSSCOMPILING)
       endif(NOT HARDFP_SUPPORTED)
     endif(NOT NEON_HARDFP_SUPPORTED AND NOT NEON_SOFTFP_SUPPORTED)
   else()
-    set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
-
     # enable SSE code generation
     if(CMAKE_COMPILER_IS_GNUCC)
       set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -msse")
@@ -293,6 +293,9 @@ if(NOT CMAKE_CROSSCOMPILING)
 else()
   # TODO: Add detections for compiler support and headers
 endif(NOT CMAKE_CROSSCOMPILING)
+
+# restore flags
+set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_SAVE})
 
 # compiler settings
 if(MSVC)
