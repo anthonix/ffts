@@ -54,11 +54,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 
+#ifdef ENABLE_LOG
 #ifdef __ANDROID__
 #include <android/log.h>
 #define LOG(s) __android_log_print(ANDROID_LOG_ERROR, "FFTS", s)
 #else
 #define LOG(s) fprintf(stderr, s)
+#endif
+#else
+#define LOG(s)
 #endif
 
 struct _ffts_plan_t;
