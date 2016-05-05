@@ -1,10 +1,10 @@
 /*
- 
+
  This file is part of FFTS -- The Fastest Fourier Transform in the South
-  
+
  Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato 
- 
+ Copyright (c) 2012, The University of Waikato
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -31,20 +31,16 @@
 
 */
 
-#ifndef __CODEGEN_H__
-#define __CODEGEN_H__
+#ifndef FFTS_CODEGEN_H
+#define FFTS_CODEGEN_H
 
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/mman.h>
-#include <string.h>
-#include <limits.h>	   /* for PAGESIZE */
+#if defined (_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
+#endif
 
 #include "ffts.h"
+#include "ffts_internal.h"
 
-void ffts_generate_func_code(ffts_plan_t *, size_t N, size_t leafN, int sign); 
+transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N, int sign);
 
-#endif
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+#endif /* FFTS_CODEGEN_H */

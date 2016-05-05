@@ -31,10 +31,14 @@
 
 */
 
-#ifndef __CODEGEN_ARM_H__
-#define __CODEGEN_ARM_H__
+#ifndef FFTS_CODEGEN_ARM_H
+#define FFTS_CODEGEN_ARM_H
 
+#include "neon.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 
 uint32_t BL(void *pos, void *target) {
 	return 0xeb000000 | (((target - pos) / 4) & 0xffffff);
@@ -95,8 +99,130 @@ void MOVI(uint32_t **p, uint8_t dst, uint32_t imm) {
 uint32_t PUSH_LR() { return 0xe92d4ff0; } //0xe92d4000; }
 uint32_t POP_LR() { return 0xe8bd8ff0; } //0xe8bd8000; }
 
+static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
+{
+	insns_t *x_4_addr;
+	size_t len;
 
+	x_4_addr = *fp;
 
+#ifdef HAVE_NEON
+	len = (char*) neon_x8 - (char*) neon_x4;
+	memcpy(x_4_addr, neon_x4, len);
 
+	if (sign < 0) {
+		x_4_addr[26] ^= 0x00200000;
+		x_4_addr[28] ^= 0x00200000;
+		x_4_addr[31] ^= 0x00200000;
+		x_4_addr[32] ^= 0x00200000;
+	}
+#else
+	len = (char*) vfp_x8 - (char*) vfp_x4;
+	memcpy(x_4_addr, vfp_x4, len);
+
+	if (sign > 0) {
+		x_4_addr[36] ^= 0x00000040;
+		x_4_addr[38] ^= 0x00000040;
+		x_4_addr[43] ^= 0x00000040;
+		x_4_addr[44] ^= 0x00000040;
+	}
 #endif
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+
+	*fp += len / 4;
+	return x_4_addr;
+}
+
+static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
+{
+	insns_t *x_8_addr;
+	ptrdiff_t len;
+
+	x_8_addr = *fp;
+
+#ifdef HAVE_NEON
+	len = (char*) neon_x8_t - (char*) neon_x8;
+	memcpy(x_8_addr, neon_x8, len);
+
+	/*
+	* Changes adds to subtracts and vice versa to allow the computation
+	* of both the IFFT and FFT
+	*/
+	if (sign < 0) {
+		x_8_addr[31] ^= 0x00200000;
+		x_8_addr[32] ^= 0x00200000;
+		x_8_addr[33] ^= 0x00200000;
+		x_8_addr[34] ^= 0x00200000;
+		x_8_addr[65] ^= 0x00200000;
+		x_8_addr[66] ^= 0x00200000;
+		x_8_addr[70] ^= 0x00200000;
+		x_8_addr[74] ^= 0x00200000;
+		x_8_addr[97] ^= 0x00200000;
+		x_8_addr[98] ^= 0x00200000;
+		x_8_addr[102] ^= 0x00200000;
+		x_8_addr[104] ^= 0x00200000;
+	}
+
+	*fp += len / 4;
+	
+	//uint32_t *x_8_t_addr = fp;
+    //memcpy(fp, neon_x8_t, neon_end - neon_x8_t);
+    //fp += (neon_end - neon_x8_t) / 4;
+#else
+	len = (char*) vfp_end - (char*) vfp_x8;
+	memcpy(x_8_addr, vfp_x8, len);
+
+	if (sign > 0) {
+		x_8_addr[65] ^= 0x00000040;
+		x_8_addr[66] ^= 0x00000040;
+		x_8_addr[68] ^= 0x00000040;
+		x_8_addr[70] ^= 0x00000040;
+		x_8_addr[103] ^= 0x00000040;
+		x_8_addr[104] ^= 0x00000040;
+		x_8_addr[105] ^= 0x00000040;
+		x_8_addr[108] ^= 0x00000040;
+		x_8_addr[113] ^= 0x00000040;
+		x_8_addr[114] ^= 0x00000040;
+		x_8_addr[117] ^= 0x00000040;
+		x_8_addr[118] ^= 0x00000040;
+	}
+
+	*fp += len / 4;
+#endif
+
+	return x_8_addr;
+}
+
+static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
+{
+	insns_t	*start = *fp;
+
+	*(*fp)++ = PUSH_LR();
+	*(*fp)++ = 0xed2d8b10;
+
+	ADDI(fp,  3,  1,        0);
+	ADDI(fp,  7,  1,     p->N);
+	ADDI(fp,  5,  1, 2 * p->N);
+	ADDI(fp, 10,  7, 2 * p->N);
+	ADDI(fp,  4,  5, 2 * p->N);
+	ADDI(fp,  8, 10, 2 * p->N);
+	ADDI(fp,  6,  4, 2 * p->N);
+	ADDI(fp,  9,  8, 2 * p->N);
+
+	// load offsets into r12
+	*(*fp)++ = LDRI(12, 0, ((uint32_t) &p->offsets) - ((uint32_t) p));
+	//  *(*fp)++ = LDRI(1, 0, 4); // load ws into r1
+	ADDI(fp, 1, 0, 0);
+
+	ADDI(fp, 0, 2, 0), // mov out into r0
+	*(*fp)++ = LDRI(2, 1, ((uint32_t) &p->ee_ws) - ((uint32_t) p));
+
+#ifdef HAVE_NEON
+	MOVI(fp, 11, p->i0);
+#else
+	MOVI(fp, 11, p->i0);
+#endif
+
+	return start;
+}
+
+#endif /* FFTS_CODEGEN_ARM_H */

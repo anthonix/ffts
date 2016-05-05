@@ -1,10 +1,10 @@
 /*
- 
+
  This file is part of FFTS -- The Fastest Fourier Transform in the South
-  
+
  Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
- Copyright (c) 2012, The University of Waikato 
- 
+ Copyright (c) 2012, The University of Waikato
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -31,20 +31,15 @@
 
 */
 
+#ifndef FFTS_TYPES_H
+#define FFTS_TYPES_H
 
-#ifndef __TYPES_H__
-#define __TYPES_H__
-
-#define __INLINE static inline __attribute__((always_inline))
-
-#if defined(complex)
-	typedef complex float cdata_t;
-#else
-	typedef float cdata_t[2];
-#endif
-	typedef float data_t;
-
+#if defined (_MSC_VER) && (_MSC_VER >= 1020)
+#pragma once
 #endif
 
+/* Define complex number as two element array */
+typedef float  ffts_cpx_32f[2];
+typedef double ffts_cpx_64f[2];
 
-// vim: set autoindent noexpandtab tabstop=3 shiftwidth=3:
+#endif /* FFTS_TYPES_H */
