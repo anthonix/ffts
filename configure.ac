@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.68])
+AC_PREREQ([2.65])
 AC_INIT(ffts, 0.7, amb@anthonix.com)
 AM_INIT_AUTOMAKE(ffts, 0.7)
 
@@ -109,7 +109,7 @@ AC_CHECK_DECLS([posix_memalign,
                 #include <malloc.h>])
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/socket.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([malloc.h stddef.h stdint.h stdlib.h string.h sys/mman.h sys/socket.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
