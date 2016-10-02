@@ -17,6 +17,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif(NOT CMAKE_BUILD_TYPE)
 
+# installation parameters
+set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/ffts)
+set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+
 # common options
 option(ENABLE_NEON
   "Enables the use of NEON instructions." OFF
@@ -429,6 +433,8 @@ if(ENABLE_SHARED)
     OUTPUT_NAME ffts
     VERSION ${FFTS_MAJOR}.${FFTS_MINOR}.${FFTS_MICRO}
   )
+
+  install( TARGETS ffts_shared DESTINATION ${LIB_INSTALL_DIR} )
 endif(ENABLE_SHARED)
 
 if(ENABLE_STATIC)
@@ -441,6 +447,8 @@ if(ENABLE_STATIC)
     # On unix-like platforms the library is called "libffts.a"
     set_target_properties(ffts_static PROPERTIES OUTPUT_NAME ffts)
   endif(UNIX)
+
+  install( TARGETS ffts_static DESTINATION ${LIB_INSTALL_DIR} )
 endif(ENABLE_STATIC)
 
 if(ENABLE_STATIC OR ENABLE_SHARED)
@@ -460,3 +468,22 @@ if(ENABLE_STATIC OR ENABLE_SHARED)
     ${FFTS_EXTRA_LIBRARIES}
   )
 endif(ENABLE_STATIC OR ENABLE_SHARED)
+
+# generate packageconfig file
+if(UNIX)
+  include(FindPkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+      # convert lists of link libraries into -lstdc++ -lm etc..
+      foreach(LIB ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES} ${PLATFORM_LIBS})
+          set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
+      endforeach()
+      # Produce a pkg-config file for linking against the shared lib
+      configure_file("ffts.pc.cmake.in" "ffts.pc" @ONLY)
+      install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/ffts.pc"
+              DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
+  endif(PKG_CONFIG_FOUND)
+endif(UNIX)
+
+install( FILES
+    ${FFTS_HEADERS}
+  DESTINATION ${INCLUDE_INSTALL_DIR} )
