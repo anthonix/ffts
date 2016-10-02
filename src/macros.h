@@ -42,8 +42,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "macros-neon.h"
 #elif HAVE_SSE
 #include "macros-sse.h"
-#elif __powerpc__
-#include "macros-altivec.h"
+// NOTE: AltiVec support disabled until updated to provide new V4SF variable type
+//#elif __powerpc__
+//#include "macros-altivec.h"
 #else
 #include "macros-alpha.h"
 #endif
