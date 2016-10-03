@@ -34,7 +34,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FFTS_INTERNAL_H
 #define FFTS_INTERNAL_H
 
-//#include "config.h"
+#ifdef AUTOTOOLS_BUILD
+#include "config.h"
+#endif
+
 #include "ffts_attributes.h"
 #include "types.h"
 
