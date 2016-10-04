@@ -56,8 +56,9 @@ typedef __m128 V4SF;
 #define V4SF_SWAP_PAIRS(x) \
     (_mm_shuffle_ps(x, x, _MM_SHUFFLE(2,3,0,1)))
 
+/* note: order is swapped to workaround GCC bug */
 #define V4SF_UNPACK_HI(x,y) \
-    (_mm_shuffle_ps(x, y, _MM_SHUFFLE(3,2,3,2)))
+    (_mm_movehl_ps(y, x))
 
 #define V4SF_UNPACK_LO(x,y) \
     (_mm_movelh_ps(x, y))
