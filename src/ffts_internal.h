@@ -2,6 +2,7 @@
 
 This file is part of FFTS -- The Fastest Fourier Transform in the South
 
+Copyright (c) 2015-2016, Jukka Ojanen <jukka.ojanen@kolumbus.fi>
 Copyright (c) 2012, Anthony M. Blake <amb@anthonix.com>
 Copyright (c) 2012, The University of Waikato
 
@@ -45,6 +46,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <malloc.h>
 #endif
 
+#ifdef HAVE_MM_ALLOC_H
+#include <mm_malloc.h>
+#ifndef HAVE__MM_MALLOC
+#define HAVE__MM_MALLOC
+#endif
+#endif
+
 #include <stddef.h>
 
 #ifdef HAVE_STDINT_H
@@ -56,6 +64,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <stdio.h>
+
+#if defined(HAVE_DECL_ALIGNED_ALLOC) && !HAVE_DECL_ALIGNED_ALLOC
+extern void *aligned_alloc(size_t, size_t);
+#endif
+
+#if defined(HAVE_DECL_MEMALIGN) && !HAVE_DECL_MEMALIGN
+extern void *memalign(size_t, size_t);
+#endif
+
+#if defined(HAVE_DECL_POSIX_MEMALIGN) && !HAVE_DECL_POSIX_MEMALIGN
+extern int posix_memalign(void **, size_t, size_t);
+#endif
+
+#if defined(HAVE_DECL_VALLOC) && !HAVE_DECL_VALLOC
+extern void *valloc(size_t);
+#endif
+
+#ifdef _mm_malloc
+#ifndef HAVE__MM_MALLOC
+#define HAVE__MM_MALLOC
+#endif
+#endif
 
 #ifdef ENABLE_LOG
 #ifdef __ANDROID__
@@ -174,20 +204,50 @@ struct _ffts_plan_t {
     size_t i2;
 };
 
-static FFTS_INLINE void *ffts_aligned_malloc(size_t size)
+static FFTS_INLINE void*
+ffts_aligned_malloc(size_t size)
 {
-#if defined(_WIN32)
-    return _aligned_malloc(size, 32);
+    void *p;
+
+    /* various ways to allocate aligned memory in order of preferance */
+#if defined(HAVE_ALIGNED_ALLOC)
+    p = aligned_alloc(32, size);
+#elif defined(__ICC) || defined(__INTEL_COMPILER) || defined(HAVE__MM_MALLOC)
+    p = (void*) _mm_malloc(size, 32);
+#elif defined(HAVE_POSIX_MEMALIGN)
+    if (posix_memalign(&p, 32, size))
+        p = NULL;
+#elif defined(HAVE_MEMALIGN)
+    p = memalign(32, size);
+#elif defined(__ALTIVEC__)
+    p = vec_malloc(size);
+#elif defined(_MSC_VER) || defined(WIN32)
+    p = _aligned_malloc(size, 32);
+#elif defined(HAVE_VALLOC)
+    p = valloc(size);
 #else
-    return valloc(size);
+    p = malloc(size);
 #endif
+
+    return p;
 }
 
-static FFTS_INLINE void ffts_aligned_free(void *p)
+static FFTS_INLINE
+void ffts_aligned_free(void *p)
 {
-#if defined(_WIN32)
+    /* order must match with ffts_aligned_malloc */
+#if defined(HAVE_ALIGNED_ALLOC)
+    free(p);
+#elif defined(__ICC) || defined(__INTEL_COMPILER) || defined(HAVE__MM_MALLOC)
+    _mm_free(p);
+#elif defined(HAVE_POSIX_MEMALIGN) || defined(HAVE_MEMALIGN)
+    free(p);
+#elif defined(__ALTIVEC__)
+    vec_free(p);
+#elif defined(_MSC_VER) || defined(WIN32)
     _aligned_free(p);
 #else
+    /* valloc or malloc */
     free(p);
 #endif
 }

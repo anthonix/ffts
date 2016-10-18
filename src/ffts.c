@@ -188,7 +188,7 @@ void ffts_free_1d(ffts_plan_t *p)
     }
 
     if (p->ws) {
-        FFTS_FREE(p->ws);
+        ffts_aligned_free(p->ws);
     }
 
     if (p->is) {
@@ -233,7 +233,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         lut_size = leaf_N * (((1 << n_luts) - 2) * 3 + 1) * sizeof(ffts_cpx_32f);
 #endif
 
-        p->ws = FFTS_MALLOC(lut_size, 32);
+        p->ws = ffts_aligned_malloc(lut_size);
         if (!p->ws) {
             goto cleanup;
         }
@@ -253,7 +253,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
 
     /* calculate factors */
     m = leaf_N << (n_luts - 2);
-    tmp = FFTS_MALLOC(m * sizeof(ffts_cpx_32f), 32);
+    tmp = ffts_aligned_malloc(m * sizeof(ffts_cpx_32f));
 
     ffts_generate_cosine_sine_pow2_32f(tmp, m);
 
@@ -263,7 +263,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         p->ws_is[i] = w - (ffts_cpx_32f*) p->ws;
 
         if (!i) {
-            ffts_cpx_32f *w0 = FFTS_MALLOC(n/4 * sizeof(ffts_cpx_32f), 32);
+            ffts_cpx_32f *w0 = ffts_aligned_malloc(n/4 * sizeof(ffts_cpx_32f));
             float *fw0 = (float*) w0;
             float *fw = (float*) w;
 
@@ -300,11 +300,11 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             w += n/4 * 2;
 #endif
 
-            FFTS_FREE(w0);
+            ffts_aligned_free(w0);
         } else {
-            ffts_cpx_32f *w0 = (ffts_cpx_32f*) FFTS_MALLOC(n/8 * sizeof(ffts_cpx_32f), 32);
-            ffts_cpx_32f *w1 = (ffts_cpx_32f*) FFTS_MALLOC(n/8 * sizeof(ffts_cpx_32f), 32);
-            ffts_cpx_32f *w2 = (ffts_cpx_32f*) FFTS_MALLOC(n/8 * sizeof(ffts_cpx_32f), 32);
+            ffts_cpx_32f *w0 = (ffts_cpx_32f*) ffts_aligned_malloc(n/8 * sizeof(ffts_cpx_32f));
+            ffts_cpx_32f *w1 = (ffts_cpx_32f*) ffts_aligned_malloc(n/8 * sizeof(ffts_cpx_32f));
+            ffts_cpx_32f *w2 = (ffts_cpx_32f*) ffts_aligned_malloc(n/8 * sizeof(ffts_cpx_32f));
 
             float *fw0 = (float*) w0;
             float *fw1 = (float*) w1;
@@ -380,9 +380,9 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             w += n/8 * 3 * 2;
 #endif
 
-            FFTS_FREE(w0);
-            FFTS_FREE(w1);
-            FFTS_FREE(w2);
+            ffts_aligned_free(w0);
+            ffts_aligned_free(w1);
+            ffts_aligned_free(w2);
         }
 
         n *= 2;
@@ -401,7 +401,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     }
 #endif
 
-    FFTS_FREE(tmp);
+    ffts_aligned_free(tmp);
 
     p->lastlut = w;
     p->n_luts = n_luts;

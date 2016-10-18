@@ -39,9 +39,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #endif
 
-#define FFTS_MALLOC(d,a) (valloc(d))
-#define FFTS_FREE(d) (free(d))
-
 typedef float32x4_t   V4SF;
 typedef float32x4x2_t V4SF2;
 

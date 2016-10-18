@@ -58,9 +58,6 @@ typedef union {
     uint32_t u[4];
 } V4SF;
 
-#define FFTS_MALLOC(d,a) (malloc(d))
-#define FFTS_FREE(d) (free(d))
-
 static FFTS_ALWAYS_INLINE V4SF
 V4SF_LIT4(float f3, float f2, float f1, float f0)
 {
