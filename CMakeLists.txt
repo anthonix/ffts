@@ -48,7 +48,9 @@ option(ENABLE_STATIC
 
 include(CheckCSourceCompiles)
 include(CheckCSourceRuns)
+include(CheckFunctionExists)
 include(CheckIncludeFile)
+include(CheckSymbolExists)
 
 # Ensure defined when building FFTS (as opposed to using it from
 # another project). Used to export functions from Windows DLL.
