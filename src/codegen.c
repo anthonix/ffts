@@ -139,9 +139,9 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
 #ifdef HAVE_SSE
     if (sign < 0) {
-        p->constants = sse_constants;
+        p->constants = (const void*) sse_constants;
     } else {
-        p->constants = sse_constants_inv;
+        p->constants = (const void*) sse_constants_inv;
     }
 #endif
 

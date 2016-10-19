@@ -175,11 +175,9 @@ struct _ffts_plan_t {
      */
     size_t transform_size;
 
-    /**
-     * Points to the cosnant variables used by
-     * the Assembly Code
-     */
-    void *constants;
+    /* pointer to the constant variable used by SSE for sign change */
+    /* TODO: #ifdef HAVE_SSE */
+    const void *constants;
 
     // multi-dimensional stuff:
     struct _ffts_plan_t **plans;
