@@ -2,7 +2,7 @@
 
 This file is part of FFTS -- The Fastest Fourier Transform in the South
 
-Copyright (c) 2015, Jukka Ojanen <jukka.ojanen@kolumbus.fi>
+Copyright (c) 2015-2016, Jukka Ojanen <jukka.ojanen@kolumbus.fi>
 
 All rights reserved.
 
@@ -39,8 +39,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ffts_internal.h"
 
+/* calculate cos(pi * n / d) and sin(pi * n / d) with maximum error less than 1 ULP, average ~0.5 ULP */
 int
-ffts_generate_cosine_sine_32f(ffts_cpx_32f *const table, int table_size);
+ffts_cexp_32f(size_t n, size_t d, float *output);
+
+int
+ffts_generate_chirp_32f(ffts_cpx_32f *const table, size_t table_size);
+
+/* generate cosine and sine tables with maximum error less than 1 ULP, average ~0.5 ULP */
+int
+ffts_generate_cosine_sine_32f(ffts_cpx_32f *const table, size_t table_size);
 
 int
 ffts_generate_cosine_sine_pow2_32f(ffts_cpx_32f *const table, int table_size);
