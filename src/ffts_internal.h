@@ -252,23 +252,49 @@ void ffts_aligned_free(void *p)
 
 #if GCC_VERSION_AT_LEAST(3,3)
 #define ffts_ctzl __builtin_ctzl
+
+static FFTS_INLINE size_t
+ffts_next_power_of_2(size_t N)
+{
+    return 1 << (32 - __builtin_clzl(N));
+}
 #elif defined(_MSC_VER)
 #include <intrin.h>
 #ifdef _M_X64
 #pragma intrinsic(_BitScanForward64)
-static __inline unsigned long ffts_ctzl(size_t N)
+static FFTS_INLINE unsigned long
+ffts_ctzl(size_t N)
 {
     unsigned long count;
     _BitScanForward64((unsigned long*) &count, N);
     return count;
 }
+
+#pragma intrinsic(_BitScanReverse64)
+static FFTS_INLINE size_t
+ffts_next_power_of_2(size_t N)
+{
+    unsigned long log_2;
+    _BitScanReverse64((unsigned long*)&log_2, N);
+    return 1ULL << (log_2 + 1);
+}
 #else
 #pragma intrinsic(_BitScanForward)
-static __inline unsigned long ffts_ctzl(size_t N)
+static FFTS_INLINE unsigned long
+ffts_ctzl(size_t N)
 {
     unsigned long count;
     _BitScanForward((unsigned long*) &count, N);
     return count;
+}
+
+#pragma intrinsic(_BitScanReverse)
+static FFTS_INLINE size_t
+ffts_next_power_of_2(size_t N)
+{
+    unsigned long log_2;
+    _BitScanReverse((unsigned long*)&log_2, N);
+    return 1 << (log_2 + 1);
 }
 #endif /* _WIN64 */
 #endif /* _MSC_VER */

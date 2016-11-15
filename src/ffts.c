@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ffts.h"
 
 #include "ffts_internal.h"
+#include "ffts_chirp_z.h"
 #include "ffts_static.h"
 #include "ffts_trig.h"
 #include "macros.h"
@@ -76,7 +77,8 @@ static const FFTS_ALIGN(64) float w_data[16] = {
 };
 #endif
 
-static FFTS_INLINE int ffts_allow_execute(void *start, size_t len)
+static FFTS_INLINE int
+ffts_allow_execute(void *start, size_t len)
 {
     int result;
 
@@ -90,7 +92,8 @@ static FFTS_INLINE int ffts_allow_execute(void *start, size_t len)
     return result;
 }
 
-static FFTS_INLINE int ffts_deny_execute(void *start, size_t len)
+static FFTS_INLINE int
+ffts_deny_execute(void *start, size_t len)
 {
     int result;
 
@@ -104,7 +107,8 @@ static FFTS_INLINE int ffts_deny_execute(void *start, size_t len)
     return result;
 }
 
-static FFTS_INLINE int ffts_flush_instruction_cache(void *start, size_t length)
+static FFTS_INLINE int
+ffts_flush_instruction_cache(void *start, size_t length)
 {
 #ifdef _WIN32
     return !FlushInstructionCache(GetCurrentProcess(), start, length);
@@ -124,7 +128,8 @@ static FFTS_INLINE int ffts_flush_instruction_cache(void *start, size_t length)
 #endif
 }
 
-static FFTS_INLINE void *ffts_vmem_alloc(size_t length)
+static FFTS_INLINE void*
+ffts_vmem_alloc(size_t length)
 {
 #if __APPLE__
     return mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
@@ -139,7 +144,8 @@ static FFTS_INLINE void *ffts_vmem_alloc(size_t length)
 #endif
 }
 
-static FFTS_INLINE void ffts_vmem_free(void *addr, size_t length)
+static FFTS_INLINE void
+ffts_vmem_free(void *addr, size_t length)
 {
 #ifdef _WIN32
     (void) length;
@@ -174,7 +180,8 @@ ffts_free(ffts_plan_t *p)
     }
 }
 
-void ffts_free_1d(ffts_plan_t *p)
+static void
+ffts_free_1d(ffts_plan_t *p)
 {
 #if !defined(DYNAMIC_DISABLED)
     if (p->transform_base) {
@@ -417,12 +424,17 @@ ffts_init_1d(size_t N, int sign)
     const size_t leaf_N = 8;
     ffts_plan_t *p;
 
-    if (N < 2 || (N & (N - 1)) != 0) {
-        LOG("FFT size must be a power of two\n");
+    if (N < 2) {
+        LOG("FFT size must be greater than 1");
         return NULL;
     }
 
-    p = calloc(1, sizeof(*p));
+    /* check if size is not a power of two */
+    if (N & (N - 1)) {
+        return ffts_chirp_z_init(N, sign);
+    }
+
+    p = (ffts_plan_t*) calloc(1, sizeof(*p));
     if (!p) {
         return NULL;
     }

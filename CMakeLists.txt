@@ -412,6 +412,8 @@ set(FFTS_HEADERS
 set(FFTS_SOURCES
   src/ffts_attributes.h
   src/ffts.c
+  src/ffts_chirp_z.c
+  src/ffts_chirp_z.h
   src/ffts_internal.h
   src/ffts_nd.c
   src/ffts_nd.h
