@@ -42,16 +42,6 @@
 typedef vector float V;
 typedef vector unsigned char VUC;
 
-#ifdef __apple__
-#define FFTS_MALLOC(d,a) vec_malloc(d)
-#define FFTS_FREE(d) vec_free(d)
-#else
-/* It appears vec_malloc() and friends are not implemented on Linux */
-#include <malloc.h>
-#define FFTS_MALLOC(d,a) memalign(16,d)
-#define FFTS_FREE(d) free(d)
-#endif
-
 #define VLIT4(f0,f1,f2,f3) ((V){f0, f1, f2, f3})
 
 #define VADD(x,y) vec_add(x,y)
