@@ -7,15 +7,17 @@ To build for Android, edit and run build_android.sh
 To build for iOS, edit and run build_iphone.sh 
 
 To build for Linux or OS X on x86, run 
+```
   ./configure --enable-sse --enable-single --prefix=/usr/local
   make
   make install
-
+```
 Optionally build for Windows and Linux with CMake, run
+```
   mkdir build
   cd build
   cmake ..
-  
+```
 FFTS dynamically generates code at runtime. This can be disabled with 
 --disable-dynamic-code
 
