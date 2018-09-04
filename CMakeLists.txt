@@ -298,9 +298,9 @@ if(NOT CMAKE_CROSSCOMPILING)
     endif(NOT NEON_HARDFP_SUPPORTED AND NOT NEON_SOFTFP_SUPPORTED)
   else()
     # enable SSE code generation
-    if(CMAKE_COMPILER_IS_GNUCC)
+    if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
       set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -msse")
-    endif(CMAKE_COMPILER_IS_GNUCC)
+    endif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
 
     # check if the platform has support for SSE intrinsics
     check_include_file(xmmintrin.h HAVE_XMMINTRIN_H)
@@ -310,9 +310,9 @@ if(NOT CMAKE_CROSSCOMPILING)
     endif(HAVE_XMMINTRIN_H)
 
     # enable SSE2 code generation
-    if(CMAKE_COMPILER_IS_GNUCC)
+    if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
       set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -msse2")
-    endif(CMAKE_COMPILER_IS_GNUCC)
+    endif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
 
     # check if the platform has support for SSE2 intrinsics
     check_include_file(emmintrin.h HAVE_EMMINTRIN_H)
@@ -322,9 +322,9 @@ if(NOT CMAKE_CROSSCOMPILING)
     endif(HAVE_EMMINTRIN_H)
 
     # enable SSE3 code generation
-    if(CMAKE_COMPILER_IS_GNUCC)
+    if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
       set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_SAVE} -msse3")
-    endif(CMAKE_COMPILER_IS_GNUCC)
+    endif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
 
     # check if the platform has support for SSE3 intrinsics
     check_include_file(pmmintrin.h HAVE_PMMINTRIN_H)
@@ -371,7 +371,7 @@ if(MSVC)
   set(CMAKE_DEBUG_POSTFIX "d")
 
   add_definitions(-D_USE_MATH_DEFINES)
-elseif(CMAKE_COMPILER_IS_GNUCC)
+elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
   include(CheckCCompilerFlag)
   include(CheckLibraryExists)
 
