@@ -37,6 +37,8 @@
 
 #ifdef HAVE_SSE
 #include <xmmintrin.h>
+#else
+#include <unistd.h>
 #endif
 
 #include <stdio.h>
