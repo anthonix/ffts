@@ -134,11 +134,11 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(libffts_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libffts_la_LIBADD =
-am__libffts_la_SOURCES_DIST = ffts.c ffts_small.c ffts_nd.c \
-	ffts_real.c ffts_real_nd.c patterns.c codegen.h codegen_arm.h \
+am__libffts_la_SOURCES_DIST = ffts.c ffts_chirp_z.c ffts_nd.c ffts_static.c \
+	ffts_real.c ffts_real_nd.c ffts_trig.c codegen.h codegen_arm.h \
 	codegen_sse.h ffts.h ffts_nd.h ffts_real.h ffts_real_nd.h \
-	ffts_small.h ffts_static.h macros-alpha.h macros-altivec.h \
-	macros-neon.h macros-sse.h macros.h neon.h neon_float.h \
+	ffts_chirp_z.h ffts_static.h macros-alpha.h macros-altivec.h \
+	ffts_trig.h macros-neon.h macros-sse.h macros.h neon.h neon_float.h \
 	patterns.h types.h vfp.h ffts_static.c codegen.c vfp.s neon.s \
 	neon_static_f.s neon_static_i.s sse.s
 @DYNAMIC_DISABLED_TRUE@am__objects_1 = ffts_static.lo
@@ -149,8 +149,9 @@ am__libffts_la_SOURCES_DIST = ffts.c ffts_small.c ffts_nd.c \
 @DYNAMIC_DISABLED_TRUE@@HAVE_NEON_TRUE@@HAVE_VFP_FALSE@	neon_static_i.lo
 @HAVE_NEON_FALSE@@HAVE_SSE_TRUE@@HAVE_VFP_FALSE@am__objects_6 =  \
 @HAVE_NEON_FALSE@@HAVE_SSE_TRUE@@HAVE_VFP_FALSE@	sse.lo
-am_libffts_la_OBJECTS = ffts.lo ffts_small.lo ffts_nd.lo ffts_real.lo \
-	ffts_real_nd.lo patterns.lo $(am__objects_1) $(am__objects_2) \
+am_libffts_la_OBJECTS = ffts.lo ffts_chirp_z.lo ffts_nd.lo ffts_real.lo \
+	ffts_real_nd.lo ffts_trig.lo ffts_static.lo \
+	$(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
 	$(am__objects_6)
 libffts_la_OBJECTS = $(am_libffts_la_OBJECTS)
@@ -170,7 +171,7 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
+DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir) -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
@@ -360,10 +361,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libffts.la
-libffts_la_SOURCES = ffts.c ffts_small.c ffts_nd.c ffts_real.c \
-	ffts_real_nd.c patterns.c codegen.h codegen_arm.h \
+libffts_la_SOURCES = ffts.c ffts_chirp_z.c ffts_nd.c ffts_real.c \
+	ffts_real_nd.c ffts_trig.c ffts_trig.h codegen.h codegen_arm.h \
 	codegen_sse.h ffts.h ffts_nd.h ffts_real.h ffts_real_nd.h \
-	ffts_small.h ffts_static.h macros-alpha.h macros-altivec.h \
+	ffts_chirp_z.h ffts_static.c ffts_static.h macros-alpha.h macros-altivec.h \
 	macros-neon.h macros-sse.h macros.h neon.h neon_float.h \
 	patterns.h types.h vfp.h $(am__append_1) $(am__append_2) \
 	$(am__append_3) $(am__append_4) $(am__append_5) \
@@ -454,9 +455,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_nd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_real.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_real_nd.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_small.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_chirp_z.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_static.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/patterns.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffts_trig.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

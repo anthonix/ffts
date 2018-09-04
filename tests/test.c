@@ -32,11 +32,17 @@
 #include "../include/ffts.h"
 #include "../src/ffts_attributes.h"
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #ifdef __ARM_NEON__
 #endif
 
 #ifdef HAVE_SSE
 #include <xmmintrin.h>
+#else
+#include <unistd.h>
 #endif
 
 #include <stdio.h>
