@@ -18,8 +18,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # installation parameters
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/ffts)
-set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+include(GNUInstallDirs)
 
 # common options
 option(ENABLE_NEON
@@ -497,7 +496,7 @@ if(ENABLE_SHARED)
     VERSION ${FFTS_MAJOR}.${FFTS_MINOR}.${FFTS_MICRO}
   )
 
-  install( TARGETS ffts_shared DESTINATION ${LIB_INSTALL_DIR} )
+install( TARGETS ffts_shared DESTINATION ${CMAKE_INSTALL_LIBDIR} )
 endif(ENABLE_SHARED)
 
 if(ENABLE_STATIC)
@@ -511,7 +510,7 @@ if(ENABLE_STATIC)
     set_target_properties(ffts_static PROPERTIES OUTPUT_NAME ffts)
   endif(UNIX)
 
-  install( TARGETS ffts_static DESTINATION ${LIB_INSTALL_DIR} )
+  install( TARGETS ffts_static DESTINATION ${CMAKE_INSTALL_LIBDIR} )
 endif(ENABLE_STATIC)
 
 if(ENABLE_STATIC OR ENABLE_SHARED)
@@ -543,10 +542,10 @@ if(UNIX)
       # Produce a pkg-config file for linking against the shared lib
       configure_file("ffts.pc.cmake.in" "ffts.pc" @ONLY)
       install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/ffts.pc"
-              DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
+        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig/")
   endif(PKG_CONFIG_FOUND)
 endif(UNIX)
 
 install( FILES
     ${FFTS_HEADERS}
-  DESTINATION ${INCLUDE_INSTALL_DIR} )
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
