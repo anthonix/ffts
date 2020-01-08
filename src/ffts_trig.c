@@ -881,7 +881,7 @@ int
 ffts_generate_cosine_sine_pow2_32f(ffts_cpx_32f *const table, int table_size)
 {
     const ffts_cpx_64f *FFTS_RESTRICT ct;
-    const double_t *FFTS_RESTRICT hs;
+    const ffts_double_t *FFTS_RESTRICT hs;
     ffts_cpx_64f FFTS_ALIGN(16) w[32];
     int i, log_2, offset;
 
