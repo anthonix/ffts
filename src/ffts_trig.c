@@ -1063,7 +1063,15 @@ ffts_generate_table_1d_real_32f(struct _ffts_plan_t *const p,
     hs = FFTS_ASSUME_ALIGNED_16(&half_secant[2 * offset]);
 
     /* initialize from lookup table */
-    for (i = 0; i <= log_2; i++) {
+    /**
+     * Here a lookup only up to log2-1 is necessary, because in the iteration holds:
+     * i_log_2 < ffts_ctzl(N/4)
+     * -> i_log_2 < ffts_ctzl(N) - 2
+     * -> i_log_2 < log_2 - 2.
+     * The largest access to w is in w[i_log_2 +1], which is equivalent to
+     * w[log_2 -1], so we only initialize up to this point.
+     */
+    for (i = 0; i < log_2-1; i++) {
         w[i][0] = ct[2*i][0];
         w[i][1] = ct[2*i][1];
     }
@@ -1073,11 +1081,11 @@ ffts_generate_table_1d_real_32f(struct _ffts_plan_t *const p,
             float t0, t1, t2; 
 
             /* calculate trailing zeros in index */
-            log_2 = ffts_ctzl(i);
+            int i_log_2 = ffts_ctzl(i);
 
-            t0 = (float) (0.5 * (1.0 - w[log_2][1]));
-            t1 = (float) (0.5 * w[log_2][0]);
-            t2 = (float) (0.5 * (1.0 + w[log_2][1]));
+            t0 = (float) (0.5 * (1.0 - w[i_log_2][1]));
+            t1 = (float) (0.5 * w[i_log_2][0]);
+            t2 = (float) (0.5 * (1.0 + w[i_log_2][1]));
 
             A[    2 * i + 0] =  t0;
             A[N - 2 * i + 0] =  t0;
@@ -1090,20 +1098,20 @@ ffts_generate_table_1d_real_32f(struct _ffts_plan_t *const p,
             B[N - 2 * i + 1] = -t1;
 
             /* skip and find next trailing zero */
-            offset = (log_2 + 2 + ffts_ctzl(~i >> (log_2 + 2)));
-            w[log_2][0] = hs[2 * log_2].d * (w[log_2 + 1][0] + w[offset][0]);
-            w[log_2][1] = hs[2 * log_2].d * (w[log_2 + 1][1] + w[offset][1]);
+            offset = (i_log_2 + 2 + ffts_ctzl(~i >> (i_log_2 + 2)));
+            w[i_log_2][0] = hs[2 * i_log_2].d * (w[i_log_2 + 1][0] + w[offset][0]);
+            w[i_log_2][1] = hs[2 * i_log_2].d * (w[i_log_2 + 1][1] + w[offset][1]);
         }
     } else {
         for (i = 1; i < N/4; i++) {
             float t0, t1, t2; 
 
             /* calculate trailing zeros in index */
-            log_2 = ffts_ctzl(i);
+            int i_log_2 = ffts_ctzl(i);
 
-            t0 = (float) (1.0 - w[log_2][1]);
-            t1 = (float) w[log_2][0];
-            t2 = (float) (1.0 + w[log_2][1]);
+            t0 = (float) (1.0 - w[i_log_2][1]);
+            t1 = (float) w[i_log_2][0];
+            t2 = (float) (1.0 + w[i_log_2][1]);
 
             A[    2 * i + 0] = t0;
             A[N - 2 * i + 0] = t0;
@@ -1116,9 +1124,9 @@ ffts_generate_table_1d_real_32f(struct _ffts_plan_t *const p,
             B[N - 2 * i + 1] = -t1;
 
             /* skip and find next trailing zero */
-            offset = (log_2 + 2 + ffts_ctzl(~i >> (log_2 + 2)));
-            w[log_2][0] = hs[2 * log_2].d * (w[log_2 + 1][0] + w[offset][0]);
-            w[log_2][1] = hs[2 * log_2].d * (w[log_2 + 1][1] + w[offset][1]);
+            offset = (i_log_2 + 2 + ffts_ctzl(~i >> (i_log_2 + 2)));
+            w[i_log_2][0] = hs[2 * i_log_2].d * (w[i_log_2 + 1][0] + w[offset][0]);
+            w[i_log_2][1] = hs[2 * i_log_2].d * (w[i_log_2 + 1][1] + w[offset][1]);
         }
     }
 
