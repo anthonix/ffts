@@ -9,6 +9,9 @@ set(FFTS_MICRO 0)
 
 set(FFTS_VERSION "ffts-${FFTS_MAJOR}.${FFTS_MINOR}.${FFTS_MICRO}")
 
+include(GNUInstallDirs)
+include(FindPkgConfig)
+
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -18,8 +21,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # installation parameters
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/ffts)
-set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR}/ffts)
+set(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_INSTALL_CMAKEDIR "${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME}")
 
 # common options
 option(ENABLE_NEON
@@ -35,11 +39,11 @@ option(DISABLE_DYNAMIC_CODE
 )
 
 option(GENERATE_POSITION_INDEPENDENT_CODE
-  "Generate position independent code" OFF
+  "Generate position independent code" ON
 )
 
 option(ENABLE_SHARED
-  "Enable building a shared library." OFF
+  "Enable building a shared library." ON
 )
 
 option(ENABLE_STATIC
@@ -497,7 +501,7 @@ if(ENABLE_SHARED)
     VERSION ${FFTS_MAJOR}.${FFTS_MINOR}.${FFTS_MICRO}
   )
 
-  install( TARGETS ffts_shared DESTINATION ${LIB_INSTALL_DIR} )
+  install( TARGETS ffts_shared DESTINATION "${LIB_INSTALL_DIR}" EXPORT ffts_shared)
 endif(ENABLE_SHARED)
 
 if(ENABLE_STATIC)
@@ -508,10 +512,14 @@ if(ENABLE_STATIC)
 
   if(UNIX)
     # On unix-like platforms the library is called "libffts.a"
-    set_target_properties(ffts_static PROPERTIES OUTPUT_NAME ffts)
+    set_target_properties(ffts_static PROPERTIES
+	    DEFINE_SYMBOL FFTS_STATIC
+	    OUTPUT_NAME ffts
+	    VERSION ${FFTS_MAJOR}.${FFTS_MINOR}.${FFTS_MICRO}
+    )
   endif(UNIX)
 
-  install( TARGETS ffts_static DESTINATION ${LIB_INSTALL_DIR} )
+  install(TARGETS ffts_static DESTINATION "${LIB_INSTALL_DIR}" EXPORT ffts_static)
 endif(ENABLE_STATIC)
 
 if(ENABLE_STATIC OR ENABLE_SHARED)
@@ -532,6 +540,12 @@ if(ENABLE_STATIC OR ENABLE_SHARED)
   )
 endif(ENABLE_STATIC OR ENABLE_SHARED)
 
+include(CMakePackageConfigHelpers)
+configure_package_config_file(fftsConfig.cmake.in fftsConfig.cmake INSTALL_DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+write_basic_package_version_file(fftsConfigVersion.cmake VERSION ${FFTS_VERSION} COMPATIBILITY AnyNewerVersion)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fftsConfig.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/fftsConfigVersion.cmake" DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+
 # generate packageconfig file
 if(UNIX)
   include(FindPkgConfig QUIET)
@@ -543,7 +557,7 @@ if(UNIX)
       # Produce a pkg-config file for linking against the shared lib
       configure_file("ffts.pc.cmake.in" "ffts.pc" @ONLY)
       install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/ffts.pc"
-              DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
+              DESTINATION "${LIB_INSTALL_DIR}/pkgconfig")
   endif(PKG_CONFIG_FOUND)
 endif(UNIX)
 

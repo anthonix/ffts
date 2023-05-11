@@ -5,7 +5,7 @@
 *.lai
 *.lo
 *.Plo
-*.so
+*.so*
 *~
 *.log
 *.swp
@@ -25,4 +25,10 @@ java/android/local.properties
 java/android/gen/*
 java/android/obj/*
 java/android/bin/*
-
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+fftsConfig.cmake
+fftsConfigVersion.cmake
+ffts_test*
