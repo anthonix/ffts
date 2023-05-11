@@ -541,10 +541,15 @@ if(ENABLE_STATIC OR ENABLE_SHARED)
 endif(ENABLE_STATIC OR ENABLE_SHARED)
 
 include(CMakePackageConfigHelpers)
-configure_package_config_file(fftsConfig.cmake.in fftsConfig.cmake INSTALL_DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
-write_basic_package_version_file(fftsConfigVersion.cmake VERSION ${FFTS_VERSION} COMPATIBILITY AnyNewerVersion)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fftsConfig.cmake"
-	"${CMAKE_CURRENT_BINARY_DIR}/fftsConfigVersion.cmake" DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fftsConfig.cmake.in
+	                      ${CMAKE_CURRENT_BINARY_DIR}/cmake/fftsConfig.cmake
+			      INSTALL_DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/cmake/fftsConfigVersion.cmake VERSION ${FFTS_VERSION} COMPATIBILITY AnyNewerVersion)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/fftsConfig.cmake"
+	      "${CMAKE_CURRENT_BINARY_DIR}/cmake/fftsConfigVersion.cmake"
+	DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
 
 # generate packageconfig file
 if(UNIX)
@@ -555,8 +560,8 @@ if(UNIX)
           set(PRIVATE_LIBS "${PRIVATE_LIBS} -l${LIB}")
       endforeach()
       # Produce a pkg-config file for linking against the shared lib
-      configure_file("ffts.pc.cmake.in" "ffts.pc" @ONLY)
-      install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/ffts.pc"
+      configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ffts.pc.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/cmake/ffts.pc" @ONLY)
+      install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/cmake/ffts.pc"
               DESTINATION "${LIB_INSTALL_DIR}/pkgconfig")
   endif(PKG_CONFIG_FOUND)
 endif(UNIX)
