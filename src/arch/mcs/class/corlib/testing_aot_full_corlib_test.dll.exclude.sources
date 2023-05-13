@@ -1,0 +1,29 @@
+#include mobile_tests.exclude.sources
+#include testing_aot_common_corlib_test.dll.exclude.sources
+Mono/NativePlatformTest.cs
+Mono/MonoNativePlatform.cs
+Mono/MonoNativePlatformType.cs
+System.Reflection.Emit/AssemblyBuilderAccessTest.cs
+System.Reflection.Emit/AssemblyBuilderTest.cs
+System.Reflection.Emit/ConstructorBuilderTest.cs
+System.Reflection.Emit/ConstructorOnTypeBuilderInstTest.cs
+System.Reflection.Emit/CustomAttributeBuilderTest.cs
+System.Reflection.Emit/DerivedTypesTest.cs
+System.Reflection.Emit/DynamicILInfoTest.cs
+System.Reflection.Emit/DynamicMethodTest.cs
+System.Reflection.Emit/EnumBuilderTest.cs
+System.Reflection.Emit/EventBuilderTest.cs
+System.Reflection.Emit/FieldBuilderTest.cs
+System.Reflection.Emit/GenericTypeParameterBuilderTest.cs
+System.Reflection.Emit/ILGeneratorTest.cs
+System.Reflection.Emit/MethodBuilderTest.cs
+System.Reflection.Emit/MethodBuilderTestIL.cs
+System.Reflection.Emit/MethodOnTypeBuilderInstTest.cs
+System.Reflection.Emit/MethodRentalCas.cs
+System.Reflection.Emit/MethodRentalTest.cs
+System.Reflection.Emit/ModuleBuilderTest.cs
+System.Reflection.Emit/ParameterBuilderTest.cs
+System.Reflection.Emit/PropertyBuilderTest.cs
+System.Reflection.Emit/SignatureHelperTest.cs
+System.Reflection.Emit/TypeBuilderTest.cs
+System.Reflection.Emit/SaveTest.cs

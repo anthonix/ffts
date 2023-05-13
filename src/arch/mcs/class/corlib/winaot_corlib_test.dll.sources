@@ -1,0 +1,3 @@
+#include corlib_test.dll.sources
+
+System/AbortBlockingConsoleIOTest.cs

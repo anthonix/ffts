@@ -1,0 +1,2 @@
+#include legacy.sources
+System.Net.Http/HttpClient.macios.cs

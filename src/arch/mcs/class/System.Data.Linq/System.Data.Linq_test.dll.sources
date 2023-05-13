@@ -1,0 +1,11 @@
+../../test-helpers/NunitHelpers.cs
+
+dummy.cs
+SqlServer/MsSqlDataContextTest.cs
+BinaryTest.cs
+DataContextTest.cs
+EntitySetTest.cs
+NullProvider.cs
+PeopleTable.cs
+Providers/DataContextTestBase.cs
+TableTest.cs

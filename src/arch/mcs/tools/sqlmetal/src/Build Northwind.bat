@@ -1,0 +1,1 @@
+DbMetal\bin\DbMetal.exe /database=Northwind /schema /server=%%DbLinqServer??localhost /user=LinqUser /password=PLACEHOLDER /namespace=nwind /sprocs /entityInterfaces= /culture="en" /pluralize "@Build Northwind parameters.txt"

@@ -1,0 +1,32 @@
+# These files are give the wrong warning when compiled.
+# If you add a new test that should generate an error but generates the
+# wrong one, it should be added here.
+
+# If you fix the compiler so that it emits the correct error,
+# the file should be removed.
+
+# This file supports extended syntax
+# csXXXX.cs		: error test case reports wrong error
+# csXXXX.cs IGNORE 	: adds test to ignore list (should ONLY be used if the runtime crashes)
+# csXXXX.cs NO ERROR	: error test case doesn't report any error. An exception is considered
+#			  as NO ERROR and CS5001 is automatically ignored.
+
+# Parser problems
+cs0080.cs 
+
+# Undocumented switch governing rules
+cs0151-4.cs NO ERROR
+
+# Operators
+cs0457-2.cs
+cs0457.cs
+
+cs8129.cs NO ERROR
+cs8141.cs
+cs8141-2.cs
+cs8144.cs
+cs8157.cs NO ERROR
+cs8160.cs
+cs8161.cs
+cs8170.cs NO ERROR
+cs8170-2.cs

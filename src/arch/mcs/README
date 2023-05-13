@@ -1,0 +1,85 @@
+This contains the C# components of the Mono project.
+
+	* Compilers written in C#
+
+	* Class Libraries.
+
+	* Regression Test Suites
+
+To install this source code, look at the INSTALL file in the `mono'
+package module which drives the compilation of this directory.
+
+* Layout
+========
+
+	build/
+		Rules, configuration and makefile components to build
+		this module.
+
+	class/
+		The class libraries.
+
+	docs/
+		Some notes on the compiler and the class libraries.
+
+	errors/
+		Sample programs that should generate errors by the C# compiler.
+
+	ilasm/
+		The IL assembler.
+
+	jay/
+		Yacc-based parser generator.
+
+	mcs/
+		The Mono C# compiler
+
+	packages/
+		Integrates some packages from NuGet (like Roslyn) into the build system.
+
+	tests/
+		Regression test suite for the C# compiler
+
+	tools/
+		Various small development tools: CorCompare used to compare
+		two assemblies for differences in the API; csharp is a C# REPL;
+		cil-strip trims IL from assemblies.
+
+* Building Individual Directories
+=================================
+
+You can build individual components in the hierarchy by running the command
+"make", and to install it use "make install".
+
+By default, the 4.x profile is built, if you want to build other profiles,
+use the following command:
+
+	make PROFILE=<profilename>
+
+And to install:
+
+	make PROFILE=<profilename> install
+
+To turn on verbose mode in the build (for example to diagnose a
+problem), you can use the V=1 flag, like this:
+
+	make V=1
+
+* Running Unit tests
+====================
+
+You can run unit tests in individual components by running the command:
+
+	make run-test
+
+If you want to only run the tests in a single fixture (say
+'MonoTests.System.TypeTest'), you can use
+
+	make run-test TEST_FIXTURE=System.TypeTest
+
+* Acknowledgements
+==================
+
+Thanks a lot to Sergey Chaban for his help during the development of
+the C# compiler.
+

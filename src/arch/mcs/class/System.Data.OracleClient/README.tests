@@ -1,0 +1,8 @@
+Some tests located require a connection to Oracle database to execute.
+To configure a connection, set the MONO_TESTS_ORACLE_CONNECTION_STRING environment variable to a connection string like the following:
+
+Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=<host ip>)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=<sid>)));uid=<user name>;pwd=<password>;
+
+If the environment variable is not present, those tests will be ignored.
+
+Scripts for populating the database are located in Test/System.Data.OracleClient.jvm (for their usage, consult Test/System.Data.OracleClient.jvm/readme.txt).

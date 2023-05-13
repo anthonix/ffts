@@ -1,0 +1,159 @@
+.TH mprof-report 1
+.SH NAME
+mprof\-report \- report generator for Mono's log profiler
+.SH SYNOPSIS
+\fBmprof\-report\fR [\fIoption\fR]... \fIfile.mlpd\fR
+.SH DESCRIPTION
+\fBmprof\-report\fR is the report generator for Mono's \fBlog\fR
+profiler. It reads the MLPD log files produced by the log profiler
+and generates a report based on the options passed to it. The
+output is based on individual reports which can be turned on or off.
+By default, all reports are generated in summary form (i.e.,
+non-verbose output).
+.PP
+\fBmprof\-report\fR can read both normal and \fBgzip\fR(1)-compressed
+log files transparently.
+.PP
+For information about how to use the log profiler with a program,
+see the \fBmono\-profilers\fR(1) page, under the \fBLOG PROFILER\fR
+section.
+.SH OPTIONS
+The following options are available:
+.TP
+\fB\-\-help\fR
+Displays usage instructions.
+.TP
+\fB\-\-out\fR=\fIfile\fR
+Write the report output to \fIfile\fR instead of standard output.
+.TP
+\fB\-\-traces\fR
+Show backtraces in reports when available.
+.TP
+\fB\-\-maxframes\fR=\fInum\fR
+Limit backtraces to \fInum\fR frames.
+.TP
+\fB\-\-reports\fR=\fIreports\fR
+Generate only the specified reports. \fIreports\fR is a
+comma-separated list of reports. See the \fBREPORTS\fR section.
+.TP
+\fB\-\-method\-sort\fR=\fImode\fR
+Sort methods according to \fImode\fR, which can be one of:
+.RS
+.TP
+\fBtotal\fR (default)
+Sort by the total amount of time spent in a method and its callees.
+.TP
+\fBself\fR
+Sort by the amount of time spent only within a method itself.
+.TP
+\fBcalls\fR
+Sort by the total amount of calls made to a method.
+.RE
+.TP
+\fB\-\-alloc\-sort\fR=\fImode\fR
+Sort allocations according to \fImode\fR, which can be one of:
+.RS
+.TP
+\fBbytes\fR (default)
+Sort by the amount of heap bytes occupied by all allocated objects of
+a type.
+.TP
+\fBcount\fR
+Sort by the total amount of allocations of a type.
+.RE
+.TP
+\fB\-\-counters\-sort\fR=\fImode\fR
+Sort counters according to \fImode\fR. This alters how the
+\fBcounters\fR report is presented. It can be one of:
+.RS
+.TP
+\fBtime\fR (default)
+Present a list of samples, each containing a list of counter
+name-value pairs.
+.TP
+\fBcategory\fR
+Present a list of counter names, each containing a list of sampled
+values.
+.RE
+.IP
+This option has no effect unless \fB\-\-verbose\fR is passed.
+.TP
+\fB\-\-track\fR=\fIobjects\fR
+Track what happens to the specified objects. \fIobjects\fR is a
+comma-separated list of object addresses.
+.TP
+\fB\-\-find\fR=\fIspec\fR
+Find and track what happens to objects matching \fIspec\fR, which can
+have one of these forms:
+.RS
+.TP
+\fBS\fR:\fIminimum_size\fR
+Look for objects that are at least \fIminimum_size\fR bytes in size.
+.TP
+\fBT\fR:\fIname_fragment\fR
+Look for objects whose type name contain \fIname_fragment\fR.
+.RE
+.IP
+Both an \fBS\fR and \fBT\fR spec can be given by passing the option
+twice.
+.TP
+\fB\-\-thread\fR=\fItid\fR
+Consider only events from the thread with ID \fItid\fR.
+.TP
+\fB\-\-time\fR=\fIspan\fR
+Consider only events occurring in the specified time span. \fIspan\fR
+must be of the form \fIfrom\fR\-\fIto\fR where \fIfrom\fR and
+\fIto\fR are seconds since the program started.
+.TP
+\fB\-\-verbose\fR
+Print verbose output.
+.TP
+\fB\-\-debug\fR
+Print extremely detailed debug output. Most users should not use this
+option.
+.SH REPORTS
+The following reports are available:
+.TP
+\fBheader\fR
+Program startup and profiler version and operational information.
+.TP
+\fBjit\fR
+JIT compiler statistics.
+.TP
+\fBgc\fR
+Garbage collection and handle statistics.
+.TP
+\fBsample\fR
+Flat statistical sampling profile.
+.TP
+\fBalloc\fR
+Per-class GC allocation statistics and backtraces.
+.TP
+\fBcall\fR
+Method call statistics and backtraces.
+.TP
+\fBmetadata\fR
+Loaded images and assemblies.
+.TP
+\fBexception\fR
+Exception statistics and backtraces.
+.TP
+\fBmonitor\fR
+Monitor lock statistics and backtraces.
+.TP
+\fBthread\fR
+Managed thread names.
+.TP
+\fBdomain\fR
+Loaded application domains.
+.TP
+\fBcontext\fR
+Loaded remoting contexts.
+.TP
+\fBheapshot\fR
+Heap snapshot information.
+.TP
+\fBcounters\fR
+Performance counter samples.
+.SH SEE ALSO
+\fBmono\fR(1), \fBmono\-profilers\fR(1)

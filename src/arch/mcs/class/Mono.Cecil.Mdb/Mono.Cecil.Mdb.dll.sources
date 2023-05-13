@@ -1,0 +1,3 @@
+../../../external/cecil/ProjectInfo.cs
+../../../external/cecil/symbols/mdb/Mono.Cecil.Mdb/*.cs
+../../../external/cecil/symbols/mdb/Mono.CompilerServices.SymbolWriter/*.cs

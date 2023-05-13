@@ -1,0 +1,9 @@
+../../build/common/Consts.cs
+../../build/common/Locale.cs
+../../build/common/SR.cs
+../../build/common/MonoTODOAttribute.cs
+corefx/SR.cs
+Assembly/AssemblyInfo.cs
+../../../external/corefx/src/System.Threading.Tasks.Dataflow/src/Base/*.cs
+../../../external/corefx/src/System.Threading.Tasks.Dataflow/src/Blocks/*.cs
+../../../external/corefx/src/System.Threading.Tasks.Dataflow/src/Internal/*.cs

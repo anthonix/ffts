@@ -1,0 +1,4 @@
+../../test-helpers/NunitHelpers.cs
+System.ServiceProcess/ServiceBaseTest.cs
+System.ServiceProcess/ServiceControllerPermissionAttributeTest.cs
+System.ServiceProcess/ServiceControllerPermissionTest.cs

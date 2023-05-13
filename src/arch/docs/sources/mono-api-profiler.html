@@ -1,0 +1,193 @@
+<h1>Runtime Profiler API</h1>
+
+	<p>The profiler API can be used by dynamically loaded profiler
+	modules to monitor different aspects of a running program. The
+	API is also usable by embedders without having to compile a
+	profiler module.
+
+<h2>Profiler Modules</h2>
+
+	<p>A profiler module is simply a shared library with a single
+	exported function which is the entry point that Mono calls at
+	startup. It must have the following signature:
+
+	<pre><code class="mapi-codeblock">
+void mono_profiler_startup_example (const char *desc)
+	</code></pre>
+
+	<p>Here, the <code>example</code> portion of the function name is
+	the name of the profiler module. It must match the shared library
+	name (i.e. <code>libmono-profiler-example.so</code>). <i>desc</i>
+	is the set of arguments that were passed from the command line.
+
+	<p>For example, a bare bones profiler module might look like this
+	(<code>example.c</code>):
+
+	<pre><code class="mapi-codeblock">
+#include &lt;mono/metadata/profiler.h&gt;
+#include &lt;stdio.h&gt;
+
+struct _MonoProfiler {
+	int dummy;
+}
+
+static MonoProfiler profiler;
+
+static void
+runtime_inited (MonoProfiler *prof)
+{
+	printf ("Hello World");
+}
+
+void
+mono_profiler_init_example (const char *desc)
+{
+	MonoProfilerHandle handle = mono_profiler_create (&amp;profiler);
+	mono_profiler_set_runtime_initialized_callback (handle, runtime_inited);
+}
+	</code></pre>
+
+	<p>To compile this module, a C compiler must be invoked in a
+	similar fashion to this, on Linux:
+
+	<pre><code class="mapi-codeblock">
+gcc -fPIC -shared -o libmono-profiler-example.so example.c `pkg-config --cflags mono-2`
+	</code></pre>
+
+	<p>Or on OS X:
+
+	<pre><code class="mapi-codeblock">
+gcc -undefined suppress -flat_namespace -o libmono-profiler-example.so example.c `pkg-config --cflags mono-2`
+	</code></pre>
+
+	<p>You can then load the module using:
+
+	<pre><code class="mapi-codeblock">
+mono --profile=example hello.exe
+	</code></pre>
+
+	<p>(Note that adjusting <code>LD_LIBRARY_PATH</code> may be
+	necessary in order for the dynamic linker to find the module.)
+
+<h2>Profiler Functions</h2>
+
+	<p>These are the functions usable for profiling programs.
+
+	<p>Each function has a note indicating whether they're async
+	safe. An async safe function can be invoked in a signal handler
+	or when the world is stopped by the GC. Conversely, a function
+	that is not async safe must not be invoked in such a context or
+	undefined behavior can occur (crashes, deadlocks, etc).
+
+	<p>Some functions may only be invoked from a profiler module's
+	init function (or prior to running managed code in the case of
+	embedding). This is noted explicitly only if applicable to a
+	function.
+
+<h3>Basic Functions</h3>
+
+	<p>These functions are used to load and install profilers.
+
+<h4><a name="api:mono_profiler_load">mono_profiler_load</a></h4>
+<h4><a name="api:mono_profiler_create">mono_profiler_create</a></h4>
+<h4><a name="api:mono_profiler_set_cleanup_callback">mono_profiler_set_cleanup_callback</a></h4>
+
+<h3>Code Coverage</h3>
+
+	<p>These functions provide access to the JIT compiler's code
+	coverage support. This functionality can be used to collect
+	information about how many times certain code paths have been
+	executed.
+
+<h4><a name="api:mono_profiler_enable_coverage">mono_profiler_enable_coverage</a></h4>
+<h4><a name="api:mono_profiler_set_coverage_filter_callback">mono_profiler_set_coverage_filter_callback</a></h4>
+<h4><a name="api:mono_profiler_get_coverage_data">mono_profiler_get_coverage_data</a></h4>
+
+<h3>Statistical Sampling</h3>
+
+	<p>Statistical sampling can be used to interrupt managed threads
+	based on a certain mode and frequency for the purpose of
+	collecting data about their current work.
+
+	<p>One common use case for this functionality, usually referred
+	to as call sampling, is to collect a backtrace from every thread
+	when a sampling hit event arrives. This data can then be compiled
+	into a report indicating where a program spends most of its time.
+
+<h4><a name="api:mono_profiler_enable_sampling">mono_profiler_enable_sampling</a></h4>
+<h4><a name="api:mono_profiler_set_sample_mode">mono_profiler_set_sample_mode</a></h4>
+<h4><a name="api:mono_profiler_get_sample_mode">mono_profiler_get_sample_mode</a></h4>
+
+	<p>A callback must be registered to receive sample hit events.
+	Please see the <i>Callback Registration</i> section below.
+
+<h3>GC Allocations</h3>
+
+	<p>Profilers can be notified about all GC allocations performed
+	by a program or the Mono runtime.
+
+<h4><a name="api:mono_profiler_enable_allocations">mono_profiler_enable_allocations</a></h4>
+
+	<p>A callback must be registered to receive allocation events.
+	Please see the <i>Callback Registration</i> section below.
+
+<h3>Call Instrumentation</h3>
+
+	<p>The JIT compiler supports instrumenting managed method entry
+	and exit points so that a profiler callback will be invoked.
+
+	<p>While such callbacks by themselves have traditionally only
+	been useful for call count profiling and the like, Mono gives
+	these callbacks access to the arguments, locals, and return
+	value of instrumented methods (together referred to as the 'call
+	context'). This enables many profiling scenarios that would
+	otherwise have required explicit hooks in the base class
+	libraries.
+
+<h4><a name="api:mono_profiler_set_call_instrumentation_filter_callback">mono_profiler_set_call_instrumentation_filter_callback</a></h4>
+<h4><a name="api:mono_profiler_enable_call_context_introspection">mono_profiler_enable_call_context_introspection</a></h4>
+<h4><a name="api:mono_profiler_call_context_get_this">mono_profiler_call_context_get_this</a></h4>
+<h4><a name="api:mono_profiler_call_context_get_argument">mono_profiler_call_context_get_argument</a></h4>
+<h4><a name="api:mono_profiler_call_context_get_local">mono_profiler_call_context_get_local</a></h4>
+<h4><a name="api:mono_profiler_call_context_get_result">mono_profiler_call_context_get_result</a></h4>
+<h4><a name="api:mono_profiler_call_context_free_buffer">mono_profiler_call_context_free_buffer</a></h4>
+
+	<p>Callbacks must be registered to receive method entry and exit
+	events. Please see the <i>Callback Registration</i> section
+	below.
+
+<h3>Callback Registration</h3>
+
+	<p>In addition to the above functions, there's a large set of
+	functions for installing generic profiler event callbacks. These
+	are generated from C macros and so are not documented here.
+	Please refer to the <code>mono/metadata/profiler.h</code> and
+	<code>mono/metadata/profiler-events.h</code> headers for a full
+	listing of these.
+
+	<p>Callback registration functions are all async safe and can be
+	safely invoked from multiple threads at the same time, with the
+	caveat that altering a registered callback from one thread will
+	not immediately affect another thread that is already invoking
+	the current callback.
+
+<h2>API Stability</h2>
+
+	<p>The profiler API does not have the same API stability
+	garantees that the rest of the Mono embedding API does. While
+	a breaking change to the profiler API is extremely rare, it has
+	happened in the past when changing the API in a backwards
+	compatible way was deemed to be too much work for too little
+	gain.
+
+	<p>Therefore, developers of profiler modules may rarely need to
+	update their code to work with new versions of the profiler API.
+
+	<p>Developers who wish to support older versions of the API can
+	perform a compile time check of the
+	<code>MONO_PROFILER_API_VERSION</code> macro and maintain code
+	for both old and new versions.
+
+	<p>To aid with transitioning to a new version of the profiler
+	API, the Mono runtime will detect and reject loading profiler
+	modules which were compiled against older profiler API versions.

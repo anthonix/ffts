@@ -1,0 +1,67 @@
+The class libraries are grouped together in the assemblies they belong.
+
+Each directory here represents an assembly, and inside each directory we
+divide the code based on the namespace they implement.
+
+In addition, each assembly directory contains a Test directory that holds the
+NUnit tests for that assembly. 
+
+We use a new build system which is described by various README files
+in mcs/build
+
+The build process typically builds an assembly, but in some cases it
+also builds special versions of the assemblies intended to be used for
+testing.
+
+* Missing implementation bits
+
+	If you implement a class and you are missing implementation bits,
+	please use the attribute [MonoTODO].  This attribute can be used
+	to programatically generate our status web pages:
+
+	[MonoTODO]
+	int MyFunction ()
+	{
+		throw new NotImplementedException ();
+	}
+
+	Ideally, write a human description of the reason why there is
+	a MonoTODO, this will be useful in the future for our
+	automated tools that can assist in developers porting their
+	code.
+
+	Do not use MonoTODO attributes for reminding yourself of
+	internal changes that must be done. Use FIXMEs or other kinds
+	of comments in the source code for that purpose, and if the
+	problem requires to be followed up on, file a bug.
+
+* Tagging buggy code
+
+	If there is a bug in your implementation tag the problem by using
+	the word "FIXME" in the code, together with a description of the 
+	problem.
+
+	Do not use XXX or obscure descriptions, because otherwise people
+	will not be able to understand what you mean.
+
+* Tagging Problematic specs.
+
+	If the documentation and the Microsoft implementation do
+	differ (you wrote a test case to prove this), I suggest that you edit
+	the file `mcs/class/doc/API-notes' so we can keep track of these problems
+	and submit our comments to ECMA or Microsoft and seek clarification.
+
+	Sometimes the documentation might be buggy, and sometimes the implementation
+	might be buggy.  Lets try to identify and pinpoint which one
+	is the correct one.
+
+	Sometimes the specification will be lame (consider Version.ToString (fieldCount)
+	where there is no way of knowing how many fields are available, making the API
+	not only stupid, but leading to unreliable code).
+
+	In those cases, use the keyword "LAMESPEC".
+
+* Coding considerations and style.
+
+	In order to keep the code consistent, please use the following
+	conventions: http://www.mono-project.com/community/contributing/coding-guidelines/

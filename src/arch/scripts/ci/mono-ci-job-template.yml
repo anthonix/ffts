@@ -1,0 +1,97 @@
+parameters:
+- name: displayName
+  type: string
+- name: os
+  type: string
+- name: arch
+  type: string
+- name: timeoutInMinutes
+  type: number
+  default: 180
+- name: publishTestResults
+  type: boolean
+  default: true
+- name: containerImage
+  type: string
+  default: ''
+- name: additionalCITags
+  type: string
+  default: ''
+- name: additionalSteps
+  type: stepList
+  default: []
+
+jobs:
+- job:
+  displayName: ${{ parameters.displayName }}
+  pool:
+    ${{ if eq(parameters.os, 'osx') }}:
+      vmImage: macos-11
+    ${{ if eq(parameters.os, 'win') }}:
+      vmImage: windows-2019
+    ${{ if and(eq(parameters.os, 'linux'),eq(parameters.arch, 'amd64')) }}:
+      vmImage: ubuntu-22.04
+    ${{ if and(eq(parameters.os, 'linux'),eq(parameters.arch, 'aarch64')) }}:
+      name: MonoARM64
+    ${{ if and(eq(parameters.os, 'linux'),eq(parameters.arch, 'armhf')) }}:
+      name: MonoARM64
+  ${{ if and(eq(parameters.os, 'linux'), eq(parameters.arch, 'i386')) }}:
+    container:
+      image: i386/ubuntu:20.04
+      options: --platform linux/386
+  ${{ if and(eq(parameters.os, 'linux'), eq(parameters.arch, 'amd64')) }}:
+    container:
+      image: mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-18.04-mono-amd64
+      options: --platform linux/amd64 --user 0:0
+  ${{ if and(eq(parameters.os, 'linux'), eq(parameters.arch, 'aarch64')) }}:
+    container:
+      image: mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-18.04-mono-arm64v8
+      options: --platform linux/arm64 --user 0:0
+  ${{ if and(eq(parameters.os, 'linux'), eq(parameters.arch, 'armhf')) }}:
+    container:
+      image: mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-18.04-mono-arm32v7
+      options: --platform linux/arm/v7 --user 0:0
+  timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
+  steps:
+    - checkout: self
+      clean: true
+      fetchDepth: 10
+      submodules: recursive
+    - ${{ if eq(parameters.os, 'osx')}}:
+      - script: brew install autoconf automake libtool pkg-config cmake python3
+        displayName: Install dependencies
+    - ${{ if eq(parameters.os, 'linux')}}:
+      - script: sudo apt update && sudo apt install -y autoconf libtool automake build-essential gettext cmake python3 curl wget bc
+        displayName: Install dependencies
+    - ${{ if eq(parameters.os, 'win')}}:
+      - powershell: |
+          curl.exe -SL --output $env:TEMP\clangc2.exe "https://go.microsoft.com/fwlink/?LinkID=809031"
+          curl.exe -SL --output $env:TEMP\cygsetup.exe "https://cygwin.com/setup-x86_64.exe"
+          Start-Process $env:TEMP\clangc2.exe -Wait -ArgumentList '/quiet /norestart'
+          Start-Process $env:TEMP\cygsetup.exe -Wait -ArgumentList '--quiet-mode --wait --root c:\cygwin --local-package-dir c:\cygwin --site http://mirrors.kernel.org/sourceware/cygwin/ --packages autoconf,automake,bison,gcc-core,gcc-g++,mingw64-i686-runtime,mingw64-i686-binutils,mingw64-i686-gcc-core,mingw64-i686-gcc-g++,mingw64-i686-pthreads,mingw64-i686-w32api,mingw64-i686-zlib,mingw64-x86_64-runtime,mingw64-x86_64-binutils,mingw64-x86_64-gcc-core,mingw64-x86_64-gcc-g++,mingw64-x86_64-pthreads,mingw64-x86_64-w32api,mingw64-x86_64-zlib,libtool,make,python,gettext-devel,gettext,intltool,libiconv,pkg-config,git,curl,wget,libxslt,bc,patch,cmake,libxml2-devel,libiconv-devel,zlib-devel,liblzma-devel,libssl-devel,bsdcpio,unzip,wget,p7zip,nohup,yasm'
+        displayName: Install dependencies
+    - ${{ if eq(parameters.os, 'win')}}:
+      - script: c:\cygwin\bin\bash.exe -c 'PATH=/bin:/usr/bin:$PATH CI_TAGS="${{ parameters.os }}-${{ parameters.arch }},msvc142,$(pullRequestCITags),${{ parameters.additionalCITags }}" scripts/ci/run-jenkins.sh'
+        displayName: Build and Test
+    - ${{ if ne(parameters.os, 'win')}}:
+      - script: CI_TAGS="${{ parameters.os }}-${{ parameters.arch }},$(pullRequestCITags),${{ parameters.additionalCITags }}" scripts/ci/run-jenkins.sh
+        displayName: Build and Test
+
+    - ${{ each step in parameters.additionalSteps }}:
+        - ${{ step }}
+
+    - ${{ if eq(parameters.os, 'win')}}:
+      - script: del /f /q mono\mini\mono.exe
+        condition: succeededOrFailed()
+        displayName: Remove mono.exe symlink
+
+    - script: echo "Found unstable steps, please check previous logs for details." && exit 1
+      displayName: Fail build on unstable steps
+      condition: eq(variables['BuildHasUnstableSteps'], true)
+    - task: PublishTestResults@2
+      condition: and(succeededOrFailed(), eq('${{ parameters.publishTestResults }}', 'true'), not(contains('${{ parameters.additionalCITags }}', 'no-tests')))
+      inputs:
+        testRunner: 'NUnit'
+        testResultsFiles: '**/TestResult*.xml'
+        testRunTitle: ${{ parameters.displayName }}
+        failTaskOnFailedTests: true

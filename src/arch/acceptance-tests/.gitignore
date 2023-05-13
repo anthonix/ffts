@@ -1,0 +1,7 @@
+Makefile.in
+Makefile
+*.exe
+*.dll
+*.mdb
+coreclr-testlist.txt
+microbench-perf.sh

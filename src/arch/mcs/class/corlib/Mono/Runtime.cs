@@ -1,0 +1,319 @@
+//
+// Mono Runtime gateway functions
+//
+//
+
+//
+// Copyright (C) 2004 Novell, Inc (http://www.novell.com)
+//
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+
+using System;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace Mono {
+
+#if MOBILE || XAMMAC_4_5
+	public
+#endif
+	static class Runtime
+	{
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		private static extern void mono_runtime_install_handlers ();
+
+#if MOBILE || XAMMAC_4_5
+		public
+#else
+		internal
+#endif
+		static void InstallSignalHandlers ()
+		{
+			mono_runtime_install_handlers ();
+		}
+
+#if MOBILE || XAMMAC_4_5
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void mono_runtime_cleanup_handlers ();
+
+		public static void RemoveSignalHandlers ()
+		{
+			mono_runtime_cleanup_handlers ();
+		}
+#endif
+
+		// Should not be removed intended for external use
+		// Safe to be called using reflection
+		// Format is undefined only for use as a string for reporting
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+#if MOBILE || XAMMAC_4_5
+		public
+#else
+		internal
+#endif
+		static extern string GetDisplayName ();
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern string GetNativeStackTrace (Exception exception);
+
+		public static bool SetGCAllowSynchronousMajor (bool flag)
+		{
+			// No longer used
+			return true;
+		}
+
+		static object dump = new object ();
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern string ExceptionToState_internal (Exception exc, out ulong portable_hash, out ulong unportable_hash);
+
+		static Tuple<String, ulong, ulong>
+		ExceptionToState (Exception exc)
+		{
+			ulong portable_hash;
+			ulong unportable_hash;
+			string payload_str = ExceptionToState_internal (exc, out portable_hash, out unportable_hash);
+
+			return new Tuple<String, ulong, ulong> (payload_str, portable_hash, unportable_hash);
+		}
+
+
+#if !MOBILE 
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void DisableMicrosoftTelemetry ();
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void EnableMicrosoftTelemetry_internal (IntPtr appBundleID, IntPtr appSignature, IntPtr appVersion, IntPtr merpGUIPath, IntPtr appPath, IntPtr configDir);
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void SendMicrosoftTelemetry_internal (IntPtr payload, ulong portable_hash, ulong unportable_hash);
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void WriteStateToFile_internal (IntPtr payload, ulong portable_hash, ulong unportable_hash);
+
+		static void
+		WriteStateToFile (Exception exc)
+		{
+			ulong portable_hash;
+			ulong unportable_hash;
+			string payload_str = ExceptionToState_internal (exc, out portable_hash, out unportable_hash);
+			using (var payload_chars = RuntimeMarshal.MarshalString (payload_str))
+			{
+				WriteStateToFile_internal (payload_chars.Value, portable_hash, unportable_hash);
+			}
+		}
+
+		static void SendMicrosoftTelemetry (string payload_str, ulong portable_hash, ulong unportable_hash)
+		{
+			if (RuntimeInformation.IsOSPlatform (OSPlatform.OSX)) {
+				using (var payload_chars = RuntimeMarshal.MarshalString (payload_str))
+				{
+					SendMicrosoftTelemetry_internal (payload_chars.Value, portable_hash, unportable_hash);
+				}
+			} else {
+				throw new PlatformNotSupportedException("Merp support is currently only supported on OSX.");
+			}
+		}
+
+		// Usage: 
+		//
+		// catch (Exception exc) {
+		//   var monoType = Type.GetType ("Mono.Runtime", false);
+		//   var m = monoType.GetMethod("SendExceptionToTelemetry", BindingFlags.NonPublic | BindingFlags.Static);
+		//   m.Invoke(null, new object[] { exc });
+		// }
+		static void SendExceptionToTelemetry (Exception exc)
+		{
+			ulong portable_hash;
+			ulong unportable_hash;
+			lock (dump)
+			{
+				string payload_str = ExceptionToState_internal (exc, out portable_hash, out unportable_hash);
+				SendMicrosoftTelemetry (payload_str, portable_hash, unportable_hash);
+			}
+		}
+
+		// All must be set except for configDir_str
+		static void EnableMicrosoftTelemetry (string appBundleID_str, string appSignature_str, string appVersion_str, string merpGUIPath_str, string unused /* eventType_str */, string appPath_str, string configDir_str)
+		{
+			if (RuntimeInformation.IsOSPlatform (OSPlatform.OSX)) {
+				using (var appBundleID_chars = RuntimeMarshal.MarshalString (appBundleID_str))
+				using (var appSignature_chars = RuntimeMarshal.MarshalString (appSignature_str))
+				using (var appVersion_chars = RuntimeMarshal.MarshalString (appVersion_str))
+				using (var merpGUIPath_chars = RuntimeMarshal.MarshalString (merpGUIPath_str))
+				using (var appPath_chars = RuntimeMarshal.MarshalString (appPath_str))
+				using (var configDir_chars = RuntimeMarshal.MarshalString (configDir_str))
+				{
+					EnableMicrosoftTelemetry_internal (appBundleID_chars.Value, appSignature_chars.Value, appVersion_chars.Value, merpGUIPath_chars.Value, appPath_chars.Value, configDir_chars.Value);
+				}
+			} else {
+				throw new PlatformNotSupportedException("Merp support is currently only supported on OSX.");
+			}
+		}
+#endif
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern string DumpStateSingle_internal (out ulong portable_hash, out ulong unportable_hash);
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern string DumpStateTotal_internal (out ulong portable_hash, out ulong unportable_hash);
+
+		static Tuple<String, ulong, ulong>
+		DumpStateSingle ()
+		{
+			ulong portable_hash;
+			ulong unportable_hash;
+			string payload_str;
+			lock (dump)
+			{
+				payload_str = DumpStateSingle_internal (out portable_hash, out unportable_hash);
+			}
+
+			return new Tuple<String, ulong, ulong> (payload_str, portable_hash, unportable_hash);
+		}
+
+		static Tuple<String, ulong, ulong>
+		DumpStateTotal ()
+		{
+			ulong portable_hash;
+			ulong unportable_hash;
+			string payload_str;
+			lock (dump)
+			{
+				payload_str = DumpStateTotal_internal (out portable_hash, out unportable_hash);
+			}
+
+			return new Tuple<String, ulong, ulong> (payload_str, portable_hash, unportable_hash);
+		}
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void RegisterReportingForAllNativeLibs_internal ();
+
+		static void RegisterReportingForAllNativeLibs ()
+		{
+			RegisterReportingForAllNativeLibs_internal ();
+		}
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void RegisterReportingForNativeLib_internal (IntPtr modulePathSuffix, IntPtr moduleName);
+
+		static void RegisterReportingForNativeLib (string modulePathSuffix_str, string moduleName_str)
+		{
+			using (var modulePathSuffix_chars = RuntimeMarshal.MarshalString (modulePathSuffix_str))
+			using (var moduleName_chars = RuntimeMarshal.MarshalString (moduleName_str))
+			{
+				RegisterReportingForNativeLib_internal (modulePathSuffix_chars.Value, moduleName_chars.Value);
+			}
+		}
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void EnableCrashReportLog_internal (IntPtr directory);
+
+		static void EnableCrashReportLog (string directory_str)
+		{
+			using (var directory_chars = RuntimeMarshal.MarshalString (directory_str))
+			{
+				EnableCrashReportLog_internal (directory_chars.Value);
+			}
+		}
+
+		enum CrashReportLogLevel : int {
+			MonoSummaryNone = 0,
+			MonoSummarySetup,
+			MonoSummarySuspendHandshake,
+			MonoSummaryUnmanagedStacks,
+			MonoSummaryManagedStacks,
+			MonoSummaryStateWriter,
+			MonoSummaryStateWriterDone,
+			MonoSummaryMerpWriter,
+			MonoSummaryMerpInvoke,
+			MonoSummaryCleanup,
+			MonoSummaryDone,
+
+			MonoSummaryDoubleFault
+		}
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern int CheckCrashReportLog_internal (IntPtr directory, bool clear);
+
+		static CrashReportLogLevel CheckCrashReportLog (string directory_str, bool clear)
+		{
+			using (var directory_chars = RuntimeMarshal.MarshalString (directory_str))
+			{
+				return (CrashReportLogLevel) CheckCrashReportLog_internal (directory_chars.Value, clear);
+			}
+		}
+
+		static string get_breadcrumb_value (string file_prefix, string directory_str, bool clear)
+		{
+			var allfiles = Directory.GetFiles (directory_str, $"{file_prefix}_*" );
+			if (allfiles.Length == 0)
+				return string.Empty;
+
+			if (allfiles.Length > 1) {
+				// it's impossible to tell which breadcrumb is the last one (let's not trust filesystem timestamps)
+				// delete the multiple files so at least next crash can make sense
+				try {
+					Array.ForEach (allfiles, f => File.Delete (f) );
+				} catch (Exception) { }
+
+				return string.Empty;
+			}
+
+			if (clear)
+				File.Delete (allfiles [0]);
+
+			var filename = Path.GetFileName (allfiles [0]);
+			return filename.Substring (file_prefix.Length + 1);
+		}
+
+		static long CheckCrashReportHash (string directory_str, bool clear)
+		{
+			var value = get_breadcrumb_value ("crash_hash", directory_str, clear);
+			if (value == string.Empty)
+				return 0;
+			else
+				return Convert.ToInt64 (value, 16);
+		}
+
+		static string CheckCrashReportReason (string directory_str, bool clear)
+		{
+			return get_breadcrumb_value ("crash_reason", directory_str, clear);
+		}
+
+		[MethodImplAttribute (MethodImplOptions.InternalCall)]
+		static extern void AnnotateMicrosoftTelemetry_internal (IntPtr key, IntPtr val);
+
+		static void AnnotateMicrosoftTelemetry (string key, string val)
+		{
+			using (var key_chars = RuntimeMarshal.MarshalString (key))
+			using (var val_chars = RuntimeMarshal.MarshalString (val))
+			{
+				lock (dump)
+				{
+					AnnotateMicrosoftTelemetry_internal (key_chars.Value, val_chars.Value);
+				}
+			}
+		}
+	}
+}

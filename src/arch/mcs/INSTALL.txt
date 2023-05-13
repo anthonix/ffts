@@ -1,0 +1,75 @@
+Basic Installation
+==================
+
+The Mono project has developed mono, a CLI runtime. The build process
+of each of these depends on nothing more than a C compiler and glib2.
+
+However, to provide a working runtime environment, these programs must
+be supplemented by the class libraries, which are written in C#.  This
+package contains the components written in C#: class libraries,
+compilers and tools.
+
+*********************************************************************
+*                                                                   *
+*                            NOTICE                                 *
+*                                                                   *
+*	Unless you are developing the class libraries, you should   *
+*	not need to do any build steps in this directory.           *
+*                                                                   *
+*       Go to ../mono and read the README file to compile and       *
+*       install.                                                    *
+*                                                                   *
+*       ../mono is where you have your `mono' source download       *
+*                                                                   *
+*********************************************************************
+
+If you only want to build a snapshot or a fresh checkout of the
+sources, you should go into the `mono' sibling directory and issue the
+make command, like this:
+
+	  cd ../mono
+	  ./autogen.sh --prefix=/usr/local
+	  make
+	  make install
+
+The compilation is bundled with the build due to dependencies on the
+class libraries on the runtime.
+
+Configuration
+=============
+
+If you want to change the configuration options for the build process,
+place your configuration options in build/config.make
+
+A list of variables that control the build are listed in the file
+build/config-default.make.
+
+More About the Build System
+===========================
+
+More information is found in build/README.*. Here's a quick rundown
+of the features:
+
+        * Profile support. 'make PROFILE=profilename' or 'export
+	  PROFILE=profilename ; make' will work. Profiles are defined
+	  in build/profiles/profilename.make ;
+
+        * Important variables are shared among makefiles now; you can
+	  edit build/config.make (see build/config-default.make for a
+	  template) and give global settings, or just have a much
+	  saner time of writing new makefiles.
+
+        * Response files, stamps, and other build trivia now all land
+	  in build/deps/, making the library build directories
+	  cleaner.
+
+        * Test libraries now live in class/Library/Library_test.dll,
+	  not class/Library/Test. 'make test' will build the test DLL,
+	  'make run-test' will actually run the nunit tests.
+
+        * Standardized recursive targets: all, clean, install, test,
+	  run-test.  Read build/README.makefiles for definitions of
+	  what they should do
+
+        * (Relatively) sane 'make dist' target; 'make distcheck'
+	  support;

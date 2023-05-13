@@ -1,0 +1,11 @@
+#include monotouch_System_xtest.dll.exclude.sources
+
+../../../external/corefx/src/System.Net.Security/tests/FunctionalTests/*.cs
+
+../../../external/corefx/src/System.Net.WebClient/tests/WebClientTest.cs
+
+../../../external/corefx/src/Common/tests/System/Net/WebSockets/WebSocketCreateTest.cs
+../../../external/corefx/src/System.Net.WebSockets/tests/WebSocketTests.netcoreapp.cs
+
+../../../external/corefx/src/System.Net.Sockets/tests/FunctionalTests/NetworkStreamTest.cs
+../../../external/corefx/src/System.Net.Sockets/tests/FunctionalTests/NetworkStreamTest.netcoreapp.cs

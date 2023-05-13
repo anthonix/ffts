@@ -1,0 +1,6 @@
+#include mobile_System.ServiceModel.Web.dll.sources
+System.ServiceModel.Web/IncomingWebRequestContext.cs
+System.ServiceModel.Web/OutgoingWebResponseContext.cs
+../../../external/corefx/src/System.ServiceModel.Syndication/src/System/ServiceModel/Syndication/*.cs
+../../../external/corefx/src/System.ServiceModel.Syndication/src/System/ServiceModel/Channels/*.cs
+../../../external/corefx/src/System.ServiceModel.Syndication/src/System/ServiceModel/*.cs
