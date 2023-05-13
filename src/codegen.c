@@ -40,14 +40,17 @@ typedef uint32_t insns_t;
 typedef uint8_t insns_t;
 #endif
 
-#ifdef __arm_neon__
-#include "codegen_arm.h"
+#ifdef __arm__
+#if   defined(__ARM_NEON__)
 #include "neon.h"
-#elif __vfp__
+#elif defined(__VFP_FP__)
 #include "vfp.h"
+#endif
 #include "codegen_arm.h"
-#else
+#elif defined(__i386__) || defined(__x86_64__)
+#ifdef __SSE__
 #include "codegen_sse.h"
+#endif
 #endif
 
 #include <assert.h>
@@ -145,7 +148,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 #ifdef __arm__
     start = generate_prologue(&fp, p);
 
-#ifdef __neon__
+#ifdef __ARM_NEON__
     memcpy(fp, neon_ee, neon_oo - neon_ee);
     if (sign < 0) {
         fp[33] ^= 0x00200000;
@@ -299,7 +302,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 #endif
 
 #ifdef __arm__
-#ifdef __neon__
+#ifdef __ARM_NEON__
     if (ffts_ctzl(N) & 1) {
         ADDI(&fp, 2, 7, 0);
         ADDI(&fp, 7, 9, 0);
@@ -535,7 +538,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             fp++;
         } else if(!pps[2]) {
             //uint32_t *x_8_t_addr = fp;
-#ifdef __neon__
+#ifdef __ARM_NEON__
             memcpy(fp, neon_x8_t, neon_ee - neon_x8_t);
             if(sign < 0) {
                 fp[31] ^= 0x00200000;

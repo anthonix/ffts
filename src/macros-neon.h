@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FFTS_MACROS_NEON_H
 #define FFTS_MACROS_NEON_H
 
-#ifdef __arm_neon__
+#ifdef __ARM_NEON__
 #include <arm_neon.h>
 #include <stdlib.h>
 

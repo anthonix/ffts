@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #endif
 
-#ifdef __arm_neon__
+#ifdef __ARM_NEON__
 #include "macros-neon.h"
 #elif defined(__i386__) || defined(__x86_64__)
 #include "macros-sse.h"

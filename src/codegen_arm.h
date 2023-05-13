@@ -104,7 +104,7 @@ static FFTS_INLINE insns_t* generate_size4_base_case(insns_t **fp, int sign)
 
 	x_4_addr = *fp;
 
-#ifdef __NEON__
+#ifdef __ARM_NEON__
 	len = (char*) neon_x8 - (char*) neon_x4;
 	memcpy(x_4_addr, neon_x4, len);
 
@@ -137,7 +137,7 @@ static FFTS_INLINE insns_t* generate_size8_base_case(insns_t **fp, int sign)
 
 	x_8_addr = *fp;
 
-#ifdef __NEON__
+#ifdef __ARM_NEON__
 	len = (char*) neon_x8_t - (char*) neon_x8;
 	memcpy(x_8_addr, neon_x8, len);
 
@@ -214,7 +214,7 @@ static FFTS_INLINE insns_t* generate_prologue(insns_t **fp, ffts_plan_t *p)
 	ADDI(fp, 0, 2, 0), // mov out into r0
 	*(*fp)++ = LDRI(2, 1, ((uint32_t) &p->ee_ws) - ((uint32_t) p));
 
-#ifdef __NEON__
+#ifdef __ARM_NEON__
 	MOVI(fp, 11, p->i0);
 #else
 	MOVI(fp, 11, p->i0);

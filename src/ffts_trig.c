@@ -733,7 +733,7 @@ exit:
 /* Oscar Buneman's method for generating a sequence of sines and cosines.
 *  Expired US Patent 4,878,187 A
 */
-#if __SSE2__
+#ifdef __SSE2__
 int
 ffts_generate_cosine_sine_pow2_32f(ffts_cpx_32f *const table, int table_size)
 {
