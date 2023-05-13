@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ffts_internal.h"
 #include "macros.h"
 
-#if defined(HAVE_NEON)
+#if defined(__NEON__)
 #include "neon.h"
 #endif
 
@@ -964,7 +964,7 @@ ffts_static_rec_f_32f(const ffts_plan_t *p, float *data, size_t N)
 {
     const float *ws = (const float*) p->ws;
 
-#if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
+#if defined(__NEON__) && defined(DYNAMIC_DISABLED)
     if (N > 128) {
         const size_t N1 = N >> 1;
         const size_t N2 = N >> 2;
@@ -1040,7 +1040,7 @@ ffts_static_rec_i_32f(const ffts_plan_t *p, float *data, size_t N)
 {
     const float *ws = (const float*) p->ws;
 
-#if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
+#if defined(__NEON__) && defined(DYNAMIC_DISABLED)
     if (N > 128) {
         const size_t N1 = N >> 1;
         const size_t N2 = N >> 2;
@@ -1120,7 +1120,7 @@ ffts_static_transform_f_32f(ffts_plan_t *p, const void *in, void *out)
     const size_t N = p->N;
     const int N_log_2 = ffts_ctzl(N);
 
-#if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
+#if defined(__NEON__) && defined(DYNAMIC_DISABLED)
     const float *ws = (const float*) p->ws;
 
     if (N_log_2 & 1) {
@@ -1181,7 +1181,7 @@ ffts_static_transform_i_32f(ffts_plan_t *p, const void *in, void *out)
     const size_t N = p->N;
     const int N_log_2 = ffts_ctzl(N);
 
-#if defined(HAVE_NEON) && defined(DYNAMIC_DISABLED)
+#if defined(__NEON__) && defined(DYNAMIC_DISABLED)
     const float *ws = (const float*) p->ws;
 
     if (N_log_2 & 1) {

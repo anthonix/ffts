@@ -33,10 +33,11 @@
 #include "../src/ffts_attributes.h"
 
 #ifdef __ARM_NEON__
+#include <arm_neon.h>
 #endif
 
-#ifdef HAVE_SSE
-#include <xmmintrin.h>
+#if defined(__i386__) || defined(__x86_64__)
+#include <immintrin.h>
 #endif
 
 #include <stdio.h>

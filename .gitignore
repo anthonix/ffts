@@ -17,6 +17,7 @@ config.h
 config.status
 compile
 libtool
+cmake/ffts.pc
 ffts.pc
 stamp-h1
 tests/test
@@ -29,6 +30,8 @@ CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 install_manifest.txt
-fftsConfig.cmake
-fftsConfigVersion.cmake
+cmake/FFTSConfig.cmake
+cmake/FFTSConfigVersion.cmake
+FFTSConfig.cmake
+FFTSConfigVersion.cmake
 ffts_test*

@@ -36,16 +36,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ffts_internal.h"
 #include "ffts_trig.h"
 
-#ifdef HAVE_NEON
+#ifdef __arm_neon__
 #include <arm_neon.h>
-#elif HAVE_SSE
-#include <xmmintrin.h>
-
-/* check if have SSE3 intrinsics */
-#ifdef HAVE_PMMINTRIN_H
-#include <pmmintrin.h>
-#elif HAVE_INTRIN_H
-#include <intrin.h>
+#elif defined(__i386__) || defined(__x86_64__)
+#include <immintrin.h>
+#endif
+#ifdef __MSVC__
+#include<intrin.h>
 #else
 /* avoid using negative zero as some configurations have problems with those */
 static const FFTS_ALIGN(16) unsigned int sign_mask_even[4] = {
@@ -54,7 +51,6 @@ static const FFTS_ALIGN(16) unsigned int sign_mask_even[4] = {
 static const FFTS_ALIGN(16) unsigned int sign_mask_odd[4] = {
     0, 0x80000000, 0, 0x80000000
 };
-#endif
 #endif
 
 static void
@@ -104,7 +100,7 @@ ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
 
     p->plans[0]->transform(p->plans[0], input, buf);
 
-#ifndef HAVE_SSE
+#ifndef __SSE__
     buf[N + 0] = buf[0];
     buf[N + 1] = buf[1];
 #endif
@@ -151,7 +147,7 @@ ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
             : "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
         );
     }
-#elif HAVE_SSE3
+#elif __SSE3__
     if (FFTS_UNLIKELY(N <= 8)) {
         __m128 t0 = _mm_load_ps(buf);
         __m128 t1 = _mm_load_ps(buf + N - 4);
@@ -235,7 +231,7 @@ ffts_execute_1d_real(ffts_plan_t *p, const void *input, void *output)
                 _mm_mul_ps(_mm_shuffle_ps(t2, t0, _MM_SHUFFLE(2,2,0,0)), t4))));
         }
     }
-#elif HAVE_SSE
+#elif __SSE__
     if (FFTS_UNLIKELY(N <= 8)) {
         __m128 c0 = _mm_load_ps((const float*) sign_mask_even);
         __m128 t0 = _mm_load_ps(buf);
@@ -407,7 +403,7 @@ ffts_execute_1d_real_inv(ffts_plan_t *p, const void *input, void *output)
             : "memory", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15"
         );
     }
-#elif HAVE_SSE3
+#elif __SSE3__
     if (FFTS_UNLIKELY(N <= 8)) {
         __m128 t0 = _mm_loadl_pi(_mm_setzero_ps(), (const __m64*) &in[N]);
         __m128 t1 = _mm_load_ps(in);
@@ -492,7 +488,7 @@ ffts_execute_1d_real_inv(ffts_plan_t *p, const void *input, void *output)
                 _mm_mul_ps(_mm_shuffle_ps(t2, t0, _MM_SHUFFLE(2,2,0,0)), t4))));
         }
     }
-#elif HAVE_SSE
+#elif __SSE__
     if (FFTS_UNLIKELY(N <= 8)) {
         __m128 c0 = _mm_load_ps((const float*) sign_mask_odd);
         __m128 t0 = _mm_loadl_pi(_mm_setzero_ps(), (const __m64*) &in[N]);
@@ -640,7 +636,7 @@ ffts_init_1d_real(size_t N, int sign)
         goto cleanup;
     }
 
-#ifdef HAVE_SSE3
+#ifdef __SSE3__
     ffts_generate_table_1d_real_32f(p, sign, 1);
 #else
     ffts_generate_table_1d_real_32f(p, sign, 0);
