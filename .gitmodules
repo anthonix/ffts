@@ -2,4 +2,4 @@
 	shallow = true
 	sparse = true
 	path = src/arch
-	url = https://github.com/mono/mono/mono/mono/arch
+	url = https://github.com/mono/mono/mono/arch
