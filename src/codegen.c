@@ -40,32 +40,26 @@ typedef uint32_t insns_t;
 typedef uint8_t insns_t;
 #endif
 
-#ifdef HAVE_NEON
-#include "codegen_arm.h"
+#ifdef __arm__
+#if   defined(__ARM_NEON__)
 #include "neon.h"
-#elif HAVE_VFP
+#elif defined(__VFP_FP__)
 #include "vfp.h"
+#endif
 #include "codegen_arm.h"
-#else
+#elif defined(__i386__) || defined(__x86_64__)
+#ifdef __SSE__
 #include "codegen_sse.h"
+#endif
 #endif
 
 #include <assert.h>
 #include <errno.h>
 #include <stddef.h>
-/* #include <stdio.h> */
-
-#ifdef HAVE_STDLIB_H
+#include <stdio.h>
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 static int ffts_tree_count(int N, int leaf_N, int offset)
 {
@@ -137,7 +131,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 
     pps = ps;
 
-#ifdef HAVE_SSE
+#ifdef __SSE__
     if (sign < 0) {
         p->constants = (const void*) sse_constants;
     } else {
@@ -154,7 +148,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 #ifdef __arm__
     start = generate_prologue(&fp, p);
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
     memcpy(fp, neon_ee, neon_oo - neon_ee);
     if (sign < 0) {
         fp[33] ^= 0x00200000;
@@ -308,7 +302,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
 #endif
 
 #ifdef __arm__
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
     if (ffts_ctzl(N) & 1) {
         ADDI(&fp, 2, 7, 0);
         ADDI(&fp, 7, 9, 0);
@@ -544,7 +538,7 @@ transform_func_t ffts_generate_func_code(ffts_plan_t *p, size_t N, size_t leaf_N
             fp++;
         } else if(!pps[2]) {
             //uint32_t *x_8_t_addr = fp;
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
             memcpy(fp, neon_x8_t, neon_ee - neon_x8_t);
             if(sign < 0) {
                 fp[31] ^= 0x00200000;

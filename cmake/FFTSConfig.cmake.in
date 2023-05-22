@@ -1,0 +1,49 @@
+set(FFTS_VERSION @PROJECT_VERSION@)
+
+@PACKAGE_INIT@
+
+function(_add_ffts_target)
+  if(FFTS_FOUND AND NOT TARGET FFTS::FFTS)
+    add_library(FFTS::FFTS INTERFACE IMPORTED)
+    if(FFTS_LIBRARIES)
+      set_target_properties(FFTS::FFTS PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${FFTS_LIBRARIES}"
+      )
+    endif()
+    if(FFTS_INCLUDE_DIR)
+      set_target_properties(FFTS::FFTS PROPERTIES
+	INTERFACE_INCLUDE_DIRECTORIES "${FFTS_INCLUDE_DIR}"
+      )
+    endif()
+    if(FFTS_LINKER_FLAGS)
+      set_target_properties(FFTS::FFTS PROPERTIES
+	INTERFACE_LINK_OPTIONS "${FFTS_LINKER_FLAGS}"
+      )
+    endif()
+    return()
+  endif()
+endfunction()
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(VC_LIB_PATH_SUFFIX lib/x64)
+else()
+  set(VC_LIB_PATH_SUFFIX lib/x86)
+endif()
+
+if(NOT FFTS_FOUND)
+  find_path(FFTS_INCLUDE_DIR ffts.h PATH_SUFFIXES ffts include/ffts include)
+  find_library(FFTS_LIBRARY NAMES ffts PATH_SUFFIXES ${CMAKE_INSTALL_LIBDIR} ${VC_LIB_PATH_SUFFIX})
+  if(FFTS_LIBRARY AND FFTS_INCLUDE_DIR)
+  	set(FFTS_FOUND TRUE)
+  	set(FFTS_LIBRARIES ${FFTS_LIBRARY})
+  endif()
+endif()
+
+if(FFTS_FOUND)
+	_add_ffts_target()
+endif()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(FFTS DEFAULT_MSG FFTS_LIBRARIES FFTS_INCLUDE_DIR)
+
+mark_as_advanced(FFTS_INCLUDE_DIRS FFTS_LIBRARY FFTS_LIBRARIES FFTS_DEFINITIONS)
