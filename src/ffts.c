@@ -51,12 +51,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <libkern/OSCacheControl.h>
 #endif
 
-#if HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#endif
 
-#if defined(HAVE_NEON)
+#if defined(__ARM_NEON__)
 static const FFTS_ALIGN(64) float w_data[16] = {
      0.70710678118654757273731092936941f,
      0.70710678118654746171500846685376f,
@@ -159,7 +157,7 @@ FFTS_API void
 ffts_execute(ffts_plan_t *p, const void *in, void *out)
 {
     /* TODO: Define NEEDS_ALIGNED properly instead */
-#if defined(HAVE_SSE) || defined(HAVE_NEON)
+#if defined(__SSE__) || defined(__ARM_NEON__)
     if (((uintptr_t) in % 16) != 0) {
         LOG("ffts_execute: input buffer needs to be aligned to a 128bit boundary\n");
     }
@@ -234,7 +232,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     if (n_luts) {
         size_t lut_size;
 
-#if defined(__arm__) && !defined(HAVE_NEON)
+#if defined(__arm__) && !defined(__ARM_NEON__)
         lut_size = leaf_N * (((1 << n_luts) - 2) * 3 + 1) * sizeof(ffts_cpx_32f) / 2;
 #else
         lut_size = leaf_N * (((1 << n_luts) - 2) * 3 + 1) * sizeof(ffts_cpx_32f);
@@ -254,7 +252,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
     w = p->ws;
     n = leaf_N * 2;
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
     V4SF neg = (sign < 0) ? V4SF_LIT4(0.0f, 0.0f, 0.0f, 0.0f) : V4SF_LIT4(-0.0f, -0.0f, -0.0f, -0.0f);
 #endif
 
@@ -280,7 +278,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             }
 
 #if defined(__arm__)
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
             for (j = 0; j < n/4; j += 4) {
                 V4SF2 temp0 = V4SF2_LD(fw0 + j*2);
                 temp0.val[1] = V4SF_XOR(temp0.val[1], neg);
@@ -331,7 +329,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
             }
 
 #if defined(__arm__)
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
             for (j = 0; j < n/8; j += 4) {
                 V4SF2 temp0, temp1, temp2;
 
@@ -396,7 +394,7 @@ ffts_generate_luts(ffts_plan_t *p, size_t N, size_t leaf_N, int sign)
         stride >>= 1;
     }
 
-#if defined(HAVE_NEON)
+#if defined(__ARM_NEON__)
     if (sign < 0) {
         p->oe_ws = (void*)(w_data + 4);
         p->ee_ws = (void*)(w_data);
@@ -464,7 +462,7 @@ ffts_init_1d(size_t N, int sign)
             p->i1++;
         }
 
-#if !defined(HAVE_VFP) || defined(DYNAMIC_DISABLED)
+#if !defined(__VFP_FP__) || defined(DYNAMIC_DISABLED)
         p->i0 /= 2;
         p->i1 /= 2;
 #endif

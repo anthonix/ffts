@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ffts_attributes.h"
 
-#if HAVE_SSE2
+#if defined(__i386__) || defined(__x86_64__)
 #include <emmintrin.h>
 #endif
 
@@ -50,7 +50,7 @@ struct ffts_dd_t
     double lo;
 };
 
-#if HAVE_SSE2
+#ifdef __SSE2__
 /* double-double vector */
 struct ffts_dd2_t {
     __m128d hi;
@@ -140,7 +140,7 @@ ffts_dd_split(double a)
     return dd;
 }
 
-#if HAVE_SSE2
+#ifdef __SSE2__
 static FFTS_INLINE struct ffts_dd2_t
 ffts_dd2_add_dd2_unnormalized(const struct ffts_dd2_t *const FFTS_RESTRICT a,
                               const struct ffts_dd2_t *const FFTS_RESTRICT b);
@@ -225,6 +225,5 @@ ffts_dd2_split(__m128d a)
     dd2.lo = _mm_sub_pd(a, dd2.hi);
     return dd2;
 }
-#endif /* HAVE_SSE2 */
-
+#endif /* __SSE2__ */
 #endif /* FFTS_DD_H */

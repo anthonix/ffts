@@ -35,10 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ffts_transpose.h"
 #include "ffts_internal.h"
 
-#ifdef HAVE_NEON
+#ifdef __ARM__NEON__
 #include "neon.h"
 #include <arm_neon.h>
-#elif HAVE_SSE2
+#elif defined(__i386__) || defined(__x86_64__)
 #include <emmintrin.h>
 #endif
 
@@ -47,13 +47,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void
 ffts_transpose(uint64_t *in, uint64_t *out, int w, int h)
 {
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON___
 #if 0
     neon_transpose4(in, out, w, h);
 #else
     neon_transpose8(in, out, w, h);
 #endif
-#elif HAVE_SSE2
+#elif defined(__SSE2__)
     uint64_t FFTS_ALIGN(64) tmp[TSIZE*TSIZE];
     int tx, ty;
     /* int x; */

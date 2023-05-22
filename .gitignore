@@ -5,7 +5,7 @@
 *.lai
 *.lo
 *.Plo
-*.so
+*.so*
 *~
 *.log
 *.swp
@@ -17,6 +17,7 @@ config.h
 config.status
 compile
 libtool
+cmake/ffts.pc
 ffts.pc
 stamp-h1
 tests/test
@@ -25,4 +26,12 @@ java/android/local.properties
 java/android/gen/*
 java/android/obj/*
 java/android/bin/*
-
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+cmake/FFTSConfig.cmake
+cmake/FFTSConfigVersion.cmake
+FFTSConfig.cmake
+FFTSConfigVersion.cmake
+ffts_test*

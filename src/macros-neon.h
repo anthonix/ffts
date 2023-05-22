@@ -33,11 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef FFTS_MACROS_NEON_H
 #define FFTS_MACROS_NEON_H
 
+#ifdef __ARM_NEON__
 #include <arm_neon.h>
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
 typedef float32x4_t   V4SF;
 typedef float32x4x2_t V4SF2;
@@ -113,4 +111,5 @@ V4SF2_STORE_SPR(float *addr, V4SF2 p)
     vst1q_f32(addr + 4, p.val[1]);
 }
 
+#endif
 #endif /* FFTS_MACROS_NEON_H */
