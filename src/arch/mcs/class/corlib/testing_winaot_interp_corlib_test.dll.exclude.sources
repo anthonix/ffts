@@ -1,3 +1,0 @@
-#include winaot_corlib_test.dll.exclude.sources
-
-System.Reflection.Emit/AssemblyBuilderTest.cs

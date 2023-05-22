@@ -1,4 +1,0 @@
-#include common_System.Core.dll.sources
-#include interpreter_System.Core.dll.sources
-#include pipes_pns.sources
-#include sre_pns.sources

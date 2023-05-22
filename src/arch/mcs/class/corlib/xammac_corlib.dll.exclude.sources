@@ -1,5 +1,0 @@
-#include monotouch_corlib.dll.exclude.sources
-System.Text/EncodingHelper.MonoTouch.cs
-System/Environment.iOS.cs
-System/NotSupportedException.iOS.cs
-

@@ -1,4 +1,0 @@
-#include testing_aot_hybrid_System.Core.dll.sources
-
-../../../external/corefx/src/System.Net.Sockets/src/System/Net/Sockets/UnixDomainSocketEndPoint.Windows.cs
-

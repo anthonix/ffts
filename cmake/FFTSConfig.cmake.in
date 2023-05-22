@@ -2,15 +2,6 @@ set(FFTS_VERSION @PROJECT_VERSION@)
 
 @PACKAGE_INIT@
 
-if(NOT (CMAKE_C_COMPILER_LOADED))
-  if(FFTS_FIND_REQUIRED)
-    message(FATAL_ERROR "FindFFTS requires C to be enabled.")
-  else()
-    message(STATUS "Looking for FFTS... - NOT found (Unsupported languages)")
-    return()
-  endif()
-endif()
-
 function(_add_ffts_target)
   if(FFTS_FOUND AND NOT TARGET FFTS::FFTS)
     add_library(FFTS::FFTS INTERFACE IMPORTED)

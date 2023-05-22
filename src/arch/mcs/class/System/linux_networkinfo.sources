@@ -1,6 +1,0 @@
-System.Net.NetworkInformation/LinuxIPInterfaceProperties.cs
-System.Net.NetworkInformation/LinuxIPv4InterfaceProperties.cs
-System.Net.NetworkInformation/LinuxIPv4InterfaceStatistics.cs
-System.Net.NetworkInformation/LinuxNetworkInterfaceMarshal.cs
-System.Net.NetworkInformation/LinuxNetworkInterface.cs
-System.Net.NetworkInformation/LinuxUnicastIPAddressInformation.cs

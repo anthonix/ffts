@@ -1,8 +1,0 @@
-Here are some test tools for Mono.Security assembly.
-
-- npdbtest
-	Npgsql-based tool to test the SSL implementation. Requires PostgreSQL
-	installed.
-
-Sebastien Pouliot
-sebastien@ximian.com
