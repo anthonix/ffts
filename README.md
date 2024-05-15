@@ -1,3 +1,11 @@
+# Please see more recently updated forks:
+
+https://github.com/linkotec/ffts
+
+https://github.com/ValveSoftware/ffts 
+
+Sorry, but I haven't been able to touch this for many years!
+
 # FFTS -- The Fastest Fourier Transform in the South
 
 [![Build Status](https://travis-ci.org/linkotec/ffts.svg?branch=master)](https://travis-ci.org/linkotec/ffts)
@@ -25,11 +33,3 @@ For JNI targets: --enable-jni will build the jni stuff automatically for
 the host target, and --enable-shared must also be added manually for it to
 work.
 
-If you like FFTS, please show your support by sending a postcard to:
-
-Anthony Blake<br>
-Department of Computer Science<br>
-The University of Waikato<br>
-Private Bag 3105<br>
-Hamilton 3240<br>
-NEW ZEALAND
