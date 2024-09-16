@@ -49,7 +49,7 @@ extern "C" {
 #    define FFTS_API __declspec(dllimport)
 #  endif
 #else
-#  if (__GNUC__ >= 4) || defined(HAVE_GCC_VISIBILITY)
+#  if (__GNUC__ >= 4)
 #    define FFTS_API __attribute__ ((visibility("default")))
 #  else
 #    define FFTS_API

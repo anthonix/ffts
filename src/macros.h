@@ -38,9 +38,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #endif
 
-#ifdef HAVE_NEON
+#ifdef __ARM_NEON__
 #include "macros-neon.h"
-#elif HAVE_SSE
+#elif defined(__i386__) || defined(__x86_64__)
 #include "macros-sse.h"
 // NOTE: AltiVec support disabled until updated to provide new V4SF variable type
 //#elif __powerpc__

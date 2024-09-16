@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #endif
 
+#if defined(__i386__) || defined(__x86_64__)
 #include <xmmintrin.h>
 
 typedef __m128 V4SF;
@@ -95,4 +96,5 @@ V4SF_IMULJ(V4SF d, V4SF re, V4SF im)
     return V4SF_ADD(re, im);
 }
 
+#endif
 #endif /* FFTS_MACROS_SSE_H */
