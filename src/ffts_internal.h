@@ -209,7 +209,7 @@ ffts_aligned_malloc(size_t size)
 
     /* various ways to allocate aligned memory in order of preferance */
 #if defined(HAVE_ALIGNED_ALLOC)
-    p = aligned_alloc(32, size);
+    p = aligned_alloc(32, ((size + 32 - 1) / 32) * 32);
 #elif defined(__ICC) || defined(__INTEL_COMPILER) || defined(HAVE__MM_MALLOC)
     p = (void*) _mm_malloc(size, 32);
 #elif defined(HAVE_POSIX_MEMALIGN)
