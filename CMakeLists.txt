@@ -1,13 +1,10 @@
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_policy(VERSION 3.0)
 
-project(ffts C ASM)
-
-# TODO: to support AutoConfigure building, this should came from "template" file
-set(FFTS_MAJOR 0)
-set(FFTS_MINOR 9)
-set(FFTS_MICRO 0)
-
-set(FFTS_VERSION "ffts-${FFTS_MAJOR}.${FFTS_MINOR}.${FFTS_MICRO}")
+project(ffts
+  VERSION 0.9.0
+  LANGUAGES C ASM
+  )
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
